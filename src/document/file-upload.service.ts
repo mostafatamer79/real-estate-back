@@ -2,7 +2,8 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { existsSync, mkdirSync, writeFileSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { File } from 'multer'; // ✅ Import Multer File type
+// Use Express.Multer.File type for file handling
+import { Request } from 'express';
 
 @Injectable()
 export class FileUploadService {
@@ -13,7 +14,7 @@ export class FileUploadService {
     if (!existsSync(this.uploadPath)) mkdirSync(this.uploadPath, { recursive: true });
   }
 
-  async uploadFile(file: File, folder: string = 'documents') {
+  async uploadFile(file: Express.Multer.File, folder: string = 'documents') {
     try {
       const fileExtension = file.originalname.split('.').pop();
       const fileName = `${uuidv4()}.${fileExtension}`;

@@ -9,7 +9,7 @@ import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-  
+
   @Post('register')
   register(@Body() createUserDto: CreateUserDto) {
     return this.authService.register(createUserDto);
@@ -36,11 +36,11 @@ verifyOtp(@Body() verifyOtpDto: any) {
 @Post('resend-otp')
 async resetOtp(@Body() resetOtpDto: ResetOtpDto) {
   const identifier = resetOtpDto.email || resetOtpDto.phone;
-  
+
   if (!identifier) {
     throw new BadRequestException('Either email or phone must be provided');
   }
-  
+
   return this.authService.resetOtp(identifier);
 }
 }

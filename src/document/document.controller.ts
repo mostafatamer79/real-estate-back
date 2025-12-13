@@ -21,7 +21,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorators';
 import { DocumentType, DocumentStatus } from './document.entity';
 import { Role } from 'src/user/user-entity';
-import { Multer } from 'multer';
+import type { Multer } from 'multer';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 @Controller('documents')
 @UseGuards(JwtAuthGuard)
@@ -35,7 +35,8 @@ export class DocumentController {
   @Roles(Role.ADMIN,Role.AGENT)
   @UseInterceptors(FileInterceptor('file'))
   async uploadDocument(
-    @UploadedFile() file: Multer.File,
+    @UploadedFile() file: Express.Multer.File
+,
     @Body() body: any,
     @Request() req
   ) {
@@ -105,7 +106,7 @@ export class DocumentController {
   @UseInterceptors(FileInterceptor('signature'))
   async signDocument(
     @Param('id', ParseUUIDPipe) id: string,
-    @UploadedFile() signatureFile: Multer.File,
+    @UploadedFile() signatureFile:  Express.Multer.File ,
     @Request() req
   ) {
     return this.documentService.signDocument(id, signatureFile, req.user);

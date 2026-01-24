@@ -1,10 +1,10 @@
 
 import { Controller, Get, Post, Body, UseGuards, Param } from '@nestjs/common';
 import { SettingsService } from './settings.service';
-import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
-import { RolesGuard } from 'src/common/guards/roles.guard';
-import { Roles } from 'src/common/decorators/roles.decorators';
-import { Role } from 'src/user/user-entity';
+import { JwtAuthGuard } from '../common/guards/jwt.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorators';
+import { Role } from '../user/user-entity';
 
 @Controller('settings')
 export class SettingsController {

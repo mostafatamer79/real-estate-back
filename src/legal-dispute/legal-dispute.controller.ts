@@ -47,9 +47,9 @@ import {
   OtherServicesQueryDto,
   PaginationDto
 } from './create-legal-dispute.dto';
-import { Roles } from 'src/common/decorators/roles.decorators';
-import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
-import { RolesGuard } from 'src/common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorators';
+import { JwtAuthGuard } from '../common/guards/jwt.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
 
 @ApiTags('Legal Services')
 @Controller('legal-services')

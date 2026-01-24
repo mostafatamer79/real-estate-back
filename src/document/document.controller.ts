@@ -20,9 +20,9 @@ import { FileUploadService } from './file-upload.service';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorators';
 import { DocumentType, DocumentStatus } from './document.entity';
-import { Role } from 'src/user/user-entity';
+import { Role } from '../user/user-entity';
 import type { Multer } from 'multer';
-import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
+import { JwtAuthGuard } from '../common/guards/jwt.guard';
 @Controller('documents')
 @UseGuards(JwtAuthGuard)
 export class DocumentController {

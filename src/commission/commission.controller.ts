@@ -17,7 +17,7 @@ import {
   import { RolesGuard } from '../common/guards/roles.guard';
   import { Roles } from '../common/decorators/roles.decorators';
   import { CommissionStatus, CommissionType } from './commission.entity';
-import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
+import { JwtAuthGuard } from '../common/guards/jwt.guard';
   
   @Controller('commissions')
   @UseGuards(JwtAuthGuard)

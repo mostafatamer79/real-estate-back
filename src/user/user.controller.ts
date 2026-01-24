@@ -3,9 +3,9 @@ import { Controller, Get, Put, Body, Param, UseGuards, Request } from '@nestjs/c
 import { UserService } from './user.service';
 import { UpdateUserDto } from './create-user-dto';
 import { Role, User, VerifyStatus } from './user-entity';
-import { RolesGuard } from 'src/common/guards/roles.guard';
-import { Roles } from 'src/common/decorators/roles.decorators';
-import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorators';
+import { JwtAuthGuard } from '../common/guards/jwt.guard';
 
 @Controller('user')
 @UseGuards(JwtAuthGuard)

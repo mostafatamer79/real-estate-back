@@ -7,14 +7,14 @@
       UnauthorizedException,
     } from '@nestjs/common';
     import { JwtService } from '@nestjs/jwt';
-    import { UserService } from 'src/user/user.service';
-    import { CreateUserDto } from 'src/user/create-user-dto';
+    import { UserService } from '../user/user.service';
+    import { CreateUserDto } from '../user/create-user-dto';
     import { LoginDto } from './login-dto';
     import * as bcrypt from 'bcrypt';
-    import { User } from 'src/user/user-entity';
+    import { User } from '../user/user-entity';
     import { ConfigService } from '@nestjs/config';
 
-import { MailService } from 'src/mail/mail.service';
+import { MailService } from '../mail/mail.service';
     
     @Injectable()
     export class AuthService {

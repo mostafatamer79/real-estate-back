@@ -1,9 +1,9 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Role, User, VerifyStatus } from './user-entity';
-import { AuthService } from 'src/auth/auth.service';
+import { AuthService } from '../auth/auth.service';
 import { CreateUserDto, UpdateUserDto } from './create-user-dto';
-import { PasswordService } from 'src/password/password.service';
+import { PasswordService } from '../password/password.service';
 import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()

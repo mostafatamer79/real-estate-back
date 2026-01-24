@@ -1,10 +1,10 @@
 // auth.controller.ts
 import { BadRequestException, Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateUserDto,VerifyOtpDto } from 'src/user/create-user-dto';
+import { CreateUserDto,VerifyOtpDto } from '../user/create-user-dto';
 import { LoginDto, ResetOtpDto } from './login-dto';
-import { Roles } from 'src/common/decorators/roles.decorators';
-import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
+import { Roles } from '../common/decorators/roles.decorators';
+import { JwtAuthGuard } from '../common/guards/jwt.guard';
 
 @Controller('auth')
 export class AuthController {

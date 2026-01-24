@@ -11,7 +11,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { User } from '../user/user-entity';
-import { Offer } from 'src/offer/offer-entity';
+import { Offer } from '../offer/offer-entity';
 
 @Entity('chat_rooms')
 @Index(['createdAt'])

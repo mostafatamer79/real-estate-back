@@ -9,11 +9,11 @@ import { OffersService } from './offers.service';
 import { CreateOfferDto, UpdateOfferDto } from './create-offer.dto';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
-import { Roles } from 'src/common/decorators/roles.decorators';
-import { RolesGuard } from 'src/common/guards/roles.guard';
-import { Role } from 'src/user/user-entity';
-import { getUserFromRequest } from 'src/common/utils/request-user.util';
+import { JwtAuthGuard } from '../common/guards/jwt.guard';
+import { Roles } from '../common/decorators/roles.decorators';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Role } from '../user/user-entity';
+import { getUserFromRequest } from '../common/utils/request-user.util';
 
 @Controller('offers')
 @UseGuards(JwtAuthGuard, RolesGuard)

@@ -13,7 +13,8 @@
     import * as bcrypt from 'bcrypt';
     import { User } from 'src/user/user-entity';
     import { ConfigService } from '@nestjs/config';
-import { create } from 'domain';
+
+import { MailService } from 'src/mail/mail.service';
     
     @Injectable()
     export class AuthService {
@@ -22,6 +23,7 @@ import { create } from 'domain';
         private readonly userService: UserService,
         private readonly jwtService: JwtService,
         private readonly configService: ConfigService,
+        private readonly mailService: MailService,
       ) {}
     
       private async generateTokens(user: User) {
@@ -43,32 +45,23 @@ import { create } from 'domain';
       }
     
       async register(createUserDto: CreateUserDto) {
-
-  
         if (createUserDto.phone) {
-
-          
-          const otp = await this.appearotpOtp(createUserDto)
-        
+          const otp = await this.generateAndSendOtp(createUserDto);
           const expireOtp = Date.now() + 5 * 60 * 1000; // OTP valid for 5 minutes
-          createUserDto.expiredOtp=new Date(expireOtp);
-          await this.userService.createUserByphone(createUserDto,otp);
-      
-        }
-        else if (createUserDto.email) {
-  
-          const otp = await this.appearotpOtp(createUserDto)
+          createUserDto.expiredOtp = new Date(expireOtp);
+          await this.userService.createUserByphone(createUserDto, otp);
+        } else if (createUserDto.email) {
+          const otp = await this.generateAndSendOtp(createUserDto);
           const expireOtp = Date.now() + 5 * 60 * 1000; // OTP valid for 5 minutes
-          createUserDto.expiredOtp=new Date(expireOtp);
-          await this.userService.createUserByemail(createUserDto,otp);
-      
+          createUserDto.expiredOtp = new Date(expireOtp);
+          await this.userService.createUserByemail(createUserDto, otp);
         }
-
       }
-      async appearotpOtp(createUserDto:CreateUserDto): Promise<string> {
+    
+      async generateAndSendOtp(createUserDto: CreateUserDto): Promise<string> {
         const otp = await this.generateOtp();
-        // In production, send the OTP via SMS or email
-        console.log(`Generated OTP for ${createUserDto.email || createUserDto.phone}: ${otp}`);
+        await this.mailService.sendOtp(createUserDto, otp);
+        // console.log(`Generated OTP for ${createUserDto.email || createUserDto.phone}: ${otp}`);
         return otp;
       } 
 
@@ -127,9 +120,11 @@ import { create } from 'domain';
           });
     
           const user = await this.userService.findOne(payload.sub);
-          if(user)
-          return this.generateTokens(user);
-      else return new NotFoundException()
+          if(user) {
+            return this.generateTokens(user);
+          } else {
+            throw new NotFoundException('User not found');
+          }
         } catch (e) {
           throw new UnauthorizedException('Invalid refresh token');
         }
@@ -158,33 +153,38 @@ import { create } from 'domain';
       async resetOtp(identifier: string): Promise<{ message: string }> {
         // Find user by email or phone
         const user =
-          await this.userService.findOneByEmail(identifier) ||
-          await this.userService.findOneByPhone(identifier);
-      
+          (await this.userService.findOneByEmail(identifier)) ||
+          (await this.userService.findOneByPhone(identifier));
+    
         if (!user) {
           throw new NotFoundException('User not found');
         }
-      
+    
         // Check if user is already verified
         if (user.isActive && user.isVerified) {
-          throw new BadRequestException('User is already verified. No need to reset OTP.');
+          throw new BadRequestException(
+            'User is already verified. No need to reset OTP.',
+          );
         }
-      
+    
         // Generate new OTP
         const newOtp = await this.generateOtp();
         const expireOtp = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
-      
+    
         // Update user with new OTP
         user.otp = newOtp;
         user.expireOtp = expireOtp;
-        
-        // In production, you would send the OTP via email or SMS here
-        console.log(`New OTP for ${user.email || user.phone}: ${newOtp}`);
-        
+    
+        // Send the OTP via email
+        await this.mailService.sendOtp(user, newOtp);
+        // console.log(`New OTP for ${user.email || user.phone}: ${newOtp}`);
+    
         await this.userService.updateUser(user);
-      
+    
         return {
-          message: `New OTP has been sent to your ${user.email ? 'email' : 'phone number'}. It will expire in 5 minutes.`
+          message: `New OTP has been sent to your ${
+            user.email ? 'email' : 'phone number'
+          }. It will expire in 5 minutes.`,
         };
       }
     }

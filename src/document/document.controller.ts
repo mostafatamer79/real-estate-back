@@ -32,7 +32,7 @@ export class DocumentController {
   ) {}
 
   @Post('upload')
-  @Roles(Role.ADMIN,Role.AGENT)
+  @Roles([Role.ADMIN,Role.AGENT])
   @UseInterceptors(FileInterceptor('file'))
   async uploadDocument(
     @UploadedFile() file: Express.Multer.File
@@ -121,7 +121,7 @@ export class DocumentController {
   }
 
   @Post('folders')
-  @Roles(Role.ADMIN,Role.AGENT)
+  @Roles([Role.ADMIN,Role.AGENT])
   async createFolder(
     @Body('name') folderName: string,
     @Request() req

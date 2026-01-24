@@ -1,13 +1,16 @@
-import { 
-  Column, 
-  CreateDateColumn, 
-  Entity, 
-  PrimaryGeneratedColumn, 
+import { Order } from "../order/entities/order.entity";
+import { Booking } from "../booking/entities/booking.entity";
+import {  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
   UpdateDateColumn,
   ManyToMany,
   JoinTable,
   BeforeInsert,
-  BeforeUpdate
+  BeforeUpdate,
+  OneToMany,
+  OneToOne
 } from "typeorm";
 
 // Permission Entity
@@ -94,7 +97,7 @@ expireOtp: Date | null;
   agentLicenseNumber?: string;
 
   @Column({
-    nullable: true, 
+    nullable: true,
     type: 'enum',
     enum: VerifyStatus,
     default: VerifyStatus.PENDING,
@@ -119,6 +122,14 @@ expireOtp: Date | null;
   @Column({ nullable: true })
   licenseDocument?: string; // For agent license documents
 
+
+  @Column({ nullable: true })
+ legalDisputes?:string
+
+
+  @Column({ nullable: true })
+ contracts?:string
+
   @ManyToMany(() => Permission, permission => permission.users, { cascade: true })
   @JoinTable({
     name: 'user_permissions',
@@ -132,4 +143,11 @@ expireOtp: Date | null;
     }
   })
   permissions: Permission[];
+
+
+  @OneToMany(() => Order, (order) => order.user)
+  orders: Order[];
+
+  @OneToMany(() => Booking, (booking) => booking.user)
+  bookings: Booking[];
 }

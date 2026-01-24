@@ -14,6 +14,10 @@ export class UserService {
         private readonly passwordService : PasswordService
     ){}
 
+    public async findAll(): Promise<User[]> {
+        return await this.userRepository.find();
+    }
+
     public async findOneByPhone(phone: string): Promise<User | null> {
         const user = await this.userRepository.findOne({ where: { phone } });
         if (!user) {

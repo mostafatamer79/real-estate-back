@@ -1,134 +1,114 @@
+
 import {
   Controller, Get, Post, Body, Patch, Param, Delete,
-  Query, ParseUUIDPipe, UseInterceptors, UploadedFiles,
-  ParseFilePipe, MaxFileSizeValidator, FileTypeValidator
+  Query, ParseUUIDPipe, UseInterceptors, UploadedFiles, Request,
+  UseGuards
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { OffersService } from './offers.service';
-import { CreateOfferDto,UpdateOfferDto } from './create-offer.dto';
+import { CreateOfferDto, UpdateOfferDto } from './create-offer.dto';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { Multer } from 'multer';
+import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
+import { Roles } from 'src/common/decorators/roles.decorators';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { Role } from 'src/user/user-entity';
+import { getUserFromRequest } from 'src/common/utils/request-user.util';
+
 @Controller('offers')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class OffersController {
   constructor(private readonly offersService: OffersService) {}
 
   @Post()
-  create(@Body() createOfferDto: CreateOfferDto) {
-    return this.offersService.create(createOfferDto);
+  @Roles([Role.ADMIN, Role.AGENT,Role.USER])
+  create(@Body() dto: CreateOfferDto, @Request() req) {
+    const user = getUserFromRequest(req, [Role.ADMIN, Role.AGENT,Role.USER]);
+    return this.offersService.create(dto, user);
   }
 
   @Get()
-  findAll(
-    @Query('status') status?: string,
-    @Query('propertyType') propertyType?: string,
-    @Query('city') city?: string,
-    @Query('minPrice') minPrice?: number,
-    @Query('maxPrice') maxPrice?: number,
-    @Query('isActive') isActive?: boolean,
-  ) {
-    return this.offersService.findAll({
-      status,
-      propertyType,
-      city,
-      minPrice: minPrice ? Number(minPrice) : undefined,
-      maxPrice: maxPrice ? Number(maxPrice) : undefined,
-      isActive: isActive !== undefined ? isActive === true : undefined,
+  findAll(@Request() req, @Query() query) {
+    const user = getUserFromRequest(req);
+    return this.offersService.findAll(user, {
+      ...query,
+      minPrice: query.minPrice ? Number(query.minPrice) : undefined,
+      maxPrice: query.maxPrice ? Number(query.maxPrice) : undefined,
+      isActive: query.isActive !== undefined ? query.isActive === 'true' : undefined,
     });
   }
 
   @Get('search')
-  search(@Query('q') searchTerm: string) {
-    return this.offersService.search(searchTerm);
+  search(@Request() req, @Query('q') q: string) {
+    const user = getUserFromRequest(req);
+    return this.offersService.search(q, user);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.offersService.findOne(id);
+  findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
+    const user = getUserFromRequest(req);
+    return this.offersService.findOne(id, user);
   }
 
   @Patch(':id')
-  update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateOfferDto: UpdateOfferDto,
-  ) {
-    return this.offersService.update(id, updateOfferDto);
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateOfferDto, @Request() req) {
+    const user = getUserFromRequest(req, [Role.ADMIN, Role.AGENT, Role.USER]);
+    // Note: The service should likely check ownership if role is USER
+    return this.offersService.update(id, dto, user);
   }
 
   @Patch(':id/status')
-  updateStatus(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body('status') status: string,
-  ) {
-    return this.offersService.updateStatus(id, status);
+  updateStatus(@Param('id', ParseUUIDPipe) id: string, @Body('status') status: string, @Request() req) {
+    const user = getUserFromRequest(req, [Role.ADMIN]);
+    return this.offersService.updateStatus(id, status, user);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.offersService.remove(id);
+  @Roles([Role.ADMIN, Role.AGENT, Role.USER])
+  remove(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
+    const user = getUserFromRequest(req, [Role.ADMIN, Role.AGENT, Role.USER]);
+    return this.offersService.remove(id, user); // Soft delete
   }
 
   @Delete(':id/hard')
-  delete(@Param('id', ParseUUIDPipe) id: string) {
-    return this.offersService.delete(id);
+  @Roles([Role.ADMIN])
+  delete(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
+    const user = getUserFromRequest(req, [Role.ADMIN]);
+    return this.offersService.delete(id, user); // Hard delete
   }
 
-  // File upload endpoints
+  // File uploads
   @Post(':id/upload/media')
-  @UseInterceptors(
-    FilesInterceptor('files', 10, {
-      storage: diskStorage({
-        destination: './uploads/media',
-        filename: (req, file, callback) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const ext = extname(file.originalname);
-          const filename = `${uniqueSuffix}${ext}`;
-          callback(null, filename);
-        },
-      }),
+  @UseInterceptors(FilesInterceptor('files', 10, {
+    storage: diskStorage({
+      destination: './uploads/media',
+      filename: (req, file, cb) => {
+        const name = Date.now() + '-' + Math.round(Math.random() * 1e9) + extname(file.originalname);
+        cb(null, name);
+      },
     }),
-  )
-  async uploadMedia(
-    @Param('id', ParseUUIDPipe) id: string,
-    @UploadedFiles(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 10 }), // 10MB
-          new FileTypeValidator({ fileType: /(jpg|jpeg|png|gif|mp4|mov|avi)$/ }),
-        ],
-      }),
-    ) files: Express.Multer.File[],
-  ) {
-    const fileUrls = files.map(file => `/uploads/media/${file.filename}`);
-    return this.offersService.addMedia(id, fileUrls);
+  }))
+  @Roles([Role.ADMIN, Role.AGENT,Role.USER])
+  async uploadMedia(@Param('id', ParseUUIDPipe) id: string, @UploadedFiles() files: Express.Multer.File[], @Request() req) {
+    const user = getUserFromRequest(req, [Role.ADMIN, Role.AGENT,Role.USER]);
+    const urls = files.map(f => `/uploads/media/${f.filename}`);
+    return this.offersService.addMedia(id, urls, user);
   }
 
   @Post(':id/upload/3d-videos')
-  @UseInterceptors(
-    FilesInterceptor('videos', 5, {
-      storage: diskStorage({
-        destination: './uploads/3d-videos',
-        filename: (req, file, callback) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const ext = extname(file.originalname);
-          const filename = `${uniqueSuffix}${ext}`;
-          callback(null, filename);
-        },
-      }),
+  @Roles([Role.ADMIN, Role.AGENT,Role.USER])
+  @UseInterceptors(FilesInterceptor('videos', 5, {
+    storage: diskStorage({
+      destination: './uploads/3d-videos',
+      filename: (req, file, cb) => {
+        const name = Date.now() + '-' + Math.round(Math.random() * 1e9) + extname(file.originalname);
+        cb(null, name);
+      },
     }),
-  )
-  async upload3DVideos(
-    @Param('id', ParseUUIDPipe) id: string,
-    @UploadedFiles(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 100 }), // 100MB
-          new FileTypeValidator({ fileType: /(mp4|mov|avi|webm)$/ }),
-        ],
-      }),
-    ) files: Express.Multer.File[],
-  ) {
-    const videoUrls = files.map(file => `/uploads/3d-videos/${file.filename}`);
-    return this.offersService.addThreeDVideos(id, videoUrls);
+  }))
+  async upload3DVideos(@Param('id', ParseUUIDPipe) id: string, @UploadedFiles() files: Express.Multer.File[], @Request() req) {
+    const user = getUserFromRequest(req, [Role.ADMIN, Role.AGENT,Role.USER]);
+    const urls = files.map(f => `/uploads/3d-videos/${f.filename}`);
+    return this.offersService.addThreeDVideos(id, urls, user);
   }
 }

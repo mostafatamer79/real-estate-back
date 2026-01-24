@@ -2,7 +2,7 @@
 import { Controller, Get, Put, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './create-user-dto';
-import { User, VerifyStatus } from './user-entity';
+import { Role, User, VerifyStatus } from './user-entity';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorators';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
@@ -11,6 +11,13 @@ import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 @UseGuards(JwtAuthGuard)
 export class UserController {
     constructor(private readonly userService: UserService) {}
+
+    @Get()
+    @Roles([Role.ADMIN])
+    @UseGuards(RolesGuard)
+    async findAll() {
+        return this.userService.findAll();
+    }
 
     @Get('profile')
     async getProfile(@Request() req) {
@@ -23,7 +30,7 @@ export class UserController {
     }
 
     @Put(':id/verify')
-    @Roles()
+    @Roles([Role.ADMIN])
     @UseGuards(RolesGuard)
     async updateVerificationStatus(
         @Param('id') userId: string,

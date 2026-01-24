@@ -1,6 +1,6 @@
 // src/auth/dto/reset-otp.dto.ts
 import { IsString,  IsEmail, ValidateIf, IsOptional, IsNotEmpty } from 'class-validator';
-import { IsSaudiPhoneNumber } from 'src/validator/IsSaudiNumber';
+import { IsSaudiPhoneNumber } from '../validator/IsSaudiNumber';
 
 export class LoginDto{
     @IsEmail()

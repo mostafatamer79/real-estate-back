@@ -1,5 +1,5 @@
 import { IsDate, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Length, MinLength } from "class-validator"
-import { IsSaudiPhoneNumber } from "src/validator/IsSaudiNumber"
+import { IsSaudiPhoneNumber } from "../validator/IsSaudiNumber"
 import { Role } from "./user-entity"
 
 export class CreateUserDto{

@@ -1,6 +1,6 @@
 // src/common/utils/request-user.util.ts
 import { ForbiddenException } from '@nestjs/common';
-import { Role } from 'src/user/user-entity';
+import { Role } from '../../user/user-entity';
 
 export function getUserFromRequest(req: any, allowedRoles?: Role[]) {
   const user = req.user;

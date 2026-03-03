@@ -12,6 +12,7 @@ export enum MarketingRequestStatus {
   IN_PROGRESS = 'in_progress',
   COMPLETED = 'completed',
   REJECTED = 'rejected',
+  CANCELLED = 'cancelled',
 }
 
 @Entity()
@@ -40,6 +41,12 @@ export class MarketingRequest {
 
   @Column({ nullable: true })
   assignedTo: string; // ID of the agent/photographer assigned
+
+  @Column({ default: 0 })
+  views: number;
+
+  @Column({ default: 0 })
+  engagement: number;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -2,13 +2,12 @@
 import {
   Controller, Get, Post, Body, Patch, Param, Delete,
   Query, ParseUUIDPipe, UseInterceptors, UploadedFiles, Request,
-  UseGuards
+  UseGuards, Ip
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { OffersService } from './offers.service';
 import { CreateOfferDto, UpdateOfferDto } from './create-offer.dto';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+// remove imports
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
 import { Roles } from '../common/decorators/roles.decorators';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -44,10 +43,23 @@ export class OffersController {
     return this.offersService.search(q, user);
   }
 
+  @Get('my-offers')
+  @UseGuards(JwtAuthGuard)
+  findMyOffers(@Request() req) {
+    const user = getUserFromRequest(req);
+    return this.offersService.findByUser(user.userId);
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
     const user = getUserFromRequest(req);
     return this.offersService.findOne(id, user);
+  }
+
+  @Post(':id/view')
+  @Roles([Role.USER, Role.AGENT, Role.ADMIN])
+  async incrementView(@Param('id', ParseUUIDPipe) id: string, @Ip() ip: string) {
+    return this.offersService.incrementViewCount(id, ip);
   }
 
   @Patch(':id')
@@ -79,36 +91,39 @@ export class OffersController {
 
   // File uploads
   @Post(':id/upload/media')
-  @UseInterceptors(FilesInterceptor('files', 10, {
-    storage: diskStorage({
-      destination: './uploads/media',
-      filename: (req, file, cb) => {
-        const name = Date.now() + '-' + Math.round(Math.random() * 1e9) + extname(file.originalname);
-        cb(null, name);
-      },
-    }),
-  }))
+  @UseInterceptors(FilesInterceptor('files', 10)) // defaults to memory storage
   @Roles([Role.ADMIN, Role.AGENT,Role.USER])
   async uploadMedia(@Param('id', ParseUUIDPipe) id: string, @UploadedFiles() files: Express.Multer.File[], @Request() req) {
     const user = getUserFromRequest(req, [Role.ADMIN, Role.AGENT,Role.USER]);
-    const urls = files.map(f => `/uploads/media/${f.filename}`);
+    // WARNING: In a real Vercel deployment, you must upload 'files' (which are in memory) to S3/Cloudinary here.
+    // For now, we return a placeholder URL to prevent crashing.
+    console.warn('Files received in memory but not saved to disk (Vercel read-only filesystem). access file.buffer to upload to S3.');
+    const urls = files.map((f, index) => `https://placeholder.com/image-${index}.jpg`); 
     return this.offersService.addMedia(id, urls, user);
   }
 
   @Post(':id/upload/3d-videos')
   @Roles([Role.ADMIN, Role.AGENT,Role.USER])
-  @UseInterceptors(FilesInterceptor('videos', 5, {
-    storage: diskStorage({
-      destination: './uploads/3d-videos',
-      filename: (req, file, cb) => {
-        const name = Date.now() + '-' + Math.round(Math.random() * 1e9) + extname(file.originalname);
-        cb(null, name);
-      },
-    }),
-  }))
+  @UseInterceptors(FilesInterceptor('videos', 5)) // defaults to memory storage
   async upload3DVideos(@Param('id', ParseUUIDPipe) id: string, @UploadedFiles() files: Express.Multer.File[], @Request() req) {
     const user = getUserFromRequest(req, [Role.ADMIN, Role.AGENT,Role.USER]);
-    const urls = files.map(f => `/uploads/3d-videos/${f.filename}`);
+    // WARNING: Same as above. Upload 'files' to cloud storage.
+    console.warn('Videos received in memory. Upload to cloud storage required for persistence.');
+    const urls = files.map((f, index) => `https://placeholder.com/video-${index}.mp4`);
     return this.offersService.addThreeDVideos(id, urls, user);
+  }
+
+  @Post(':id/purchase')
+  @Roles([Role.USER, Role.AGENT, Role.ADMIN])
+  async createPurchase(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
+    const user = getUserFromRequest(req, [Role.USER, Role.AGENT, Role.ADMIN]);
+    return this.offersService.createPurchaseRequest(id, user);
+  }
+
+  @Post(':id/visit')
+  @Roles([Role.USER, Role.AGENT, Role.ADMIN])
+  async createVisit(@Param('id', ParseUUIDPipe) id: string, @Body() body: any, @Request() req) {
+    const user = getUserFromRequest(req, [Role.USER, Role.AGENT, Role.ADMIN]);
+    return this.offersService.createVisitRequest(id, user, body);
   }
 }

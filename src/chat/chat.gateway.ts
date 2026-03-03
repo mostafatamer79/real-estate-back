@@ -28,10 +28,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: Socket) {
     try {
-      const userId = client.handshake.auth.userId;
+      const userId = client.handshake.query.userId as string || client.handshake.auth.userId;
       if (userId) {
         this.connectedUsers.set(userId, client.id);
         console.log(`User ${userId} connected`);
+        
+        // Broadcast online status to all connected clients (or specifically to relevant rooms if optimized)
+        // For simplicity, we broadcast to everyone or let clients check
+        this.server.emit('userStatus', { userId, status: 'online' });
       }
     } catch (error) {
       console.error('Connection error:', error);
@@ -44,9 +48,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (socketId === client.id) {
         this.connectedUsers.delete(userId);
         console.log(`User ${userId} disconnected`);
+        this.server.emit('userStatus', { userId, status: 'offline' });
         break;
       }
     }
+  }
+
+  @SubscribeMessage('checkUserStatus')
+  handleCheckUserStatus(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { userId: string },
+  ) {
+    const isOnline = this.connectedUsers.has(data.userId);
+    client.emit('userStatus', { 
+      userId: data.userId, 
+      status: isOnline ? 'online' : 'offline' 
+    });
   }
 
   @SubscribeMessage('joinRoom')
@@ -77,15 +94,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Broadcast to room
       this.server.to(data.roomId).emit('receiveMessage', {
-        id: message.id,
-        content: message.content,
-        sender: {
-          id: message.sender.id,
-          firstName: message.sender.firstName,
-          lastName: message.sender.lastName,
-          email: message.sender.email,
-        },
-        createdAt: message.createdAt,
+        type: 'receiveMessage',
+        message: {
+          id: message.id,
+          content: message.content,
+          sender: {
+            id: message.sender.id,
+            firstName: message.sender.firstName,
+            lastName: message.sender.lastName,
+            email: message.sender.email,
+          },
+          createdAt: message.createdAt,
+        }
       });
 
     } catch (error) {

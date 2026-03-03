@@ -30,6 +30,48 @@ export class Order {
   @Column('decimal', { precision: 14, scale: 2 })
   price: number;
 
+  @Column('int', { nullable: true })
+  rooms: number;
+
+  @Column('int', { nullable: true })
+  bathrooms: number;
+
+  @Column('int', { nullable: true })
+  livingRooms: number;
+
+  @Column('int', { nullable: true })
+  kitchens: number;
+
+  @Column('int', { nullable: true })
+  floors: number;
+
+  @Column('int', { nullable: true })
+  apartments: number;
+
+  @Column({ default: false })
+  hasMaidRoom: boolean;
+
+  @Column({ default: false })
+  hasRoof: boolean;
+
+  @Column({ default: false })
+  hasExternalAnnex: boolean;
+
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  buildingArea: number;
+
+  @Column({ default: false })
+  hasGarage: boolean;
+
+  @Column({ default: false })
+  hasPool: boolean;
+
+  @Column({ default: false })
+  hasElevator: boolean;
+
+  @Column({ nullable: true })
+  furnitureStatus: string;
+
   @Column({ type: 'text', nullable: true })
   additionalDetails: string;
 

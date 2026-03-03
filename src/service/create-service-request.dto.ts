@@ -1,31 +1,31 @@
 // src/service-request/create-service-request.dto.ts
 import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
-import { ServiceCategory } from './service-request.entity';
+import { ServiceCategory, TargetDepartment } from './service-request.entity';
 import { ServiceStatus } from './service-request.entity';
 
 export class CreateServiceRequestDto {
   @IsEnum(ServiceCategory)
-  @IsNotEmpty()
+  @IsOptional()
   category: ServiceCategory;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   serviceType: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   clientName: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   phone: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   city: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   district: string;
 
   @IsNumber()
@@ -39,6 +39,22 @@ export class CreateServiceRequestDto {
   @IsString()
   @IsOptional()
   userId?: string; // If user is logged in
+
+  @IsEnum(TargetDepartment)
+  @IsOptional()
+  targetDepartment?: TargetDepartment;
+
+  @IsOptional()
+  firstParty?: any;
+
+  @IsOptional()
+  secondParty?: any;
+
+  @IsOptional()
+  metadata?: any;
+
+  @IsOptional()
+  documentIds?: string[];
 }
 // src/service-request/update-service-request.dto.ts
 
@@ -64,4 +80,12 @@ export class UpdateServiceRequestDto {
 
   @IsOptional()
   completedAt?: Date;
+
+  @IsEnum(TargetDepartment)
+  @IsOptional()
+  targetDepartment?: TargetDepartment;
+
+  @IsNumber()
+  @IsOptional()
+  price?: number;
 }

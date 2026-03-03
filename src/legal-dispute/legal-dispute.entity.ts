@@ -107,6 +107,7 @@ export class LegalDispute {
   firstPartyAgent?: {
     name: string;
     agencyNumber: string;
+    idNumber: string;
     documentId?: string;
   };
 
@@ -114,6 +115,7 @@ export class LegalDispute {
   secondPartyAgent?: {
     name: string;
     agencyNumber: string;
+    idNumber: string;
     documentId?: string;
   };
 

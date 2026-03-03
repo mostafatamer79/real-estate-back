@@ -63,13 +63,23 @@ export class OtherLegalService {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
   @Column({ nullable: true })
-  respondedBy: string;
+  respondedBy?: string;
+
   @ManyToOne(() => User)
   @JoinColumn({ name: 'userId' })
   user: User;
-  email: string | undefined;
-  consultationDetails: string | undefined;
-  propertyLocation: string | undefined;
-  reportDetails: string | undefined;
+
+  @Column({ nullable: true })
+  email?: string;
+
+  @Column({ type: 'text', nullable: true })
+  consultationDetails?: string;
+
+  @Column({ nullable: true })
+  propertyLocation?: string;
+
+  @Column({ type: 'text', nullable: true })
+  reportDetails?: string;
 }

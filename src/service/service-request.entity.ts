@@ -15,6 +15,9 @@ import {
     POST_PURCHASE = 'postPurchase',
     LEGAL = 'legal',
     CONSTRUCTION = 'construction',
+    MARKETING = 'marketing',
+    LEASING = 'leasing',
+    VISIT = 'visit',
     OTHER = 'other'
   }
 
@@ -28,6 +31,18 @@ import {
   export enum PaidStatus {
    PAID = 'paid',
    UNPAID = 'unpaid'
+  }
+  export enum ClientDecision {
+    PENDING = 'pending',
+    ACCEPTED = 'accepted',
+    REJECTED = 'rejected'
+  }
+
+  export enum TargetDepartment {
+    REAL_ESTATE = 'real_estate', // ادارة الاملاك
+    MARKETING = 'marketing',    // ادارة التسويق
+    LEGAL = 'legal',            // ادارة القانونية
+    FINANCE = 'finance'         // الادارة المالية
   }
   @Entity('service_requests')
   export class ServiceRequest {
@@ -68,6 +83,13 @@ import {
     })
     status: ServiceStatus;
 
+    @Column({
+      type: 'enum',
+      enum: TargetDepartment,
+      default: TargetDepartment.REAL_ESTATE
+    })
+    targetDepartment: TargetDepartment;
+
     @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
     estimatedCost: number;
 
@@ -100,6 +122,37 @@ import {
 
     @Column({type:'enum',enum:PaidStatus,default:PaidStatus.UNPAID})
     paymentStatus:PaidStatus
+
+    @Column({ type: 'boolean', default: false })
+    adminAccepted: boolean;
+
+    // Legal invoice workflow
+    @Column({ type: 'boolean', default: false })
+    invoiceSent: boolean;
+
+    @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
+    invoicePrice: number | null;
+
+    @Column({
+      type: 'enum',
+      enum: ClientDecision,
+      default: ClientDecision.PENDING,
+      nullable: true
+    })
+    clientDecision: ClientDecision | null;
+
+    @Column({ type: 'jsonb', nullable: true })
+    firstParty: any;
+
+    @Column({ type: 'jsonb', nullable: true })
+    secondParty: any;
+
+    @Column({ type: 'jsonb', nullable: true })
+    metadata: any;
+
+    @Column('simple-array', { nullable: true })
+    documentIds: string[];
+
     @CreateDateColumn()
     createdAt: Date;
 

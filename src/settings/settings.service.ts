@@ -40,4 +40,14 @@ export class SettingsService {
         const setting = await this.findOne('appointment_price');
         return setting ? parseFloat(setting.value) : 0;
     }
+
+    async getPurchaseServiceFee(): Promise<number> {
+        const setting = await this.findOne('purchase_service_fee_percentage');
+        return setting ? parseFloat(setting.value) : 2.5; // Default 2.5%
+    }
+
+    async getTaxPercentage(): Promise<number> {
+        const setting = await this.findOne('tax_percentage');
+        return setting ? parseFloat(setting.value) : 15; // Default 15%
+    }
 }

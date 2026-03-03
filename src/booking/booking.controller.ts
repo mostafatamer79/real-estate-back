@@ -20,6 +20,19 @@ export class BookingController {
     return this.bookingService.findAll(req.user);
   }
 
+  @Get('user/:userId')
+  @UseGuards(JwtAuthGuard)
+  // @Roles([Role.ADMIN]) // Allow admins to see user bookings
+  findUserBookings(@Param('userId') userId: string) {
+    return this.bookingService.findByUser(userId);
+  }
+
+  @Get('offer/:offerId')
+  @UseGuards(JwtAuthGuard)
+  findOfferBookings(@Param('offerId') offerId: string) {
+    return this.bookingService.findByOffer(offerId);
+  }
+
   @Get('incoming')
   findIncoming(@Req() req) {
     return this.bookingService.findIncoming(req.user);

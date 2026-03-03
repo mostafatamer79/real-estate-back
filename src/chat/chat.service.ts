@@ -4,6 +4,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Message, ChatRoom } from './message.entity';
 import { User } from '../user/user-entity';
+import { NotificationService } from '../notification/notification.service';
+import { NotificationGateway } from '../notification/notification.gateway';
+import { NotificationType } from '../notification/notification.entity';
 
 @Injectable()
 export class ChatService {
@@ -14,6 +17,8 @@ export class ChatService {
     private messageRepository: Repository<Message>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    private notificationService: NotificationService,
+    private notificationGateway: NotificationGateway,
   ) {}
 
 async getRoomById(roomId: string) {
@@ -26,10 +31,10 @@ async getRoomById(roomId: string) {
 // Also update getOrCreateOfferChat to include offerTitle
 async getOrCreateOfferChat(offerId: string, buyerId: string, sellerId: string, offerTitle?: string) {
   // Check if room already exists
-  let room = await this.chatRoomRepository.findOne({
-    where: { offerId },
-    relations: ['participants'],
-  });
+    let room = await this.chatRoomRepository.findOne({
+      where: { offerId, createdBy: buyerId },
+      relations: ['participants'],
+    });
 
   if (!room) {
     // Get buyer and seller
@@ -58,7 +63,7 @@ async getOrCreateOfferChat(offerId: string, buyerId: string, sellerId: string, o
 
 async getOrCreateOrderChat(orderId: string, userId: string, otherId: string, title?: string) {
     let room = await this.chatRoomRepository.findOne({
-        where: { orderId },
+        where: { orderId, createdBy: userId },
         relations: ['participants'],
     });
 
@@ -84,7 +89,7 @@ async getOrCreateOrderChat(orderId: string, userId: string, otherId: string, tit
 
 async getOrCreateDisputeChat(disputeId: string, userId: string, otherId: string, title?: string) {
     let room = await this.chatRoomRepository.findOne({
-        where: { disputeId },
+        where: { disputeId, createdBy: userId },
         relations: ['participants'],
     });
 
@@ -127,7 +132,28 @@ async getOrCreateDisputeChat(disputeId: string, userId: string, otherId: string,
       room,
     });
 
-    return this.messageRepository.save(message);
+    const savedMessage = await this.messageRepository.save(message);
+
+    // Filter recipients (everyone in room except sender)
+    const recipients = room.participants.filter(p => p.id !== senderId);
+
+    // Send notifications
+    for (const recipient of recipients) {
+      const notification = await this.notificationService.create(
+        recipient.id,
+        NotificationType.CHAT,
+        `رسالة جديدة من ${sender.firstName}`,
+        content.length > 50 ? content.substring(0, 50) + '...' : content,
+        { 
+          roomId: room.id, 
+          senderId: sender.id,
+          messageId: savedMessage.id 
+        }
+      );
+      await this.notificationGateway.sendNotificationToUser(recipient.id, notification);
+    }
+
+    return savedMessage;
   }
 
   // Get messages for a room

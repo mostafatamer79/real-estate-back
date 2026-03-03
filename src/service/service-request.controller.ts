@@ -25,6 +25,8 @@ import { Role } from 'src/user/user-entity';
     constructor(private readonly serviceRequestService: ServiceRequestService) {}
 
     @Post()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles([Role.AGENT, Role.BROKER, Role.ADMIN])
     async create(@Body() createDto: CreateServiceRequestDto, @Request() req) {
       return this.serviceRequestService.create(createDto, req.user);
     }
@@ -92,11 +94,45 @@ import { Role } from 'src/user/user-entity';
     return this.serviceRequestService.markAsPaid(id, req.user);
   }
 
+  // NEW ENDPOINT: Accept service request (Admin only)
+  @Put(':id/accept')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles([Role.ADMIN])
+  async accept(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req
+  ) {
+    return this.serviceRequestService.accept(id, req.user);
+  }
+
   // NEW ENDPOINT: Get total unpaid amount
   @Get('payment/total-unpaid')
   @UseGuards(JwtAuthGuard)
   async getTotalUnpaidAmount(@Request() req) {
     const total = await this.serviceRequestService.getTotalUnpaidAmount(req.user.id);
     return { totalUnpaid: total };
+  }
+
+  // LEGAL WORKFLOW: Admin sends invoice to client
+  @Put(':id/send-invoice')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles([Role.ADMIN, Role.LEGAL, Role.LEGAL_ADMIN])
+  async sendInvoice(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { price: number },
+    @Request() req
+  ) {
+    return this.serviceRequestService.sendInvoice(id, body.price, req.user);
+  }
+
+  // LEGAL WORKFLOW: Client accepts or rejects the invoice
+  @Put(':id/client-decision')
+  @UseGuards(JwtAuthGuard)
+  async clientDecision(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { decision: 'accepted' | 'rejected' },
+    @Request() req
+  ) {
+    return this.serviceRequestService.clientDecision(id, body.decision, req.user);
   }
   }

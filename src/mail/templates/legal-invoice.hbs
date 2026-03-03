@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>فاتورة طلبك القانوني</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background:#f4f6f9; margin:0; padding:0; }
+    .container { max-width:600px; margin:30px auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.08); }
+    .header { background:linear-gradient(135deg,#065f46,#059669); padding:32px; text-align:center; color:#fff; }
+    .header h1 { margin:0; font-size:22px; font-weight:800; }
+    .header p { margin:8px 0 0; opacity:0.85; font-size:14px; }
+    .badge { display:inline-block; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.3); border-radius:20px; padding:4px 14px; font-size:12px; margin-bottom:16px; }
+    .content { padding:32px; }
+    .invoice-card { background:#f0fdf4; border:2px solid #86efac; border-radius:16px; padding:24px; margin-bottom:24px; text-align:center; }
+    .price { font-size:48px; font-weight:900; color:#065f46; margin:8px 0; }
+    .price-label { font-size:13px; color:#6b7280; font-weight:600; }
+    .info-box { background:#f8faff; border:1px solid #e0e8ff; border-radius:12px; padding:20px; margin-bottom:20px; }
+    .info-box h3 { margin:0 0 16px; font-size:14px; color:#1e3a5f; font-weight:700; }
+    .info-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eef0f5; font-size:14px; }
+    .info-row:last-child { border-bottom:none; }
+    .info-label { color:#6b7280; font-weight:600; }
+    .info-value { color:#111827; font-weight:700; }
+    .actions { display:flex; gap:12px; justify-content:center; margin:24px 0; }
+    .btn-accept { background:#059669; color:#fff; padding:14px 28px; border-radius:50px; text-decoration:none; font-weight:700; font-size:14px; display:inline-block; }
+    .btn-reject { background:#dc2626; color:#fff; padding:14px 28px; border-radius:50px; text-decoration:none; font-weight:700; font-size:14px; display:inline-block; }
+    .note { font-size:12px; color:#6b7280; text-align:center; margin-top:16px; }
+    .footer { background:#f8faff; padding:20px 32px; text-align:center; font-size:12px; color:#9ca3af; border-top:1px solid #e5e7eb; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="badge">🧾 فاتورة قانونية</div>
+      <h1>فاتورة طلبك القانوني</h1>
+      <p>تم إعداد الفاتورة، يرجى مراجعتها والرد عليها</p>
+    </div>
+    <div class="content">
+      <div class="invoice-card">
+        <div class="price-label">المبلغ الإجمالي</div>
+        <div class="price">{{invoicePrice}} ريال</div>
+        <div class="price-label">رقم الفاتورة: {{invoiceNumber}}</div>
+      </div>
+      <div class="info-box">
+        <h3>تفاصيل الخدمة</h3>
+        <div class="info-row">
+          <span class="info-label">رقم الطلب</span>
+          <span class="info-value">#{{id}}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">الخدمة</span>
+          <span class="info-value">{{serviceType}}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">العميل</span>
+          <span class="info-value">{{clientName}}</span>
+        </div>
+      </div>
+      <div class="actions">
+        <a href="#" class="btn-accept">✓ قبول الفاتورة</a>
+        <a href="#" class="btn-reject">✗ رفض الفاتورة</a>
+      </div>
+      <p class="note">يرجى تسجيل الدخول إلى المنصة لقبول أو رفض الفاتورة بشكل رسمي.</p>
+    </div>
+    <div class="footer">
+      <p>© 2025 دير عقارك | هذه رسالة تلقائية، لا ترد عليها مباشرة.</p>
+    </div>
+  </div>
+</body>
+</html>

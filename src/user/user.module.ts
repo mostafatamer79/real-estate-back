@@ -8,11 +8,14 @@ import { UserService } from './user.service';
 import { PasswordService } from '../password/password.service';
 import { UserController } from './user.controller';
 
+import { DocumentModule } from '../document/document.module';
+
 @Module({
     imports: [
         TypeOrmModule.forFeature([Permission,User]),
-      ConfigModule.forFeature(authConfig),
-      JwtModule.registerAsync({
+        DocumentModule,
+        ConfigModule.forFeature(authConfig),
+        JwtModule.registerAsync({
         imports: [ConfigModule],
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => {

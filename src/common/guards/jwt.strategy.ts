@@ -16,6 +16,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: any) {
     // Here, `payload` is the decoded JWT
-    return { userId: payload.sub, email: payload.email, role: payload.role ,isActive: payload.isActive, verifyStatus: payload.verifyStatus, phone: payload.phone};
+    return { id: payload.sub, userId: payload.sub, email: payload.email, role: payload.role ,isActive: payload.isActive, verifyStatus: payload.verifyStatus, phone: payload.phone};
   }
 }

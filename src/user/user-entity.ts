@@ -38,12 +38,38 @@ export class Permission {
 
 }
 
-// User Role Enum
 export enum Role {
   ADMIN = 'admin',
-  USER = 'user',
-  AGENT = 'agent',
+  USER = 'user', // Beneficiary / المستفيد
+  BROKER = 'broker', // Real Estate Broker / وسيط عقاري
+  REAL_ESTATE_OFFICE = 'real_estate_office', // مكتب عقاري
+  OWNER = 'owner', // Malek / مالك
+  LAWYER = 'lawyer', // Mahamy / محام
+  ENGINEERING_OFFICE = 'engineering_office', // Engineering Office / مكتب هندسي
+  OTHER = 'other', // Other / أخرى
+  AGENT = 'agent', // Keep for backward compatibility if needed, though BROKER is preferred
+  EMPLOYEE = 'employee', // Employee / موظف
+  COLLABORATOR = 'collaborator', // Collaborator / متعاون
+  MARKETING = 'marketing',
+  MARKETING_ADMIN = 'marketing_admin',
+  LEGAL = 'legal',
+  LEGAL_ADMIN = 'legal_admin',
+  FINANCE = 'finance',
+  FINANCE_ADMIN = 'finance_admin',
+  VIEWER = 'viewer',
 }
+
+export enum ApplyStatus {
+    PENDING = 'pending',
+    ACCEPTED = 'accepted',
+    REJECTED = 'rejected',
+}
+
+export enum FinancialAgreementType {
+    SALARY = 'salary',
+    PERCENTAGE = 'percentage'
+}
+
 export enum VerifyStatus {
   PENDING = 'pending',
   VERIFIED = 'verified',
@@ -87,12 +113,28 @@ expireOtp: Date | null;
   })
   role: Role;
 
+  @Column({ nullable: true })
+  roleOtherDescription?: string; // For Role.OTHER
+
   @Column({ default: false })
   isVerified: boolean; // General verification status
 
   @Column({ default: false })
   isActive: boolean;
 
+  @Column({ nullable: true })
+  falLicenseNumber?: string; // Formerly agentLicenseNumber
+
+  @Column({ nullable: true })
+  falLicenseExpiry?: Date;
+
+  @Column({ nullable: true })
+  lawLicenseNumber?: string; // For Lawyer
+
+  @Column({ nullable: true })
+  commercialRegistrationNumber?: string; // For Engineering Office
+
+  // Legacy field, keeping for safety or migration
   @Column({ nullable: true })
   agentLicenseNumber?: string;
 
@@ -121,6 +163,16 @@ expireOtp: Date | null;
 
   @Column({ nullable: true })
   licenseDocument?: string; // For agent license documents
+    
+  @Column({
+      type: 'enum',
+      enum: FinancialAgreementType,
+      nullable: true
+  })
+  financialAgreementType: FinancialAgreementType;
+
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  financialAgreementValue: number;
 
 
   @Column({ nullable: true })
@@ -128,7 +180,38 @@ expireOtp: Date | null;
 
 
   @Column({ nullable: true })
- contracts?:string
+  contracts?: string;
+
+  // National Access / Verification
+  @Column({ unique: true, nullable: true })
+  nationalId?: string;
+
+  // National Address
+  @Column({ nullable: true })
+  postalCode?: string;
+
+  @Column({ nullable: true })
+  streetName?: string;
+
+  @Column({ nullable: true })
+  district?: string;
+
+  @Column({ nullable: true })
+  additionalNumber?: string;
+
+  @Column({ nullable: true })
+  unitNumber?: string;
+
+  // Broker Details
+  @Column({ nullable: true })
+  licenseIssueDate?: Date;
+
+  @Column({
+    type: 'enum',
+    enum: ['individual', 'office'],
+    nullable: true
+  })
+  brokerType?: 'individual' | 'office';
 
   @ManyToMany(() => Permission, permission => permission.users, { cascade: true })
   @JoinTable({
@@ -144,6 +227,9 @@ expireOtp: Date | null;
   })
   permissions: Permission[];
 
+
+  @Column({ type: 'simple-json', nullable: true })
+  departmentPermissions: any;
 
   @OneToMany(() => Order, (order) => order.user)
   orders: Order[];

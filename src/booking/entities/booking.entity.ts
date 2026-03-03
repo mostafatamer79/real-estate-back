@@ -18,6 +18,11 @@ export enum BookingType {
   DISPUTE_RESOLUTION = 'dispute_resolution',
 }
 
+export enum VisitType {
+  SELF = 'self',
+  AGENT = 'agent',
+}
+
 @Entity('bookings')
 export class Booking {
   @PrimaryGeneratedColumn('uuid')
@@ -28,6 +33,16 @@ export class Booking {
     enum: BookingType,
   })
   type: BookingType;
+
+  @Column({
+    type: 'enum',
+    enum: VisitType,
+    nullable: true,
+  })
+  visitType: VisitType;
+
+  @Column({ type: 'json', nullable: true })
+  services: any; // Can be array of strings or object
 
   @Column({
     type: 'enum',

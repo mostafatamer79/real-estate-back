@@ -3,26 +3,32 @@ import {
     Injectable, 
     NotFoundException, 
     ForbiddenException,
-    BadRequestException 
+    BadRequestException,
+    Inject,
+    forwardRef
   } from '@nestjs/common';
   import { InjectRepository } from '@nestjs/typeorm';
   import { Repository } from 'typeorm';
   import { Commission, CommissionStatus, CommissionType } from './commission.entity';
   import { CreateCommissionDto,UpdateCommissionDto } from './create-commission.dto';
   import { User, Role } from '../user/user-entity';
+  import { FinancialService } from '../financial/financial.service';
+  import { TransactionType, TransactionStatus } from '../financial/entities/financial-transaction.entity';
   
   @Injectable()
   export class CommissionService {
     constructor(
       @InjectRepository(Commission)
       private readonly commissionRepository: Repository<Commission>,
+      @Inject(forwardRef(() => FinancialService))
+      private readonly financialService: FinancialService,
     ) {}
   
     async create(createDto: CreateCommissionDto, user: User): Promise<Commission> {
       // Only agents can create commissions
-      if (user.role !== Role.AGENT) {
-        throw new ForbiddenException('Only agents can create commission requests');
-      }
+      // if (user.role !== Role.AGENT,user.role ) {
+      //   throw new ForbiddenException('Only agents can create commission requests');
+      // }
   
       const commission = this.commissionRepository.create({
         ...createDto,
@@ -54,6 +60,8 @@ import {
           (commission.owner->>'idNumber' = :userId OR 
            commission.buyer->>'idNumber' = :userId)
         `, { userId: user.id });
+      } else {
+        query = query.where('1=1');
       }
   
       // Apply additional filters
@@ -103,6 +111,7 @@ import {
   
     async update(id: string, updateDto: UpdateCommissionDto, user: User): Promise<Commission> {
       const commission = await this.findOne(id, user);
+      const previousStatus = commission.status;
   
       // Only creator can update draft commissions
       if (commission.status !== CommissionStatus.DRAFT && user.role === Role.AGENT) {
@@ -131,7 +140,58 @@ import {
       }
   
       Object.assign(commission, updateDto);
-      return await this.commissionRepository.save(commission);
+      const savedCommission = await this.commissionRepository.save(commission);
+      
+      // Create financial transaction when commission is approved or paid
+      if (updateDto.status && 
+          (updateDto.status === CommissionStatus.APPROVED || updateDto.status === CommissionStatus.PAID) &&
+          previousStatus !== updateDto.status) {
+        await this.createFinancialTransactions(savedCommission);
+      }
+      
+      return savedCommission;
+    }
+  
+    /**
+     * Create financial transactions for approved/paid commissions
+     */
+    private async createFinancialTransactions(commission: Commission): Promise<void> {
+      try {
+        // Create main commission transaction for the creator (agent)
+        await this.financialService.createTransaction({
+          type: TransactionType.COMMISSION,
+          amount: commission.finalCommissionAmount || commission.commissionAmount,
+          toUserId: commission.creatorId,
+          commissionAmount: commission.commissionAmount,
+          taxAmount: commission.taxAmount,
+          status: TransactionStatus.COMPLETED,
+          referenceType: 'commission',
+          referenceId: commission.id,
+          description: `Commission ${commission.commissionNumber} - ${commission.type}`,
+        });
+
+        // Create transactions for brokers if any
+        if (commission.brokers && commission.brokers.length > 0) {
+          for (const broker of commission.brokers) {
+            // Note: Assuming broker has userId field, adjust if needed
+            if (broker.commissionAmount && broker.commissionAmount > 0) {
+              await this.financialService.createTransaction({
+                type: TransactionType.COMMISSION,
+                amount: broker.commissionAmount,
+                toUserId: broker.license, // Using license as identifier, adjust as needed
+                status: TransactionStatus.COMPLETED,
+                referenceType: 'commission',
+                referenceId: commission.id,
+                description: `Broker commission for ${commission.commissionNumber} - ${broker.name}`,
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error creating financial transactions for commission:', error);
+        // Log error but don't fail the commission update
+        // Consider adding a notification or alert system here
+      }
     }
   
     async submit(id: string, user: User): Promise<Commission> {

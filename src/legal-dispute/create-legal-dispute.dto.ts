@@ -1,5 +1,5 @@
 // create-legal-dispute.dto.ts
-import { IsString, IsOptional, IsEmail, IsPhoneNumber, IsObject, IsArray, IsEnum, IsNumber } from 'class-validator';
+import { IsString, IsOptional, IsEmail, IsPhoneNumber, IsObject, IsArray, IsEnum, IsNumber, ValidateIf } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 import {
   PartyRole,
@@ -51,6 +51,9 @@ export class PartyAgentDto {
   @IsString()
   agencyNumber: string;
 
+  @IsString()
+  idNumber: string;
+
   @IsOptional()
   @IsString()
   documentId?: string;
@@ -71,8 +74,9 @@ export class CreateLegalDisputeDto {
   @IsObject()
   secondPartyAgent?: PartyAgentDto;
 
+  @IsOptional()
   @IsEnum(DisputeType)
-  disputeType: DisputeType;
+  disputeType?: DisputeType;
 
   @IsOptional()
   @IsString()
@@ -163,15 +167,17 @@ export class CreateContractDto {
   @IsString()
   otherContractType?: string;
 
+  @ValidateIf((o) => o.contractType !== ContractType.REVIEW)
   @IsObject()
-  firstParty: ContractPartyDto;
+  firstParty?: ContractPartyDto;
 
   @IsOptional()
   @IsObject()
   firstPartyAgent?: ContractAgentDto;
 
+  @ValidateIf((o) => o.contractType !== ContractType.REVIEW)
   @IsObject()
-  secondParty: ContractPartyDto;
+  secondParty?: ContractPartyDto;
 
   @IsOptional()
   @IsObject()
@@ -239,6 +245,10 @@ export class LegalDocumentationPartyDto {
 
   @IsEnum(IdType)
   idType: IdType;
+
+  @IsOptional()
+  @IsString()
+  identityDocumentId?: string;
 }
 
 export class CreateLegalDocumentationDto {

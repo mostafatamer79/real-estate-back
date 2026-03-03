@@ -25,10 +25,15 @@ import { PaymentModule } from './payment/payment.module';
 import { MarketingModule } from './marketing/marketing.module';
 import { FinancialModule } from './financial/financial.module';
 import { HomeModule } from './home/home.module';
+import { NotificationModule } from './notification/notification.module';
+import { SubscriptionModule } from './subscription/subscription.module';
+import { ManagementPackageModule } from './subscription/management-package/management-package.module';
+
+import { PropertyModule } from './property/property.module';
 
 @Module({
   imports: [    ConfigModule.forRoot({ load: [ typeOrmConfig,authConfig], isGlobal: true }),
-  TypeOrmModule.forRoot(typeOrmConfig()),    AuthModule,UserModule,ServiceRequestModule,DocumentModule,CommissionModule,OffersModule,ChatModule,PlacesModule,LegalServicesModule, SettingsModule, OrderModule, BookingModule, PaymentModule, MarketingModule, FinancialModule, HomeModule,
+  TypeOrmModule.forRoot(typeOrmConfig()),    AuthModule,UserModule,ServiceRequestModule,DocumentModule,CommissionModule,OffersModule,ChatModule,PlacesModule,LegalServicesModule, SettingsModule, OrderModule, BookingModule, PaymentModule, MarketingModule, FinancialModule, HomeModule, NotificationModule, PropertyModule, SubscriptionModule, ManagementPackageModule,
   MailModule
 ],
 

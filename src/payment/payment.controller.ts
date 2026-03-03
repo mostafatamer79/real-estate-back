@@ -8,8 +8,8 @@ export class PaymentController {
 
   @Post('intent')
   @UseGuards(JwtAuthGuard)
-  async createPaymentIntent(@Body('bookingId') bookingId: string, @Req() req) {
-    return this.paymentService.createPaymentIntent(bookingId, req.user);
+  async createPaymentIntent(@Body() body: { bookingId?: string; invoiceId?: string }, @Req() req) {
+    return this.paymentService.createPaymentIntent(body, req.user);
   }
 
   @Post('webhook')

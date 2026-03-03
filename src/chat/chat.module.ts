@@ -25,6 +25,9 @@ import { JwtAuthGuard } from '../common/guards/jwt.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 
 
+// Modules
+import { NotificationModule } from '../notification/notification.module';
+
 @Module({
   imports: [
         JwtModule.registerAsync({
@@ -41,6 +44,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
       }),
     
     TypeOrmModule.forFeature([ChatRoom,Message,  User]),
+    NotificationModule,
 
   ],
   providers: [

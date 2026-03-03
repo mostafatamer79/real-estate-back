@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { BookingService } from '../booking/booking.service';
 import { BookingStatus } from '../booking/entities/booking.entity';
+import { FinancialService } from '../financial/financial.service';
+import { InvoiceStatus } from '../financial/entities/invoice.entity';
 
 @Injectable()
 export class PaymentService {
@@ -11,43 +13,45 @@ export class PaymentService {
   constructor(
     private configService: ConfigService,
     private bookingService: BookingService,
+    private financialService: FinancialService,
   ) {
     const secretKey = this.configService.get<string>('STRIPE_SECRET_KEY') || 'sk_test_placeholder';
     this.stripe = new Stripe(secretKey, {
-      apiVersion: '2024-12-18.acacia' as any, // Using latest API version
+      apiVersion: '2024-12-18.acacia' as any,
     });
   }
 
-  async createPaymentIntent(bookingId: string, user: any) {
-    const booking = await this.bookingService.findOne(bookingId, user);
+  async createPaymentIntent(params: { bookingId?: string; invoiceId?: string }, user: any) {
+    let amount = 0;
+    let metadata: any = { userId: user.id };
 
-    if (!booking) {
-        throw new BadRequestException('Booking not found');
-    }
-    
-    if (booking.status === BookingStatus.PAID) {
-         throw new BadRequestException('Booking is already paid');
-    }
-    
-    if (!booking.price || booking.price <= 0) {
-        throw new BadRequestException('Booking price is invalid');
+    if (params.bookingId) {
+      const booking = await this.bookingService.findOne(params.bookingId, user);
+      if (!booking) throw new BadRequestException('Booking not found');
+      if (booking.status === BookingStatus.PAID) throw new BadRequestException('Booking already paid');
+      if (!booking.price || booking.price <= 0) throw new BadRequestException('Invalid price');
+      
+      amount = Math.round(booking.price * 100);
+      metadata.bookingId = booking.id;
+    } else if (params.invoiceId) {
+      const invoice = await this.financialService.findInvoiceById(params.invoiceId);
+      if (!invoice) throw new BadRequestException('Invoice not found');
+      if (invoice.status === InvoiceStatus.PAID) throw new BadRequestException('Invoice already paid');
+      
+      amount = Math.round(Number(invoice.total) * 100);
+      metadata.invoiceId = invoice.id;
+    } else {
+      throw new BadRequestException('Either bookingId or invoiceId is required');
     }
 
     const paymentIntent = await this.stripe.paymentIntents.create({
-      amount: Math.round(booking.price * 100), // Convert to cents
-      currency: 'sar', // Saudi Riyal
-      metadata: {
-        bookingId: booking.id,
-        userId: user.id,
-      },
-      automatic_payment_methods: {
-          enabled: true,
-      },
+      amount,
+      currency: 'sar',
+      metadata,
+      automatic_payment_methods: { enabled: true },
     });
 
-    return {
-      clientSecret: paymentIntent.client_secret,
-    };
+    return { clientSecret: paymentIntent.client_secret };
   }
 
   async constructEventFromPayload(signature: string, payload: Buffer) {
@@ -62,6 +66,7 @@ export class PaymentService {
       if (event.type === 'payment_intent.succeeded') {
           const paymentIntent = event.data.object as Stripe.PaymentIntent;
           const bookingId = paymentIntent.metadata.bookingId;
+          const invoiceId = paymentIntent.metadata.invoiceId;
           
           // System user context for update
           const systemUser = { id: 'system', role: 'system' };
@@ -70,6 +75,9 @@ export class PaymentService {
              console.log(`Payment succeeded for booking ${bookingId}`);
              await this.bookingService.updateStatus(bookingId, BookingStatus.PAID, systemUser);
              // TODO: Trigger notification to Agent?
+          } else if (invoiceId) {
+             console.log(`Payment succeeded for invoice ${invoiceId}`);
+             await this.financialService.updateInvoiceStatus(invoiceId, InvoiceStatus.PAID);
           }
       }
   }

@@ -1,7 +1,7 @@
 import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
 
 export function IsSaudiPhoneNumber(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'isSaudiPhoneNumber',
       target: object.constructor,

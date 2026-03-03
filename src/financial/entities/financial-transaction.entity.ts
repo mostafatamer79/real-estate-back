@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { User } from '../../user/user-entity';
 
 export enum TransactionType {
   SALE = 'sale',
@@ -41,10 +42,18 @@ export class FinancialTransaction {
   amount: number;
 
   @Column({ nullable: true })
-  fromUserId: string; // Sender ID (User or Platform/System)
+  fromUserId: string;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'fromUserId' })
+  fromUser: User;
 
   @Column({ nullable: true })
-  toUserId: string; // Receiver ID
+  toUserId: string;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'toUserId' })
+  toUser: User;
 
   @Column('decimal', { precision: 14, scale: 2, default: 0 })
   taxAmount: number;

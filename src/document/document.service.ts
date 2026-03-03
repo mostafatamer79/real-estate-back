@@ -100,6 +100,8 @@ import { Multer } from 'multer';
         query = query.where('document.recipientId = :userId', { userId: user.id });
       } else if (user.role === Role.AGENT) {
         query = query.where('document.uploadedById = :agentId', { agentId: user.id });
+      } else {
+        query = query.where('1=1');
       }
 
       // Apply additional filters

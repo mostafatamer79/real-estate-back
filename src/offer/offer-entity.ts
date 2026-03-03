@@ -102,11 +102,28 @@ export class Offer {
   @Column('simple-array', { nullable: true })
   threeDVideos: string[]; // URLs to 3D videos
 
+  // Additional listing metadata
+  @Column('text', { nullable: true })
+  video3d: string;
+
+  @Column('text', { nullable: true })
+  locationUrl: string;
+
+  @Column({ nullable: true })
+  dealType: string;
+
+  @Column({ nullable: true })
+  mainCategory: string;
+
   // Status and Metadata
   @Column({ default: 'draft' })
   status: string; // draft, published, sold, expired
 
+  @Column({ default: 0 })
+  views: number;
+
   @Column({ default: true })
+
   isActive: boolean;
 
   @ManyToOne(() => User, { eager: true })

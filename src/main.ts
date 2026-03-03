@@ -21,7 +21,10 @@ const isDev = process.env.NODE_ENV === 'development';
 // SHARED CONFIG
 // --------------------------------------------
 async function configureApp(app: NestExpressApplication) {
-  app.useStaticAssets(join(__dirname, '..', '..', '/uploads'), {
+  const isServerless = process.env.NODE_ENV === 'production' || process.env.AWS_LAMBDA_FUNCTION_NAME || process.cwd().startsWith('/var/task');
+  const uploadDir = isServerless ? '/tmp/uploads' : join(__dirname, '..', '..', '/uploads');
+
+  app.useStaticAssets(uploadDir, {
     prefix: '/uploads/',
   });
   app.use(helmet());
@@ -37,7 +40,7 @@ async function configureApp(app: NestExpressApplication) {
     allowedHeaders: ['Content-Type', 'Authorization', 'x-lang', 'lang',],
   });
 
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix('api');
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -50,7 +53,7 @@ async function configureApp(app: NestExpressApplication) {
   );
 
   // Query parser
-  const instance = app.getHttpAdapter().getInstance() as express.Express;
+  const instance = app.getHttpAdapter().getInstance();
   instance.set('query parser', (str: string) =>
     qs.parse(str, {
       depth: 10,

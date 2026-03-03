@@ -10,8 +10,25 @@ export class FileUploadService {
   private uploadPath: string;
 
   constructor() {
-    this.uploadPath = join(process.cwd(), 'uploads');
-    if (!existsSync(this.uploadPath)) mkdirSync(this.uploadPath, { recursive: true });
+    const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.cwd().startsWith('/var/task');
+    const basePath = isServerless ? '/tmp' : process.cwd();
+    this.uploadPath = join(basePath, 'uploads');
+    
+    // In serverless, we must use /tmp. In local, we use cwd.
+    // We only attempt to create the directory if it doesn't exist.
+    if (!existsSync(this.uploadPath)) {
+        try {
+            mkdirSync(this.uploadPath, { recursive: true });
+        } catch (error) {
+            console.error(`Failed to create upload directory at ${this.uploadPath}:`, error);
+            // Fallback to /tmp just in case we were wrong about the environment
+            if (basePath !== '/tmp') {
+                 console.warn('Falling back to /tmp/uploads');
+                 this.uploadPath = join('/tmp', 'uploads');
+                 if (!existsSync(this.uploadPath)) mkdirSync(this.uploadPath, { recursive: true });
+            }
+        }
+    }
   }
 
   async uploadFile(file: Express.Multer.File, folder: string = 'documents') {

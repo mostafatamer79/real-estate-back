@@ -146,6 +146,21 @@ export class CreateOfferDto {
   @IsString({ each: true })
   threeDVideos?: string[];
 
+  // Additional listing metadata
+  @IsOptional()
+  @IsString()
+  video3d?: string;
+
+  @IsOptional()
+  locationUrl?: string;
+
+  @IsString()
+  dealType?: string;
+
+  @IsOptional()
+  @IsString()
+  mainCategory?: string;
+
   @IsOptional()
   @IsString()
   status?: string;

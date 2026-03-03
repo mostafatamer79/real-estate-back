@@ -14,7 +14,7 @@ import {
 } from './create-legal-dispute.dto';
 import { User } from '../user/user-entity';
 import { Role } from '../user/user-entity';
-import { LegalDispute, LegalDisputeStatus, ServiceStatus } from './legal-dispute.entity';
+import { LegalDispute, LegalDisputeStatus, ServiceStatus, DisputeType, ContractType, PartyType, IdType, ApplicantRole } from './legal-dispute.entity';
 import { LegalDocumentation } from './legal-documentation.entity';
 import { OtherLegalService } from './other-legal-services.entity';
 
@@ -49,6 +49,7 @@ export class LegalServicesService {
       dispute.firstPartyAgent = {
         name: dto.firstPartyAgent.name,
         agencyNumber: dto.firstPartyAgent.agencyNumber,
+        idNumber: dto.firstPartyAgent.idNumber,
         documentId: dto.firstPartyAgent.documentId
       };
     }
@@ -57,11 +58,12 @@ export class LegalServicesService {
       dispute.secondPartyAgent = {
         name: dto.secondPartyAgent.name,
         agencyNumber: dto.secondPartyAgent.agencyNumber,
+        idNumber: dto.secondPartyAgent.idNumber,
         documentId: dto.secondPartyAgent.documentId
       };
     }
 
-    dispute.disputeType = dto.disputeType;
+    dispute.disputeType = dto.disputeType || DisputeType.OTHER;
     dispute.otherDisputeType = dto.otherDisputeType;
     dispute.disputeDescription = dto.disputeDescription;
     dispute.documentIds = dto.documentIds || [];
@@ -77,6 +79,8 @@ export class LegalServicesService {
 
     if (userRole !== Role.ADMIN) {
       query.where('dispute.userId = :userId', { userId });
+    } else {
+      query.where('1=1');
     }
 
     if (filters?.status) {
@@ -199,10 +203,25 @@ export class LegalServicesService {
     const contractNumber = `CONTRACT-${year}${month}-${String(count + 1).padStart(4, '0')}`;
 
     const contract = new Contract();
+    const isReviewContract = dto.contractType === ContractType.REVIEW;
     contract.userId = userId;
     contract.contractType = dto.contractType;
     contract.otherContractType = dto.otherContractType;
-    contract.firstParty = dto.firstParty;
+    if (!isReviewContract && (!dto.firstParty || !dto.secondParty)) {
+      throw new BadRequestException('firstParty and secondParty are required unless contract type is مراجعة العقود');
+    }
+
+    contract.firstParty = dto.firstParty || {
+      name: '',
+      type: PartyType.INDIVIDUAL,
+      idType: IdType.IDENTITY,
+      idNumber: '',
+      nationality: '',
+      city: '',
+      nationalAddress: '',
+      phone: '',
+      email: ''
+    };
 
     if (dto.firstPartyAgent && dto.firstPartyAgent.name && dto.firstPartyAgent.agencyNumber) {
       contract.firstPartyAgent = {
@@ -212,7 +231,17 @@ export class LegalServicesService {
       };
     }
 
-    contract.secondParty = dto.secondParty;
+    contract.secondParty = dto.secondParty || {
+      name: '',
+      type: PartyType.INDIVIDUAL,
+      idType: IdType.IDENTITY,
+      idNumber: '',
+      nationality: '',
+      city: '',
+      nationalAddress: '',
+      phone: '',
+      email: ''
+    };
 
     if (dto.secondPartyAgent && dto.secondPartyAgent.name && dto.secondPartyAgent.agencyNumber) {
       contract.secondPartyAgent = {
@@ -227,7 +256,7 @@ export class LegalServicesService {
     contract.paymentDetails = dto.paymentDetails;
     contract.rightsResponsibilities = dto.rightsResponsibilities;
     contract.cancellationTerms = dto.cancellationTerms;
-    contract.applicantRole = dto.applicantRole;
+    contract.applicantRole = dto.applicantRole || ApplicantRole.AGENT;
     contract.contractDocumentIds = dto.contractDocumentIds || [];
     contract.additionalDocumentIds = dto.additionalDocumentIds || [];
     contract.contractNumber = contractNumber;
@@ -243,6 +272,8 @@ export class LegalServicesService {
 
     if (userRole !== Role.ADMIN) {
       query.where('contract.userId = :userId', { userId });
+    } else {
+      query.where('1=1');
     }
 
     if (filters?.status) {
@@ -354,6 +385,8 @@ export class LegalServicesService {
 
     if (userRole !== Role.ADMIN) {
       query.where('doc.userId = :userId', { userId });
+    } else {
+      query.where('1=1');
     }
 
     if (filters?.status) {
@@ -409,6 +442,8 @@ export class LegalServicesService {
 
     if (userRole !== Role.ADMIN) {
       query.where('service.userId = :userId', { userId });
+    } else {
+      query.where('1=1');
     }
 
     if (filters?.status) {

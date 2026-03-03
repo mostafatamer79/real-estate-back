@@ -16,6 +16,7 @@ export class LegalDocumentation {
     name: string;
     idNumber: string;
     idType: 'هوية' | 'إقامة' | 'سجل تجاري';
+    identityDocumentId?: string;
   };
 
   // Second Party
@@ -24,6 +25,7 @@ export class LegalDocumentation {
     name: string;
     idNumber: string;
     idType: 'هوية' | 'إقامة' | 'سجل تجاري';
+    identityDocumentId?: string;
   };
 
   // Required Documents
@@ -68,7 +70,13 @@ export class LegalDocumentation {
   @ManyToOne(() => User)
   @JoinColumn({ name: 'userId' })
   user: User;
-  ownershipDeedNotes: string | undefined;
-  otherDocumentsNotes: string | undefined;
-  additionalRequirements: string | undefined;
+
+  @Column({ type: 'text', nullable: true })
+  ownershipDeedNotes?: string;
+
+  @Column({ type: 'text', nullable: true })
+  otherDocumentsNotes?: string;
+
+  @Column({ type: 'text', nullable: true })
+  additionalRequirements?: string;
 }

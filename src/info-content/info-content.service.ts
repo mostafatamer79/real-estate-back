@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { InfoTab } from './entities/info-tab.entity';
@@ -11,22 +11,74 @@ import { UpdateInfoBlockDto } from './dto/update-info-block.dto';
 
 @Injectable()
 export class InfoContentService implements OnModuleInit {
+  private readonly logger = new Logger(InfoContentService.name);
+  private schemaReady = true;
+
   constructor(
     @InjectRepository(InfoTab) private readonly tabsRepo: Repository<InfoTab>,
     @InjectRepository(InfoBlock) private readonly blocksRepo: Repository<InfoBlock>,
   ) {}
 
   async onModuleInit() {
-    await this.ensureSeeded();
+    await this.ensureSeeded({ failSilently: true });
   }
 
-  private async ensureSeeded() {
-    const [tabCount, blockCount] = await Promise.all([
-      this.tabsRepo.count(),
-      this.blocksRepo.count(),
-    ]);
-    if (tabCount > 0 && blockCount > 0) return;
-    await this.seedDefaults();
+  private isMissingRelationError(error: unknown): boolean {
+    return (
+      !!error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      (error as { code?: string }).code === '42P01'
+    );
+  }
+
+  private buildDefaultContent() {
+    const tabs = DEFAULT_INFO_TABS.map((tab, idx) => ({
+      id: `default-tab-${idx}`,
+      key: tab.key,
+      titleAr: tab.titleAr,
+      titleEn: tab.titleEn,
+      sortOrder: tab.sortOrder ?? 0,
+      createdAt: new Date(0),
+      updatedAt: new Date(0),
+    })) as InfoTab[];
+
+    const tabIdByKey = new Map(tabs.map((tab) => [tab.key, tab.id]));
+    const blocks = DEFAULT_INFO_BLOCKS.map((block, idx) => ({
+      id: `default-block-${idx}`,
+      tabId: tabIdByKey.get(block.tabKey) ?? '',
+      labelAr: block.labelAr,
+      labelEn: block.labelEn,
+      textAr: block.textAr,
+      textEn: block.textEn,
+      sortOrder: block.sortOrder ?? 0,
+      createdAt: new Date(0),
+      updatedAt: new Date(0),
+    })) as InfoBlock[];
+
+    return { tabs, blocks };
+  }
+
+  private async ensureSeeded(options?: { failSilently?: boolean }) {
+    try {
+      const [tabCount, blockCount] = await Promise.all([
+        this.tabsRepo.count(),
+        this.blocksRepo.count(),
+      ]);
+      this.schemaReady = true;
+      if (tabCount > 0 && blockCount > 0) return;
+      await this.seedDefaults();
+    } catch (error) {
+      if (this.isMissingRelationError(error) && options?.failSilently) {
+        this.schemaReady = false;
+        this.logger.warn(
+          'Info content tables are missing. Skipping DB seed and using fallback defaults until the schema is created.',
+        );
+        return;
+      }
+
+      throw error;
+    }
   }
 
   private async seedDefaults() {
@@ -71,7 +123,11 @@ export class InfoContentService implements OnModuleInit {
   }
 
   async getAll() {
-    await this.ensureSeeded();
+    await this.ensureSeeded({ failSilently: true });
+    if (!this.schemaReady) {
+      return this.buildDefaultContent();
+    }
+
     const tabs = await this.tabsRepo.find({ order: { sortOrder: 'ASC', createdAt: 'ASC' } });
     const tabIds = tabs.map((t) => t.id);
     const blocks = tabIds.length
@@ -146,4 +202,3 @@ export class InfoContentService implements OnModuleInit {
     return this.getAll();
   }
 }
-

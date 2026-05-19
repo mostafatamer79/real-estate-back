@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { In } from 'typeorm';
@@ -11,6 +11,9 @@ import { CustomerServiceFaqCategory } from './entities/customer-service-faq-cate
 
 @Injectable()
 export class CustomerServiceFaqService implements OnModuleInit {
+  private readonly logger = new Logger(CustomerServiceFaqService.name);
+  private schemaReady = true;
+
   constructor(
     @InjectRepository(CustomerServiceFaq)
     private readonly repo: Repository<CustomerServiceFaq>,
@@ -19,16 +22,61 @@ export class CustomerServiceFaqService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    await this.ensureSeeded();
+    await this.ensureSeeded({ failSilently: true });
   }
 
-  private async ensureSeeded() {
-    const [faqCount, catCount] = await Promise.all([
-      this.repo.count(),
-      this.categoriesRepo.count(),
-    ]);
-    if (faqCount > 0 && catCount > 0) return;
-    await this.seedDefaults();
+  private isMissingRelationError(error: unknown): boolean {
+    return (
+      !!error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      (error as { code?: string }).code === '42P01'
+    );
+  }
+
+  private buildDefaultFaqs(): CustomerServiceFaq[] {
+    return DEFAULT_CUSTOMER_SERVICE_FAQS.map((dto: any, idx: number) => {
+      const category = DEFAULT_CUSTOMER_SERVICE_FAQ_CATEGORIES.find(
+        (item) => item.key === dto.categoryKey,
+      );
+
+      return {
+        id: `default-faq-${idx}`,
+        categoryAr: category?.nameAr ?? '',
+        categoryEn: category?.nameEn ?? '',
+        categoryId: null,
+        category: null,
+        questionAr: dto.questionAr,
+        answerAr: dto.answerAr,
+        questionEn: dto.questionEn,
+        answerEn: dto.answerEn,
+        sortOrder: dto.sortOrder ?? 0,
+        createdAt: new Date(0),
+        updatedAt: new Date(0),
+      } as CustomerServiceFaq;
+    });
+  }
+
+  private async ensureSeeded(options?: { failSilently?: boolean }) {
+    try {
+      const [faqCount, catCount] = await Promise.all([
+        this.repo.count(),
+        this.categoriesRepo.count(),
+      ]);
+      this.schemaReady = true;
+      if (faqCount > 0 && catCount > 0) return;
+      await this.seedDefaults();
+    } catch (error) {
+      if (this.isMissingRelationError(error) && options?.failSilently) {
+        this.schemaReady = false;
+        this.logger.warn(
+          'Customer service FAQ tables are missing. Skipping DB seed and using fallback defaults until the schema is created.',
+        );
+        return;
+      }
+
+      throw error;
+    }
   }
 
   private async seedDefaults() {
@@ -77,7 +125,11 @@ export class CustomerServiceFaqService implements OnModuleInit {
 
   findAll(): Promise<CustomerServiceFaq[]> {
     return (async () => {
-      await this.ensureSeeded();
+      await this.ensureSeeded({ failSilently: true });
+      if (!this.schemaReady) {
+        return this.buildDefaultFaqs();
+      }
+
       // Order by category.sortOrder then question.sortOrder for stable UI.
       return this.repo
         .createQueryBuilder('faq')

@@ -23,17 +23,29 @@ const isDev = process.env.NODE_ENV === 'development';
 async function configureApp(app: NestExpressApplication) {
   const isServerless = process.env.NODE_ENV === 'production' || process.env.AWS_LAMBDA_FUNCTION_NAME || process.cwd().startsWith('/var/task');
   const uploadDir = isServerless ? '/tmp/uploads' : join(__dirname, '..', '..', '/uploads');
+  const corsOrigins = (process.env.CORS_ORIGIN || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 
   app.useStaticAssets(uploadDir, {
     prefix: '/uploads/',
   });
   app.use(helmet());
 
-  // ✅ ACCEPT ALL ORIGINS (credentials-safe)
   app.enableCors({
     origin: (origin, callback) => {
-      // allow all origins (browser + server-to-server)
-      callback(null, origin || true);
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      if (corsOrigins.length === 0 || corsOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

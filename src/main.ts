@@ -5,9 +5,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { join } from 'path';
-import { NestExpressApplication, ExpressAdapter } from '@nestjs/platform-express';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
-import express from 'express';
 import * as qs from 'qs';
 import * as dotenv from 'dotenv';
 import helmet from 'helmet';
@@ -15,14 +14,8 @@ import helmet from 'helmet';
 // Load environment variables
 dotenv.config();
 
-const isDev = process.env.NODE_ENV === 'development';
-
-// --------------------------------------------
-// SHARED CONFIG
-// --------------------------------------------
 async function configureApp(app: NestExpressApplication) {
-  const isServerless = process.env.NODE_ENV === 'production' || process.env.AWS_LAMBDA_FUNCTION_NAME || process.cwd().startsWith('/var/task');
-  const uploadDir = isServerless ? '/tmp/uploads' : join(__dirname, '..', '..', '/uploads');
+  const uploadDir = join(__dirname, '..', '..', '/uploads');
   const corsOrigins = (process.env.CORS_ORIGIN || '')
     .split(',')
     .map((origin) => origin.trim())
@@ -79,57 +72,14 @@ async function configureApp(app: NestExpressApplication) {
   return app;
 }
 
-// --------------------------------------------
-// 🧪 DEVELOPMENT MODE
-// --------------------------------------------
-if (isDev) {
-  (async () => {
-    const app = await NestFactory.create<NestExpressApplication>(AppModule);
-    await configureApp(app);
+async function bootstrap() {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  await configureApp(app);
 
-    const port = process.env.PORT || 3030;
-    await app.listen(port);
+  const port = process.env.PORT || 3030;
+  await app.listen(port);
 
-    Logger.log(`🧪 Dev server running at http://localhost:${port}`);
-  })();
+  Logger.log(`Server running at http://localhost:${port}`);
 }
 
-// --------------------------------------------
-// 🚀 PRODUCTION / SERVERLESS MODE
-// --------------------------------------------
-let cachedApp: NestExpressApplication;
-
-async function bootstrapServerless() {
-  if (!cachedApp) {
-    const server = express();
-
-    // ❌ NO EXPRESS CORS — Nest owns CORS
-    const app = await NestFactory.create<NestExpressApplication>(
-      AppModule,
-      new ExpressAdapter(server),
-      {cors:false}
-
-    );
-
-    await configureApp(app);
-    await app.init();
-
-    cachedApp = app;
-  }
-
-  return cachedApp;
-}
-
-// --------------------------------------------
-// ⭐ SERVERLESS HANDLER
-// --------------------------------------------
-export default async function handler(req: any, res: any) {
-  if (isDev) {
-    res.status(400).send('Use the development server instead.');
-    return;
-  }
-
-  const app = await bootstrapServerless();
-  const expressInstance = app.getHttpAdapter().getInstance();
-  return expressInstance(req, res);
-}
+bootstrap();

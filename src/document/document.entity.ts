@@ -80,14 +80,14 @@ import {
     @Column({ type: 'json', nullable: true })
     tags: string[];
   
-    @ManyToOne(() => User)
+    @ManyToOne(() => User, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'uploadedById' })
     uploadedBy: User;
   
     @Column()
     uploadedById: string;
   
-    @ManyToOne(() => User)
+    @ManyToOne(() => User, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'recipientId' })
     recipient: User;
   
@@ -106,10 +106,10 @@ import {
     @Column({ default: true })
     isActive: boolean;
   
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;
   
-    @UpdateDateColumn()
+    @UpdateDateColumn({ type: 'timestamptz' })
     updatedAt: Date;
   
     @BeforeInsert()

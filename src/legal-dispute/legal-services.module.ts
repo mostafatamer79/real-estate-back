@@ -9,6 +9,8 @@ import { LegalServicesController } from './legal-dispute.controller';
 import { LegalDispute } from './legal-dispute.entity';
 import { LegalDocumentation } from './legal-documentation.entity';
 import { OtherLegalService } from './other-legal-services.entity';
+import { DepartmentsGuard } from '../common/guards/departments.guard';
+import { SettingsModule } from '../settings/settings.module';
 
 @Module({
   imports: [
@@ -18,10 +20,11 @@ import { OtherLegalService } from './other-legal-services.entity';
       LegalDocumentation,
       OtherLegalService,
       User
-    ])
+    ]),
+    SettingsModule,
   ],
   controllers: [LegalServicesController],
-  providers: [LegalServicesService],
+  providers: [LegalServicesService, DepartmentsGuard],
   exports: [LegalServicesService]
 })
 export class LegalServicesModule {}

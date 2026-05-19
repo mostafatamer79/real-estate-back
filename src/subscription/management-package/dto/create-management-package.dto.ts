@@ -28,17 +28,19 @@ export class CreateManagementPackageDto {
   @IsString()
   description?: string;
 
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  features: string[];
+  features?: string[];
 
   @IsArray()
   @IsString({ each: true })
   administrations: string[];
 
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  services: string[];
+  services?: string[];
 
   @IsOptional()
   @IsBoolean()

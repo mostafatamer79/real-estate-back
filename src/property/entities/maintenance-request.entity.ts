@@ -39,9 +39,9 @@ export class MaintenanceRequest {
     @Column({ type: 'date', nullable: true })
     completedDate: Date;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ type: 'timestamptz' })
     updatedAt: Date;
 }

@@ -1,4 +1,5 @@
 import { User } from '../user/user-entity';
+import { Department } from '../user/department.enum';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity('offers')
@@ -116,6 +117,13 @@ export class Offer {
   mainCategory: string;
 
   // Status and Metadata
+  @Column({
+    type: 'enum',
+    enum: Department,
+    nullable: true,
+  })
+  department?: Department | null;
+
   @Column({ default: 'draft' })
   status: string; // draft, published, sold, expired
 
@@ -123,15 +131,20 @@ export class Offer {
   views: number;
 
   @Column({ default: true })
-
   isActive: boolean;
 
-  @ManyToOne(() => User, { eager: true })
-@JoinColumn({ name: 'userId' })
-user: User;
+  @Column({ nullable: true })
+  clientName: string;
 
-@Column()
-userId: string;
+  @Column({ nullable: true })
+  clientPhone: string;
+
+  @ManyToOne(() => User, { eager: true, onDelete: 'CASCADE', nullable: true })
+  @JoinColumn({ name: 'userId' })
+  user: User;
+
+  @Column({ nullable: true })
+  userId: string;
   @CreateDateColumn()
   createdAt: Date;
 

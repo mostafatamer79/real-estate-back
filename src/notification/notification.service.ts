@@ -69,6 +69,25 @@ export class NotificationService {
     );
   }
 
+  async markChatNotificationsAsRead(roomId: string, userId: string): Promise<void> {
+    const unreadChatNotifications = await this.notificationRepository.find({
+      where: {
+        userId,
+        type: NotificationType.CHAT,
+        isRead: false,
+      }
+    });
+
+    const notificationsToUpdate = unreadChatNotifications.filter(
+      n => n.data && n.data.roomId === roomId
+    );
+
+    if (notificationsToUpdate.length > 0) {
+      const ids = notificationsToUpdate.map(n => n.id);
+      await this.notificationRepository.update(ids, { isRead: true });
+    }
+  }
+
   async delete(notificationId: string, userId: string): Promise<void> {
     const result = await this.notificationRepository.delete({
       id: notificationId,

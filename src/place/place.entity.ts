@@ -44,6 +44,6 @@ export class Place {
   location: string; // stores POINT(longitude latitude)
 
   
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }

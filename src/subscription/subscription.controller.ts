@@ -17,7 +17,9 @@ import {
   CancelSubscriptionDto,
 } from './dto/create-subscription.dto';
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
+import { SkipSubscriptionGuard } from '../common/decorators/skip-subscription.decorator';
 
+@SkipSubscriptionGuard()
 @Controller('subscriptions')
 @UseGuards(JwtAuthGuard)
 export class SubscriptionController {
@@ -25,8 +27,12 @@ export class SubscriptionController {
 
   @Post()
   async create(@Request() req, @Body() createSubscriptionDto: CreateSubscriptionDto) {
+    const userId = (req.user.role === 'admin' && createSubscriptionDto.userId) 
+      ? createSubscriptionDto.userId 
+      : req.user.userId;
+      
     return await this.subscriptionService.create(
-      req.user.userId,
+      userId,
       createSubscriptionDto,
     );
   }
@@ -39,6 +45,13 @@ export class SubscriptionController {
   @Get('my/active')
   async getMyActiveSubscriptions(@Request() req) {
     return await this.subscriptionService.findActiveSubscriptions(req.user.userId);
+  }
+
+  @Get('status')
+  async getStatus(@Request() req, @Query('userId') userId?: string) {
+    // Super-admin can check any user's status; otherwise use own ID
+    const targetId = (req.user.role === 'admin' && userId) ? userId : req.user.userId;
+    return await this.subscriptionService.getSubscriptionStatus(targetId);
   }
 
   @Get('property/:propertyId')
@@ -73,6 +86,7 @@ export class SubscriptionController {
       id,
       req.user.userId,
       updateSubscriptionDto,
+      req.user.role === 'admin',
     );
   }
 
@@ -86,11 +100,21 @@ export class SubscriptionController {
       id,
       req.user.userId,
       cancelSubscriptionDto,
+      req.user.role === 'admin',
     );
   }
 
   @Post(':id/activate')
-  async activate(@Param('id') id: string) {
-    return await this.subscriptionService.activate(id);
+  async activate(
+    @Param('id') id: string,
+    @Request() req,
+    @Body() body: { paymentMethod?: string },
+  ) {
+    return await this.subscriptionService.activate(
+      id,
+      req.user.userId,
+      body?.paymentMethod as any,
+      req.user.role === 'admin',
+    );
   }
 }

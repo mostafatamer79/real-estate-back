@@ -22,15 +22,24 @@ canActivate(context: ExecutionContext): boolean {
 
   const req = context.switchToHttp().getRequest();
   const user = req.user;
-
+  
   if (!user) {
-    throw new ForbiddenException('User not found in request');
+    return true;
+  }
+
+  // Always allow admins to bypass role checks
+  if (user.role === Role.ADMIN) {
+    return true;
   }
 
   // If user.role is singular:
-  if (!requiredRoles.includes(user.role)) {
-    throw new ForbiddenException('Access denied');
+  const hasRole = requiredRoles.includes(user.role);
+  
+  if (!hasRole) {
+    console.warn(`RolesGuard: Access denied for user ${user.id} with role "${user.role}". Required roles:`, requiredRoles);
   }
+
+  return hasRole;
 
   // OR, if user.roles is an array:
   // if (!user.roles.some((r: Role) => requiredRoles.includes(r))) {

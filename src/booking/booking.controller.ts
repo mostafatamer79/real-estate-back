@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, ParseUUIDPipe } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
@@ -23,13 +23,13 @@ export class BookingController {
   @Get('user/:userId')
   @UseGuards(JwtAuthGuard)
   // @Roles([Role.ADMIN]) // Allow admins to see user bookings
-  findUserBookings(@Param('userId') userId: string) {
+  findUserBookings(@Param('userId', ParseUUIDPipe) userId: string) {
     return this.bookingService.findByUser(userId);
   }
 
   @Get('offer/:offerId')
   @UseGuards(JwtAuthGuard)
-  findOfferBookings(@Param('offerId') offerId: string) {
+  findOfferBookings(@Param('offerId', ParseUUIDPipe) offerId: string) {
     return this.bookingService.findByOffer(offerId);
   }
 

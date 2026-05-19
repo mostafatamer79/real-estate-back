@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from '../../user/user-entity';
+import { Department } from '../../user/department.enum';
 
 @Entity('orders')
 export class Order {
@@ -75,12 +76,35 @@ export class Order {
   @Column({ type: 'text', nullable: true })
   additionalDetails: string;
 
-  @ManyToOne(() => User, (user) => user.orders, { eager: true })
-  user: User;
+  @Column({ default: 'pending' })
+  status: string; // pending, in_progress, completed, cancelled
 
-  @CreateDateColumn()
+  @Column({ nullable: true })
+  clientName: string;
+
+  @Column({ nullable: true })
+  clientPhone: string;
+
+  @Column({
+    type: 'enum',
+    enum: Department,
+    nullable: true,
+  })
+  department?: Department | null;
+
+  @ManyToOne(() => User, (user) => user.orders, { eager: true, onDelete: 'CASCADE', nullable: true })
+  user: User | null;
+
+  @Column({ nullable: true })
+  assignedToId: string | null;
+
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'assignedToId' })
+  assignedTo: User | null;
+
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }

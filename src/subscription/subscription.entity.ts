@@ -48,6 +48,9 @@ export class Subscription {
   @Column({ nullable: true })
   unitId?: string;
 
+  @Column({ nullable: true })
+  departmentSlug?: string;
+
   @Column({
     type: 'enum',
     enum: SubscriptionType,
@@ -92,6 +95,9 @@ export class Subscription {
   @Column({ default: false })
   autoRenew: boolean;
 
+  @Column({ default: false })
+  noExpiry: boolean;
+
   @Column({ type: 'timestamp', nullable: true })
   cancelledAt?: Date;
 
@@ -101,13 +107,13 @@ export class Subscription {
   @Column({ type: 'text', nullable: true })
   cancellationReason?: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
 

@@ -177,20 +177,21 @@ export class MarketingService {
   }
 
   // Email Marketing Management
-  async createEmailMarketing(createDto: CreateEmailMarketingDto): Promise<EmailMarketing> {
+  async createEmailMarketing(createDto: CreateEmailMarketingDto, ownerId: string): Promise<EmailMarketing> {
     // Normalize enum values to lowercase to guard against cached clients sending uppercase
     const normalized = {
       ...createDto,
       category: createDto.category?.toLowerCase() as any,
       frequency: createDto.frequency?.toLowerCase() as any,
       targetRole: createDto.targetRole ? createDto.targetRole.toLowerCase() as any : null,
+      ownerId,
     };
     const campaign = this.emailMarketingRepository.create(normalized);
     return this.emailMarketingRepository.save(campaign);
   }
 
-  async updateEmailMarketing(id: string, updateDto: UpdateEmailMarketingDto): Promise<EmailMarketing> {
-    const campaign = await this.emailMarketingRepository.findOne({ where: { id } });
+  async updateEmailMarketing(id: string, ownerId: string, updateDto: UpdateEmailMarketingDto): Promise<EmailMarketing> {
+    const campaign = await this.emailMarketingRepository.findOne({ where: { id, ownerId } });
     if (!campaign) throw new NotFoundException('Marketing campaign not found');
     const normalized: any = {
       ...updateDto,
@@ -202,20 +203,60 @@ export class MarketingService {
     return this.emailMarketingRepository.save(campaign);
   }
 
-  async findAllEmailMarketing(): Promise<EmailMarketing[]> {
-    return this.emailMarketingRepository.find({ order: { createdAt: 'DESC' } });
+  async findEmailMarketingByOwner(ownerId: string): Promise<EmailMarketing[]> {
+    return this.emailMarketingRepository.find({ where: { ownerId }, order: { createdAt: 'DESC' } });
   }
 
-  async getEmailMarketingById(id: string): Promise<EmailMarketing> {
-    const campaign = await this.emailMarketingRepository.findOne({ where: { id } });
+  async getEmailMarketingById(id: string, ownerId: string): Promise<EmailMarketing> {
+    const campaign = await this.emailMarketingRepository.findOne({ where: { id, ownerId } });
     if (!campaign) throw new NotFoundException('Marketing campaign not found');
     return campaign;
   }
 
-  async removeEmailMarketing(id: string): Promise<void> {
-    const campaign = await this.emailMarketingRepository.findOne({ where: { id } });
+  async removeEmailMarketing(id: string, ownerId: string): Promise<void> {
+    const campaign = await this.emailMarketingRepository.findOne({ where: { id, ownerId } });
     if (!campaign) throw new NotFoundException('Marketing campaign not found');
     await this.emailMarketingRepository.remove(campaign);
+  }
+
+  async getEmailMarketingStats(ownerId: string) {
+    const campaigns = await this.emailMarketingRepository.find({ where: { ownerId } });
+    const now = Date.now();
+    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+    const currentStart = now - thirtyDays;
+    const previousStart = now - thirtyDays * 2;
+
+    const summarize = (items: EmailMarketing[]) => {
+      const totalSent = items.reduce((sum, campaign) => sum + Number(campaign.totalSent || 0), 0);
+      const openCount = items.reduce((sum, campaign) => sum + Number(campaign.openCount || 0), 0);
+      const clickCount = items.reduce((sum, campaign) => sum + Number(campaign.clickCount || 0), 0);
+
+      return {
+        totalSent,
+        openRate: totalSent > 0 ? (openCount / totalSent) * 100 : 0,
+        clickRate: totalSent > 0 ? (clickCount / totalSent) * 100 : 0,
+      };
+    };
+
+    const current = summarize(campaigns.filter((campaign) => new Date(campaign.createdAt).getTime() >= currentStart));
+    const previous = summarize(campaigns.filter((campaign) => {
+      const createdAt = new Date(campaign.createdAt).getTime();
+      return createdAt >= previousStart && createdAt < currentStart;
+    }));
+    const allTime = summarize(campaigns);
+    const delta = (currentValue: number, previousValue: number) => {
+      if (previousValue === 0) return currentValue === 0 ? 0 : 100;
+      return ((currentValue - previousValue) / previousValue) * 100;
+    };
+
+    return {
+      totalSent: allTime.totalSent,
+      openRate: allTime.openRate,
+      clickRate: allTime.clickRate,
+      sentTrend: delta(current.totalSent, previous.totalSent),
+      openRateTrend: current.openRate - previous.openRate,
+      clickRateTrend: current.clickRate - previous.clickRate,
+    };
   }
 
   async sendScheduledEmails() {
@@ -245,7 +286,7 @@ export class MarketingService {
           if (user.email) {
             await this.mailService.sendMarketingEmail(
               user.email, 
-              campaign.subject || `إشعار من دير عقارك: ${campaign.category}`, 
+              campaign.subject || `إشعار من الوساطة الرقمية: ${campaign.category}`, 
               campaign.content,
               campaign.category
             );
@@ -253,6 +294,7 @@ export class MarketingService {
         }
 
         campaign.lastSentAt = now;
+        campaign.totalSent = Number(campaign.totalSent || 0) + users.length;
         await this.emailMarketingRepository.save(campaign);
       }
     }

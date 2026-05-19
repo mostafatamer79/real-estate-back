@@ -4,29 +4,36 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { FileUploadService } from '../document/file-upload.service';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './create-user-dto';
-import { Role, User, VerifyStatus } from './user-entity';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { Roles } from '../common/decorators/roles.decorators';
+import { Department, Role, User, VerifyStatus } from './user-entity';
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
+import { EmployeeManagementGuard } from '../common/guards/employee-management.guard';
+import { MailService } from '../mail/mail.service';
+import { AuthService } from '../auth/auth.service';
 
 @Controller('user')
 @UseGuards(JwtAuthGuard)
 export class UserController {
     constructor(
         private readonly userService: UserService,
-        private readonly fileUploadService: FileUploadService
+        private readonly fileUploadService: FileUploadService,
+        private readonly mailService: MailService,
+        private readonly authService: AuthService,
     ) {}
 
     @Get()
-    @Roles([Role.ADMIN])
-    @UseGuards(RolesGuard)
+    @UseGuards(EmployeeManagementGuard)
     async findAll() {
         return this.userService.findAll();
     }
 
+    @Get('by-department/:department')
+    @UseGuards(EmployeeManagementGuard)
+    async findByDepartment(@Param('department') department: Department) {
+        return this.userService.findByDepartment(department);
+    }
+
     @Post()
-    @Roles([Role.ADMIN])
-    @UseGuards(RolesGuard)
+    @UseGuards(EmployeeManagementGuard)
     async create(@Body() createUserDto: any) { // Using any temporarily, should use CreateUserDto but ensure it's imported
         return this.userService.createUser(createUserDto);
     }
@@ -42,8 +49,7 @@ export class UserController {
     }
 
     @Put(':id/verify')
-    @Roles([Role.ADMIN])
-    @UseGuards(RolesGuard)
+    @UseGuards(EmployeeManagementGuard)
     async updateVerificationStatus(
         @Param('id') userId: string,
         @Body('status') status: VerifyStatus
@@ -53,16 +59,44 @@ export class UserController {
 
 
     @Post('nafath/send-otp')
-    async sendNafathOtp(@Body('nationalId') nationalId: string) {
-        return { message: 'OTP sent', success: true };
+    async sendNafathOtp(@Request() req, @Body('nationalId') nationalId: string) {
+        if (!nationalId) {
+            throw new BadRequestException('National ID is required');
+        }
+
+        const user = await this.userService.findOne(req.user.id);
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+
+        if (!user.email) {
+            throw new BadRequestException('A verified email address is required to receive the code');
+        }
+
+        const otp = await this.authService.generateOtp();
+        user.otp = otp;
+        user.expireOtp = new Date(Date.now() + 5 * 60 * 1000);
+        await this.userService.updateUser(user);
+        await this.mailService.sendOtp(user, otp);
+
+        return { message: 'OTP sent', success: true, nationalId };
     }
 
     @Post('nafath/verify')
     async verifyNafath(@Request() req, @Body('nationalId') nationalId: string, @Body('otp') otp: string) {
-        // Mock OTP check
-        if (otp !== '1234') {
-             throw new BadRequestException('Invalid OTP');
+        const user = await this.userService.findOne(req.user.id);
+        if (!user) {
+            throw new BadRequestException('User not found');
         }
+
+        if (!user.otp || !user.expireOtp || user.expireOtp < new Date() || user.otp !== otp) {
+            throw new BadRequestException('Invalid OTP');
+        }
+
+        user.otp = null;
+        user.expireOtp = null;
+        await this.userService.updateUser(user);
+
         return this.userService.verifyNafath(req.user.id, nationalId);
     }
 
@@ -78,20 +112,27 @@ export class UserController {
     }
 
     @Delete(':id')
-    @Roles([Role.ADMIN])
-    @UseGuards(RolesGuard)
+    @UseGuards(EmployeeManagementGuard)
     async remove(@Param('id') userId: string) {
         await this.userService.remove(userId);
         return { success: true, message: 'User deleted successfully' };
     }
 
+    @Put(':id')
+    @UseGuards(EmployeeManagementGuard)
+    async update(
+        @Param('id') userId: string,
+        @Body() updateUserDto: UpdateUserDto
+    ) {
+        return this.userService.updateUserDetails(userId, updateUserDto);
+    }
+
     @Put(':id/role')
-    @Roles([Role.ADMIN])
-    @UseGuards(RolesGuard)
+    @UseGuards(EmployeeManagementGuard)
     async updateRole(
         @Param('id') userId: string,
         @Body('role') role: Role
     ) {
-        return this.userService.updateRole(userId, role);
+        return this.userService.updateUserDetails(userId, { role });
     }
 }

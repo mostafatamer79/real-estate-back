@@ -12,6 +12,8 @@ import {  Column,
   OneToMany,
   OneToOne
 } from "typeorm";
+import { Department } from "./department.enum";
+export { Department };
 
 // Permission Entity
 @Entity('permissions')
@@ -41,15 +43,8 @@ export class Permission {
 export enum Role {
   ADMIN = 'admin',
   USER = 'user', // Beneficiary / المستفيد
-  BROKER = 'broker', // Real Estate Broker / وسيط عقاري
-  REAL_ESTATE_OFFICE = 'real_estate_office', // مكتب عقاري
-  OWNER = 'owner', // Malek / مالك
-  LAWYER = 'lawyer', // Mahamy / محام
-  ENGINEERING_OFFICE = 'engineering_office', // Engineering Office / مكتب هندسي
-  OTHER = 'other', // Other / أخرى
-  AGENT = 'agent', // Keep for backward compatibility if needed, though BROKER is preferred
+  MANGER = 'manager', // Manager
   EMPLOYEE = 'employee', // Employee / موظف
-  COLLABORATOR = 'collaborator', // Collaborator / متعاون
   MARKETING = 'marketing',
   MARKETING_ADMIN = 'marketing_admin',
   LEGAL = 'legal',
@@ -57,7 +52,12 @@ export enum Role {
   FINANCE = 'finance',
   FINANCE_ADMIN = 'finance_admin',
   VIEWER = 'viewer',
+  AGENT = 'agent',
+  BROKER = 'broker',
+  OWNER = 'owner',
 }
+
+
 
 export enum ApplyStatus {
     PENDING = 'pending',
@@ -109,7 +109,7 @@ expireOtp: Date | null;
   @Column({
     type: 'enum',
     enum: Role,
-    default: Role.USER,
+    default: Role.VIEWER,
   })
   role: Role;
 
@@ -227,9 +227,17 @@ expireOtp: Date | null;
   })
   permissions: Permission[];
 
+  @Column({ nullable: true })
+  lastSeen?: Date;
 
   @Column({ type: 'simple-json', nullable: true })
   departmentPermissions: any;
+
+  @Column({ type: 'simple-json', nullable: true })
+  departments?: Department[];
+
+  @Column({ nullable: true })
+  parentId?: string;
 
   @OneToMany(() => Order, (order) => order.user)
   orders: Order[];

@@ -14,13 +14,14 @@ import {
   } from '@nestjs/common';
   import { CommissionService } from './commission.service';
   import { CreateCommissionDto ,UpdateCommissionDto} from './create-commission.dto';
-  import { RolesGuard } from '../common/guards/roles.guard';
-  import { Roles } from '../common/decorators/roles.decorators';
   import { CommissionStatus, CommissionType } from './commission.entity';
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
+import { Departments } from '../common/decorators/departments.decorators';
+import { DepartmentsGuard } from '../common/guards/departments.guard';
   
   @Controller('commissions')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, DepartmentsGuard)
+  @Departments('finance')
   export class CommissionController {
     constructor(private readonly commissionService: CommissionService) {}
   

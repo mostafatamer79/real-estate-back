@@ -1,5 +1,5 @@
 import { MailerService } from '@nestjs-modules/mailer';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { User } from '../user/user-entity';
 
 @Injectable()
@@ -10,12 +10,16 @@ export class MailService {
     const email = user.email || user; // Handle both User object and email string
     const name = user.firstName ? `${user.firstName}` : 'المستخدم';
 
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      throw new BadRequestException('A valid email address is required to send OTP');
+    }
+
     try {
       await this.mailerService.sendMail({
         to: email,
         // from: '"No Reply" <noreply@example.com>', // Override default from
-        subject: 'كود التحقق - دير عقارك',
-        template: './otp', // `.hbs` extension is appended automatically
+        subject: 'كود التحقق - الوساطة الرقمية',
+        template: 'otp', // `.hbs` extension is appended automatically
         context: { 
           name: name,
           otp,
@@ -34,7 +38,7 @@ export class MailService {
       await this.mailerService.sendMail({
         to: email,
         subject: 'طلب تسويق جديد',
-        template: './marketing-request', 
+        template: 'marketing-request', 
         context: {
           type: requestType,
           id: id,
@@ -52,13 +56,14 @@ export class MailService {
       await this.mailerService.sendMail({
         to: email,
         subject: 'إشعار بطلب خدمة جديد يحتاج للمراجعة',
-        template: './admin-notification',
+        template: 'admin-notification',
         context: {
           id: serviceRequest.id.substring(0, 8),
           category: serviceRequest.category,
           serviceType: serviceRequest.serviceType,
           clientName: serviceRequest.clientName,
           phone: serviceRequest.phone,
+          year: new Date().getFullYear(),
         },
       });
       console.log(`Admin notification sent to ${email}`);
@@ -72,7 +77,7 @@ export class MailService {
       await this.mailerService.sendMail({
         to: email,
         subject: subject,
-        template: './marketing-campaign', 
+        template: 'marketing-campaign', 
         context: {
           category,
           content,
@@ -89,7 +94,7 @@ export class MailService {
       await this.mailerService.sendMail({
         to: email,
         subject: 'طلب خدمة قانونية جديد',
-        template: './legal-request',
+        template: 'legal-request',
         context: {
           id: request.id.substring(0, 8),
           serviceType: request.serviceType,
@@ -113,7 +118,7 @@ export class MailService {
       await this.mailerService.sendMail({
         to: email,
         subject: 'فاتورة طلبك القانوني - يرجى الرد',
-        template: './legal-invoice',
+        template: 'legal-invoice',
         context: {
           id: request.id.substring(0, 8),
           invoiceNumber: request.invoiceNumber,
@@ -136,7 +141,7 @@ export class MailService {
       await this.mailerService.sendMail({
         to: email,
         subject,
-        template: './legal-decision',
+        template: 'legal-decision',
         context: {
           id: request.id.substring(0, 8),
           invoiceNumber: request.invoiceNumber,
@@ -153,4 +158,3 @@ export class MailService {
     }
   }
 }
-

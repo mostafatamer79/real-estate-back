@@ -43,16 +43,16 @@ export class Property {
     
     // Establishing a logical relationship with User (Owner)
     // Assuming the user creating/managing this is the owner or manager
-    @ManyToOne(() => User, { nullable: true }) 
+    @ManyToOne(() => User, { nullable: true, onDelete: 'CASCADE' }) 
     @JoinColumn({ name: 'ownerId' })
     owner: User;
     
     @Column({ nullable: true })
     ownerId: string;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ type: 'timestamptz' })
     updatedAt: Date;
 }

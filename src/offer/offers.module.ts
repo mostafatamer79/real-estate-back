@@ -8,14 +8,18 @@ import { VisitRequest } from './entities/visit-request.entity';
 import { Invoice } from '../financial/entities/invoice.entity';
 import { OfferView } from './entities/offer-view.entity';
 import { SettingsModule } from '../settings/settings.module';
+import { User } from '../user/user-entity';
+import { UserModule } from '../user/user.module';
+import { DepartmentsGuard } from '../common/guards/departments.guard';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Offer, PurchaseRequest, VisitRequest, Invoice, OfferView]),
+    TypeOrmModule.forFeature([Offer, PurchaseRequest, VisitRequest, Invoice, OfferView, User]),
     SettingsModule,
+    UserModule,
   ],
   controllers: [OffersController],
-  providers: [OffersService],
+  providers: [OffersService, DepartmentsGuard],
   exports: [OffersService],
 })
 export class OffersModule {}

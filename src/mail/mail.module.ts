@@ -10,17 +10,21 @@ import { ConfigService } from '@nestjs/config';
   imports: [
     MailerModule.forRootAsync({
       useFactory: async (config: ConfigService) => ({
+        // Gmail (and many SMTP providers) often reject passwords copied with spaces.
+        // App Passwords are typically displayed in 4-char groups; remove whitespace just in case.
         transport: {
           host: config.get('SMTP_HOST'),
-          port: config.get('SMTP_PORT'),
-          secure: false, // true for 465, false for other ports
+          port: Number(config.get('SMTP_PORT') ?? 587),
+          secure: Number(config.get('SMTP_PORT') ?? 587) === 465, // true for 465, false for other ports
           auth: {
             user: config.get('SMTP_USER'),
-            pass: config.get('SMTP_PASS'),
+            pass: String(config.get('SMTP_PASS') ?? '').replace(/\s+/g, ''),
           },
+          // Useful for port 587 (STARTTLS)
+          requireTLS: Number(config.get('SMTP_PORT') ?? 587) === 587,
         },
         defaults: {
-          from: `"No Reply" <${config.get('SMTP_USER')}>`,
+          from: config.get('SMTP_FROM') || `"No Reply" <${config.get('SMTP_USER')}>`,
         },
         template: {
           dir: join(__dirname, 'templates'),

@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
+import { ForbiddenException } from '@nestjs/common';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
@@ -61,18 +62,56 @@ export class ChatController {
     );
   }
 
+  @Post('rooms/service-request')
+  async getOrCreateServiceRequestRoom(
+    @Body() data: { serviceRequestId: string; clientId: string; title: string },
+    @Request() req,
+  ) {
+    // Only the client can initiate a service-request chat. Staff can join after creation.
+    if (req.user.userId !== data.clientId) {
+      throw new ForbiddenException('Only the client can start this chat');
+    }
+    return this.chatService.getOrCreateServiceRequestChat(
+      data.serviceRequestId,
+      req.user.userId,
+      data.clientId,
+      data.title,
+    );
+  }
+
   // Get room messages
   @Get('rooms/:roomId/messages')
   async getRoomMessages(
     @Param('roomId') roomId: string,
     @Query('limit') limit: any = 50,
+    @Request() req,
   ) {
-    return this.chatService.getRoomMessages(roomId, parseInt(limit));
+    return this.chatService.getRoomMessages(roomId, parseInt(limit), req.user.userId);
+  }
+
+  // Backwards-compatible alias: some clients call /chat/:roomId/messages
+  @Get(':roomId/messages')
+  async getRoomMessagesAlias(
+    @Param('roomId') roomId: string,
+    @Query('limit') limit: any = 50,
+    @Request() req,
+  ) {
+    return this.chatService.getRoomMessages(roomId, parseInt(limit), req.user.userId);
   }
 
   // Send message
   @Post('rooms/:roomId/messages')
   async sendMessage(
+    @Param('roomId') roomId: string,
+    @Body() data: { content: string },
+    @Request() req,
+  ) {
+    return this.chatService.sendMessage(roomId, req.user.userId, data.content);
+  }
+
+  // Backwards-compatible alias: some clients call /chat/:roomId/messages
+  @Post(':roomId/messages')
+  async sendMessageAlias(
     @Param('roomId') roomId: string,
     @Body() data: { content: string },
     @Request() req,
@@ -97,10 +136,14 @@ export class ChatController {
         const messages = await this.chatService.getRoomMessages(room.id, 1);
         const lastMessage = messages[0];
 
+        // Get unread count
+        const unreadCount = await this.chatService.getUnreadCount(room.id, req.user.userId);
+
         return {
           id: room.id,
           name: room.name,
           offerId: room.offerId,
+          unreadCount,
           participants: room.participants?.map(p => ({
             id: p.id,
             firstName: p.firstName,
@@ -127,6 +170,16 @@ export class ChatController {
       data: transformedRooms,
       count: transformedRooms.length,
     };
+  }
+
+  // Mark room as read
+  @Post('rooms/:roomId/read')
+  async markRoomAsRead(
+    @Param('roomId') roomId: string,
+    @Request() req,
+  ) {
+    await this.chatService.markRoomAsRead(roomId, req.user.userId);
+    return { success: true };
   }
 
   // Get specific room

@@ -55,10 +55,10 @@ export class Unit {
     @Column()
     propertyId: string;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ type: 'timestamptz' })
     updatedAt: Date;
 
     @OneToMany('Lease', 'unit', { cascade: true })

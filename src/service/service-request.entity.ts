@@ -42,7 +42,8 @@ import {
     REAL_ESTATE = 'real_estate', // ادارة الاملاك
     MARKETING = 'marketing',    // ادارة التسويق
     LEGAL = 'legal',            // ادارة القانونية
-    FINANCE = 'finance'         // الادارة المالية
+    FINANCE = 'finance',         // الادارة المالية
+    EMPLOYEES = 'employees'      // ادارة الموظفين
   }
   @Entity('service_requests')
   export class ServiceRequest {
@@ -111,7 +112,7 @@ import {
     @Column({ nullable: true })
     invoiceNumber: string;
 
-    @ManyToOne(() => User, { nullable: true })
+    @ManyToOne(() => User, { nullable: true, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'userId' })
     user: User;
 
@@ -153,10 +154,20 @@ import {
     @Column('simple-array', { nullable: true })
     documentIds: string[];
 
-    @CreateDateColumn()
+    /** Stores per-department price contributions.
+     * Format: { "marketing": { price: 500, addedBy: "userId", note: "...", addedAt: "ISO date" } }
+     */
+    @Column({ type: 'jsonb', nullable: true, default: '{}' })
+    departmentPrices: Record<string, { price: number; addedBy: string; note?: string; addedAt: string }> | null;
+
+    /** ID of the chat room created for this service request */
+    @Column({ type: 'text', nullable: true })
+    chatRoomId: string | null;
+
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ type: 'timestamptz' })
     updatedAt: Date;
 
     @BeforeInsert()

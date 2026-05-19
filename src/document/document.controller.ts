@@ -17,14 +17,14 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DocumentService } from './document.service';
 import { FileUploadService } from './file-upload.service';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { Roles } from '../common/decorators/roles.decorators';
 import { DocumentType, DocumentStatus } from './document.entity';
-import { Role } from '../user/user-entity';
 import type { Multer } from 'multer';
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
+import { Departments } from '../common/decorators/departments.decorators';
+import { DepartmentsGuard } from '../common/guards/departments.guard';
 @Controller('documents')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, DepartmentsGuard)
+@Departments('properties', 'legal', 'marketing', 'finance')
 export class DocumentController {
   constructor(
     private readonly documentService: DocumentService,
@@ -32,7 +32,6 @@ export class DocumentController {
   ) {}
 
   @Post('upload')
-  @Roles([Role.ADMIN,Role.AGENT])
   @UseInterceptors(FileInterceptor('file'))
   async uploadDocument(
     @UploadedFile() file: Express.Multer.File
@@ -121,7 +120,6 @@ export class DocumentController {
   }
 
   @Post('folders')
-  @Roles([Role.ADMIN,Role.AGENT])
   async createFolder(
     @Body('name') folderName: string,
     @Request() req

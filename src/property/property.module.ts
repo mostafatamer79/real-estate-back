@@ -10,7 +10,10 @@ import { Payment } from './entities/payment.entity';
 import { UtilityBill } from './entities/utility-bill.entity';
 import { MaintenanceRequest } from './entities/maintenance-request.entity';
 import { Expense } from './entities/expense.entity';
+import { User } from '../user/user-entity';
 import { UserModule } from '../user/user.module';
+import { DepartmentsGuard } from '../common/guards/departments.guard';
+import { SettingsModule } from '../settings/settings.module';
 
 @Module({
     imports: [
@@ -22,12 +25,14 @@ import { UserModule } from '../user/user.module';
             Payment, 
             UtilityBill, 
             MaintenanceRequest,
-            Expense
+            Expense,
+            User
         ]),
-        UserModule
+        UserModule,
+        SettingsModule,
     ],
     controllers: [PropertyController], // Add other controllers as created
-    providers: [PropertyService], // Add other services as created
+    providers: [PropertyService, DepartmentsGuard], // Add other services as created
     exports: [PropertyService]
 })
 export class PropertyModule {}

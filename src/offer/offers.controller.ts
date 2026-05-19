@@ -9,20 +9,19 @@ import { OffersService } from './offers.service';
 import { CreateOfferDto, UpdateOfferDto } from './create-offer.dto';
 // remove imports
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
-import { Roles } from '../common/decorators/roles.decorators';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { Role } from '../user/user-entity';
+import { Departments } from '../common/decorators/departments.decorators';
+import { DepartmentsGuard } from '../common/guards/departments.guard';
 import { getUserFromRequest } from '../common/utils/request-user.util';
 
 @Controller('offers')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, DepartmentsGuard)
+@Departments('properties', 'offers')
 export class OffersController {
   constructor(private readonly offersService: OffersService) {}
 
   @Post()
-  @Roles([Role.ADMIN, Role.AGENT,Role.USER])
   create(@Body() dto: CreateOfferDto, @Request() req) {
-    const user = getUserFromRequest(req, [Role.ADMIN, Role.AGENT,Role.USER]);
+    const user = getUserFromRequest(req);
     return this.offersService.create(dto, user);
   }
 
@@ -57,44 +56,46 @@ export class OffersController {
   }
 
   @Post(':id/view')
-  @Roles([Role.USER, Role.AGENT, Role.ADMIN])
   async incrementView(@Param('id', ParseUUIDPipe) id: string, @Ip() ip: string) {
     return this.offersService.incrementViewCount(id, ip);
   }
 
   @Patch(':id')
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateOfferDto, @Request() req) {
-    const user = getUserFromRequest(req, [Role.ADMIN, Role.AGENT, Role.USER]);
+    const user = getUserFromRequest(req);
     // Note: The service should likely check ownership if role is USER
     return this.offersService.update(id, dto, user);
   }
 
   @Patch(':id/status')
   updateStatus(@Param('id', ParseUUIDPipe) id: string, @Body('status') status: string, @Request() req) {
-    const user = getUserFromRequest(req, [Role.ADMIN]);
+    const user = getUserFromRequest(req);
     return this.offersService.updateStatus(id, status, user);
   }
 
+  @Patch(':id/active')
+  setActive(@Param('id', ParseUUIDPipe) id: string, @Body('isActive') isActive: boolean, @Request() req) {
+    const user = getUserFromRequest(req);
+    return this.offersService.setActive(id, isActive, user);
+  }
+
   @Delete(':id')
-  @Roles([Role.ADMIN, Role.AGENT, Role.USER])
   remove(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
-    const user = getUserFromRequest(req, [Role.ADMIN, Role.AGENT, Role.USER]);
+    const user = getUserFromRequest(req);
     return this.offersService.remove(id, user); // Soft delete
   }
 
   @Delete(':id/hard')
-  @Roles([Role.ADMIN])
   delete(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
-    const user = getUserFromRequest(req, [Role.ADMIN]);
+    const user = getUserFromRequest(req);
     return this.offersService.delete(id, user); // Hard delete
   }
 
   // File uploads
   @Post(':id/upload/media')
   @UseInterceptors(FilesInterceptor('files', 10)) // defaults to memory storage
-  @Roles([Role.ADMIN, Role.AGENT,Role.USER])
   async uploadMedia(@Param('id', ParseUUIDPipe) id: string, @UploadedFiles() files: Express.Multer.File[], @Request() req) {
-    const user = getUserFromRequest(req, [Role.ADMIN, Role.AGENT,Role.USER]);
+    const user = getUserFromRequest(req);
     // WARNING: In a real Vercel deployment, you must upload 'files' (which are in memory) to S3/Cloudinary here.
     // For now, we return a placeholder URL to prevent crashing.
     console.warn('Files received in memory but not saved to disk (Vercel read-only filesystem). access file.buffer to upload to S3.');
@@ -103,10 +104,9 @@ export class OffersController {
   }
 
   @Post(':id/upload/3d-videos')
-  @Roles([Role.ADMIN, Role.AGENT,Role.USER])
   @UseInterceptors(FilesInterceptor('videos', 5)) // defaults to memory storage
   async upload3DVideos(@Param('id', ParseUUIDPipe) id: string, @UploadedFiles() files: Express.Multer.File[], @Request() req) {
-    const user = getUserFromRequest(req, [Role.ADMIN, Role.AGENT,Role.USER]);
+    const user = getUserFromRequest(req);
     // WARNING: Same as above. Upload 'files' to cloud storage.
     console.warn('Videos received in memory. Upload to cloud storage required for persistence.');
     const urls = files.map((f, index) => `https://placeholder.com/video-${index}.mp4`);
@@ -114,16 +114,14 @@ export class OffersController {
   }
 
   @Post(':id/purchase')
-  @Roles([Role.USER, Role.AGENT, Role.ADMIN])
   async createPurchase(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
-    const user = getUserFromRequest(req, [Role.USER, Role.AGENT, Role.ADMIN]);
+    const user = getUserFromRequest(req);
     return this.offersService.createPurchaseRequest(id, user);
   }
 
   @Post(':id/visit')
-  @Roles([Role.USER, Role.AGENT, Role.ADMIN])
   async createVisit(@Param('id', ParseUUIDPipe) id: string, @Body() body: any, @Request() req) {
-    const user = getUserFromRequest(req, [Role.USER, Role.AGENT, Role.ADMIN]);
+    const user = getUserFromRequest(req);
     return this.offersService.createVisitRequest(id, user, body);
   }
 }

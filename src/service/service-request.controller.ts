@@ -10,44 +10,72 @@ import {
     Query,
     UseGuards,
     Request,
-    ParseUUIDPipe
+    ParseUUIDPipe,
+    ForbiddenException
   } from '@nestjs/common';
   import { ServiceRequestService } from './service-request.service';
-  import { CreateServiceRequestDto ,UpdateServiceRequestDto} from './create-service-request.dto';
+  import { CreateServiceRequestDto, UpdateServiceRequestDto, AddDepartmentPriceDto } from './create-service-request.dto';
 
-  import { RolesGuard } from '../common/guards/roles.guard';
-  import { Roles } from '../common/decorators/roles.decorators';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
-import { Role } from 'src/user/user-entity';
+import { ChatService } from '../chat/chat.service';
+import { SkipSubscriptionGuard } from '../common/decorators/skip-subscription.decorator';
 
+  @SkipSubscriptionGuard()
   @Controller('service-requests')
   export class ServiceRequestController {
-    constructor(private readonly serviceRequestService: ServiceRequestService) {}
+    constructor(
+      private readonly serviceRequestService: ServiceRequestService,
+      private readonly chatService: ChatService,
+    ) {}
 
     @Post()
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles([Role.AGENT, Role.BROKER, Role.ADMIN])
+    @UseGuards(JwtAuthGuard)
     async create(@Body() createDto: CreateServiceRequestDto, @Request() req) {
       return this.serviceRequestService.create(createDto, req.user);
     }
 
     @Get()
     @UseGuards(JwtAuthGuard)
-    async findAll(@Request() req) {
-      return this.serviceRequestService.findAll(req.user);
+    async findAll(
+      @Request() req,
+      @Query('page') page: string = '1',
+      @Query('limit') limit: string = '10',
+      @Query('mine') mine: string = 'false'
+    ) {
+      return this.serviceRequestService.findAll(req.user, parseInt(page), parseInt(limit), mine === 'true');
     }
 
     @Get('category/:category')
-
+    @UseGuards(JwtAuthGuard)
     async getByCategory(@Param('category') category: string) {
       return this.serviceRequestService.getByCategory(category);
     }
 
     @Get('statistics')
-
-
+    @UseGuards(JwtAuthGuard)
     async getStatistics() {
       return this.serviceRequestService.getStatistics();
+    }
+
+    @Get('by-department/:department')
+    @UseGuards(JwtAuthGuard)
+    async findByDepartment(
+      @Param('department') department: string,
+      @Query('countOnly') countOnly: string,
+      @Request() req
+    ) {
+      const userDepartments = Array.isArray(req.user?.departments) ? req.user.departments : [];
+      const departmentPermissions = req.user?.departmentPermissions || {};
+      const canAccess =
+        userDepartments.includes(department) ||
+        departmentPermissions[department] === true ||
+        departmentPermissions[department] === 'manage' ||
+        departmentPermissions[department] === 'view';
+
+      if (!canAccess) {
+        throw new ForbiddenException('Access denied');
+      }
+      return this.serviceRequestService.findByDepartment(department, req.user, countOnly === 'true');
     }
 
     @Get(':id')
@@ -96,8 +124,7 @@ import { Role } from 'src/user/user-entity';
 
   // NEW ENDPOINT: Accept service request (Admin only)
   @Put(':id/accept')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles([Role.ADMIN])
+  @UseGuards(JwtAuthGuard)
   async accept(
     @Param('id', ParseUUIDPipe) id: string,
     @Request() req
@@ -115,8 +142,7 @@ import { Role } from 'src/user/user-entity';
 
   // LEGAL WORKFLOW: Admin sends invoice to client
   @Put(':id/send-invoice')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles([Role.ADMIN, Role.LEGAL, Role.LEGAL_ADMIN])
+  @UseGuards(JwtAuthGuard)
   async sendInvoice(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: { price: number },
@@ -134,5 +160,58 @@ import { Role } from 'src/user/user-entity';
     @Request() req
   ) {
     return this.serviceRequestService.clientDecision(id, body.decision, req.user);
+  }
+
+  // DEPARTMENT PRICING: Staff member adds their department's price
+  @Put(':id/department-price')
+  @UseGuards(JwtAuthGuard)
+  async addDepartmentPrice(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AddDepartmentPriceDto,
+    @Request() req
+  ) {
+    return this.serviceRequestService.addDepartmentPrice(id, dto.price, dto.note, req.user, dto.deptSlug);
+  }
+
+  // CHAT: Create or retrieve the chat room for a service request
+  @Post(':id/chat')
+  @UseGuards(JwtAuthGuard)
+  async getOrCreateChat(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req
+  ) {
+    return this.serviceRequestService.getOrCreateChatRoom(id, req.user, this.chatService);
+  }
+
+  // NEW ENDPOINT: Chat with specific staff contributor
+  @Post(':id/staff-chat/:staffId')
+  @UseGuards(JwtAuthGuard)
+  async getOrCreateStaffChat(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('staffId', ParseUUIDPipe) staffId: string,
+    @Request() req
+  ) {
+    return this.serviceRequestService.getOrCreateStaffChat(id, staffId, req.user, this.chatService);
+  }
+
+  // NEW ENDPOINT: Private chat for self (notes)
+  @Post(':id/self-chat')
+  @UseGuards(JwtAuthGuard)
+  async getOrCreateSelfChat(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req
+  ) {
+    return this.serviceRequestService.getOrCreateSelfChat(id, req.user, this.chatService);
+  }
+
+  // NEW ENDPOINT: Accept a department's offer
+  @Put(':id/accept-department-offer')
+  @UseGuards(JwtAuthGuard)
+  async acceptDepartmentOffer(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { deptSlug: string },
+    @Request() req
+  ) {
+    return this.serviceRequestService.acceptDepartmentOffer(id, body.deptSlug, req.user);
   }
   }

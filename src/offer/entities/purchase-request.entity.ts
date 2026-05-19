@@ -21,7 +21,7 @@ export class PurchaseRequest {
   })
   status: PurchaseRequestStatus;
 
-  @ManyToOne(() => User, { nullable: false })
+  @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
 
@@ -35,9 +35,9 @@ export class PurchaseRequest {
   @Column()
   offerId: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }

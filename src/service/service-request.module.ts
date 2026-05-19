@@ -8,6 +8,7 @@ import { ServiceRequestController } from './service-request.controller';
 import { SettingsModule } from '../settings/settings.module';
 import { MailModule } from '../mail/mail.module';
 import { NotificationModule } from '../notification/notification.module';
+import { ChatModule } from '../chat/chat.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { NotificationModule } from '../notification/notification.module';
     SettingsModule,
     MailModule,
     NotificationModule,
+    ChatModule,
   ],
   controllers: [ServiceRequestController],
   providers: [ServiceRequestService],

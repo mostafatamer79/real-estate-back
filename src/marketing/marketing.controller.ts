@@ -2,9 +2,12 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request }
 import { MarketingService } from './marketing.service';
 import { CreateMarketingRequestDto, UpdateMarketingRequestDto } from './dto/marketing-request.dto';
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
+import { Departments } from '../common/decorators/departments.decorators';
+import { DepartmentsGuard } from '../common/guards/departments.guard';
 
 @Controller('marketing')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, DepartmentsGuard)
+@Departments('marketing')
 export class MarketingController {
   constructor(private readonly marketingService: MarketingService) {}
 
@@ -37,13 +40,18 @@ export class MarketingController {
 
   // Email Marketing — primary routes (/marketing/email)
   @Post('email')
-  createEmailMarketing(@Body() createDto: any) {
-    return this.marketingService.createEmailMarketing(createDto);
+  createEmailMarketing(@Body() createDto: any, @Request() req) {
+    return this.marketingService.createEmailMarketing(createDto, req.user.userId);
   }
 
   @Get('email')
-  findAllEmailMarketing() {
-    return this.marketingService.findAllEmailMarketing();
+  findAllEmailMarketing(@Request() req) {
+    return this.marketingService.findEmailMarketingByOwner(req.user.userId);
+  }
+
+  @Get('email/stats')
+  getEmailMarketingStats(@Request() req) {
+    return this.marketingService.getEmailMarketingStats(req.user.userId);
   }
 
   @Post('email/trigger')
@@ -52,29 +60,34 @@ export class MarketingController {
   }
 
   @Get('email/:id')
-  findOneEmailMarketing(@Param('id') id: string) {
-    return this.marketingService.getEmailMarketingById(id);
+  findOneEmailMarketing(@Param('id') id: string, @Request() req) {
+    return this.marketingService.getEmailMarketingById(id, req.user.userId);
   }
 
   @Patch('email/:id')
-  updateEmailMarketing(@Param('id') id: string, @Body() updateDto: any) {
-    return this.marketingService.updateEmailMarketing(id, updateDto);
+  updateEmailMarketing(@Param('id') id: string, @Body() updateDto: any, @Request() req) {
+    return this.marketingService.updateEmailMarketing(id, req.user.userId, updateDto);
   }
 
   @Delete('email/:id')
-  removeEmailMarketing(@Param('id') id: string) {
-    return this.marketingService.removeEmailMarketing(id);
+  removeEmailMarketing(@Param('id') id: string, @Request() req) {
+    return this.marketingService.removeEmailMarketing(id, req.user.userId);
   }
 
   // Email Marketing — alias routes (/marketing/email-marketing) used by admin panel
   @Post('email-marketing')
-  createEmailMarketingAlias(@Body() createDto: any) {
-    return this.marketingService.createEmailMarketing(createDto);
+  createEmailMarketingAlias(@Body() createDto: any, @Request() req) {
+    return this.marketingService.createEmailMarketing(createDto, req.user.userId);
   }
 
   @Get('email-marketing')
-  findAllEmailMarketingAlias() {
-    return this.marketingService.findAllEmailMarketing();
+  findAllEmailMarketingAlias(@Request() req) {
+    return this.marketingService.findEmailMarketingByOwner(req.user.userId);
+  }
+
+  @Get('email-marketing/stats')
+  getEmailMarketingStatsAlias(@Request() req) {
+    return this.marketingService.getEmailMarketingStats(req.user.userId);
   }
 
   @Post('email-marketing/trigger')
@@ -83,18 +96,18 @@ export class MarketingController {
   }
 
   @Get('email-marketing/:id')
-  findOneEmailMarketingAlias(@Param('id') id: string) {
-    return this.marketingService.getEmailMarketingById(id);
+  findOneEmailMarketingAlias(@Param('id') id: string, @Request() req) {
+    return this.marketingService.getEmailMarketingById(id, req.user.userId);
   }
 
   @Patch('email-marketing/:id')
-  updateEmailMarketingAlias(@Param('id') id: string, @Body() updateDto: any) {
-    return this.marketingService.updateEmailMarketing(id, updateDto);
+  updateEmailMarketingAlias(@Param('id') id: string, @Body() updateDto: any, @Request() req) {
+    return this.marketingService.updateEmailMarketing(id, req.user.userId, updateDto);
   }
 
   @Delete('email-marketing/:id')
-  removeEmailMarketingAlias(@Param('id') id: string) {
-    return this.marketingService.removeEmailMarketing(id);
+  removeEmailMarketingAlias(@Param('id') id: string, @Request() req) {
+    return this.marketingService.removeEmailMarketing(id, req.user.userId);
   }
 
   @Get(':id')

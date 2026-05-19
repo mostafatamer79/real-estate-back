@@ -38,7 +38,7 @@ export class ChatRoom {
   @OneToMany(() => Message, message => message.room)
   messages: Message[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
   @Column({ default: false })
@@ -55,6 +55,9 @@ export class ChatRoom {
 
   @Column({nullable:true})
   disputeId: string;
+
+  @Column({nullable:true})
+  serviceRequestId: string;
 }
 @Entity('messages')
 @Index(['room', 'createdAt']) // Index for performance
@@ -71,8 +74,11 @@ export class Message {
   @ManyToOne(() => ChatRoom, room => room.messages, { onDelete: 'CASCADE' })
   room: ChatRoom;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
+
+  @Column({ default: false })
+  isRead: boolean;
 
   @Column({ default: false })
   isEdited: boolean;

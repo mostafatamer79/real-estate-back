@@ -22,7 +22,6 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { FilesInterceptor } from '@nestjs/platform-express';
 
-import { Role } from '../user/user-entity';
 import { LegalServicesService } from './legal-services.service';
 import {
   CreateLegalDisputeDto,
@@ -47,14 +46,16 @@ import {
   OtherServicesQueryDto,
   PaginationDto
 } from './create-legal-dispute.dto';
-import { Roles } from '../common/decorators/roles.decorators';
+import { Departments } from '../common/decorators/departments.decorators';
+import { SkipDepartmentsGuard } from '../common/decorators/skip-departments.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
+import { DepartmentsGuard } from '../common/guards/departments.guard';
 
 @ApiTags('Legal Services')
 @Controller('legal-services')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, DepartmentsGuard)
+@Departments('legal')
 export class LegalServicesController {
   constructor(private readonly legalServicesService: LegalServicesService) {}
 
@@ -287,7 +288,6 @@ export class LegalServicesController {
   }
 
   @Put('documentations/:id/certify')
-  @Roles([Role.ADMIN])
   @ApiOperation({ summary: 'Certify documentation (Admin/Notary only)' })
   async certifyDocumentation(
     @Param('id', ParseUUIDPipe) id: string,
@@ -349,7 +349,6 @@ export class LegalServicesController {
   }
 
   @Put('other-services/:id/respond')
-  @Roles([Role.ADMIN])
   @ApiOperation({ summary: 'Respond to legal service (Admin/Lawyer only)' })
   async respondToLegalService(
     @Param('id', ParseUUIDPipe) id: string,
@@ -523,6 +522,7 @@ export class LegalServicesController {
 
   @Get('user-stats')
   @ApiOperation({ summary: 'Get user-specific statistics' })
+  @SkipDepartmentsGuard()
   async getUserLegalStats(@Request() req) {
     const stats = await this.legalServicesService.getLegalServicesStats(
       req.user.userId,

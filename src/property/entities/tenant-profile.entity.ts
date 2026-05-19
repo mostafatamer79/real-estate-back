@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Lease } from './lease.entity';
 import { User } from '../../user/user-entity';
 
 @Entity('tenant_profiles')
@@ -37,10 +38,13 @@ export class TenantProfile {
 
     @Column({ nullable: true })
     userId: string;
+
+    @OneToMany(() => Lease, (lease) => lease.tenant)
+    leases: Lease[];
     
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ type: 'timestamptz' })
     updatedAt: Date;
 }

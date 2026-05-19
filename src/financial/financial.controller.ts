@@ -1,19 +1,26 @@
-import { Controller, Get, Post, Body, UseGuards, Request, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Request, Param, Query, ParseUUIDPipe, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { FinancialService } from './financial.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
+import { Departments } from '../common/decorators/departments.decorators';
+import { DepartmentsGuard } from '../common/guards/departments.guard';
+import { SkipSubscriptionGuard } from '../common/decorators/skip-subscription.decorator';
 
+@SkipSubscriptionGuard()
 @Controller('financial')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, DepartmentsGuard)
 export class FinancialController {
   constructor(private readonly financialService: FinancialService) {}
 
   @Post('transaction')
+  @Departments('finance')
   create(@Body() createDto: CreateTransactionDto) {
     return this.financialService.createTransaction(createDto);
   }
 
   @Post('expense')
+  @Departments('finance')
   createExpense(@Body() createDto: CreateTransactionDto) {
     return this.financialService.createExpense(createDto);
   }
@@ -24,18 +31,45 @@ export class FinancialController {
   }
 
   @Get('dashboard')
-  getDashboardStats() {
-    return this.financialService.getDashboardStats();
+  @Departments('finance')
+  getDashboardStats(@Request() req) {
+    return this.financialService.getDashboardStats(req.user);
+  }
+
+  @Get('workspace-summary')
+  @Departments('finance')
+  getWorkspaceSummary(@Request() req) {
+    return this.financialService.getDashboardStats(req.user);
   }
 
   @Get('transactions')
-  findAll() {
-    return this.financialService.findAll();
+  @Departments('finance')
+  findAll(@Request() req) {
+    return this.financialService.findAll(req.user);
+  }
+
+  @Get('transactions/export')
+  @Departments('finance')
+  async exportTransactions(
+    @Request() req,
+    @Res() res: Response,
+    @Query('type') type?: string,
+    @Query('status') status?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('search') search?: string,
+  ) {
+    const csv = await this.financialService.exportTransactionsCsv(req.user, { type, status, startDate, endDate, search });
+    const datePart = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="wallet-transactions-${datePart}.csv"`);
+    return res.send(csv);
   }
 
   @Get('commissions')
-  getCommissions() {
-    return this.financialService.getCommissions();
+  @Departments('finance')
+  getCommissions(@Request() req) {
+    return this.financialService.getCommissions(req.user);
   }
 
   @Get('my-wallet')
@@ -51,12 +85,14 @@ export class FinancialController {
   }
 
   @Get('chart-data')
+  @Departments('finance')
   getChartData(
+    @Request() req,
     @Query('status') status?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string
   ) {
-    return this.financialService.getChartData(status, startDate, endDate);
+    return this.financialService.getChartData(req.user, status, startDate, endDate);
   }
 
   @Post('invoices')
@@ -73,7 +109,7 @@ export class FinancialController {
   }
 
   @Get('invoices/user/:userId')
-  async getUserInvoices(@Param('userId') userId: string) {
+  async getUserInvoices(@Param('userId', ParseUUIDPipe) userId: string) {
     return this.financialService.getUserInvoices(userId);
   }
 

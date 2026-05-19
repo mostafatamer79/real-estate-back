@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Subscription, SubscriptionStatus, SubscriptionType } from './subscription.entity';
 import { User } from '../user/user-entity';
+import { Department } from '../user/department.enum';
 import { Property } from '../property/entities/property.entity';
 import { Unit } from '../property/entities/unit.entity';
 import {
@@ -16,9 +17,18 @@ import {
   CancelSubscriptionDto,
 } from './dto/create-subscription.dto';
 import { ManagementPackageService } from './management-package/management-package.service';
+import { PaymentMethod } from './subscription.entity';
 
 @Injectable()
 export class SubscriptionService {
+  private readonly administrationToDepartment: Record<string, Department> = {
+    'admin.dept.real_estate': Department.PROPERTIES,
+    'admin.dept.marketing': Department.MARKETING,
+    'admin.dept.legal': Department.LEGAL,
+    'admin.dept.finance': Department.FINANCE,
+    'admin.dept.hr': Department.EMPLOYEES,
+  };
+
   constructor(
     @InjectRepository(Subscription)
     private subscriptionRepository: Repository<Subscription>,
@@ -97,16 +107,18 @@ export class SubscriptionService {
       userId,
       propertyId: createSubscriptionDto.propertyId,
       unitId: createSubscriptionDto.unitId,
+      departmentSlug: createSubscriptionDto.departmentSlug,
       packageId: createSubscriptionDto.packageId,
       subscriptionType: createSubscriptionDto.subscriptionType,
       customPeriodMonths: createSubscriptionDto.customPeriodMonths,
       amount: createSubscriptionDto.amount,
       startDate,
-      endDate,
+      endDate: createSubscriptionDto.endDate ? new Date(createSubscriptionDto.endDate) : endDate,
       paymentMethod: createSubscriptionDto.paymentMethod,
       notes: createSubscriptionDto.notes,
       paymentReference: createSubscriptionDto.paymentReference,
-      status: SubscriptionStatus.PENDING,
+      status: (createSubscriptionDto.status as SubscriptionStatus) || SubscriptionStatus.PENDING,
+      noExpiry: createSubscriptionDto.noExpiry || false,
     });
 
     return await this.subscriptionRepository.save(subscription);
@@ -118,7 +130,7 @@ export class SubscriptionService {
       .leftJoinAndSelect('subscription.user', 'user')
       .leftJoinAndSelect('subscription.property', 'property')
       .leftJoinAndSelect('subscription.unit', 'unit')
-      .leftJoinAndSelect('subscription.package', 'package');
+      .leftJoinAndSelect('subscription.managementPackage', 'managementPackage');
 
     if (userId) {
       query.where('subscription.userId = :userId', { userId });
@@ -130,7 +142,7 @@ export class SubscriptionService {
   async findOne(id: string): Promise<Subscription> {
     const subscription = await this.subscriptionRepository.findOne({
       where: { id },
-      relations: ['user', 'property', 'unit', 'package'],
+      relations: ['user', 'property', 'unit', 'managementPackage'],
     });
 
     if (!subscription) {
@@ -143,7 +155,7 @@ export class SubscriptionService {
   async findMySubscriptions(userId: string): Promise<Subscription[]> {
     return await this.subscriptionRepository.find({
       where: { userId },
-      relations: ['property', 'unit', 'package'],
+      relations: ['property', 'unit', 'managementPackage'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -154,7 +166,7 @@ export class SubscriptionService {
         userId,
         status: SubscriptionStatus.ACTIVE,
       },
-      relations: ['property', 'unit', 'package'],
+      relations: ['property', 'unit', 'managementPackage'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -163,10 +175,11 @@ export class SubscriptionService {
     id: string,
     userId: string,
     updateSubscriptionDto: UpdateSubscriptionDto,
+    isAdmin: boolean = false,
   ): Promise<Subscription> {
     const subscription = await this.findOne(id);
 
-    if (subscription.userId !== userId) {
+    if (!isAdmin && subscription.userId !== userId) {
       throw new ForbiddenException('You can only update your own subscription');
     }
 
@@ -183,10 +196,11 @@ export class SubscriptionService {
     id: string,
     userId: string,
     cancelSubscriptionDto: CancelSubscriptionDto,
+    isAdmin: boolean = false,
   ): Promise<Subscription> {
     const subscription = await this.findOne(id);
 
-    if (subscription.userId !== userId) {
+    if (!isAdmin && subscription.userId !== userId) {
       throw new ForbiddenException(
         'You can only cancel your own subscription',
       );
@@ -204,8 +218,12 @@ export class SubscriptionService {
     return await this.subscriptionRepository.save(subscription);
   }
 
-  async activate(id: string): Promise<Subscription> {
+  async activate(id: string, userId: string, paymentMethod?: PaymentMethod, isAdmin: boolean = false): Promise<Subscription> {
     const subscription = await this.findOne(id);
+
+    if (!isAdmin && subscription.userId !== userId) {
+      throw new ForbiddenException('You can only activate your own subscription');
+    }
 
     if (subscription.status === SubscriptionStatus.ACTIVE) {
       throw new BadRequestException('Subscription is already active');
@@ -213,8 +231,43 @@ export class SubscriptionService {
 
     subscription.status = SubscriptionStatus.ACTIVE;
     subscription.paidAt = new Date();
+    if (paymentMethod) {
+      subscription.paymentMethod = paymentMethod;
+    }
 
-    return await this.subscriptionRepository.save(subscription);
+    const savedSubscription = await this.subscriptionRepository.save(subscription);
+    await this.applyPackageDepartmentsToUser(savedSubscription);
+    return savedSubscription;
+  }
+
+  private async applyPackageDepartmentsToUser(subscription: Subscription): Promise<void> {
+    if (!subscription.userId || !subscription.managementPackage) return;
+
+    const user = await this.userRepository.findOne({ where: { id: subscription.userId } });
+    if (!user) return;
+
+    const packageAdministrations = Array.isArray(subscription.managementPackage.administrations)
+      ? subscription.managementPackage.administrations
+      : [];
+
+    const mappedDepartments = packageAdministrations
+      .map((administrationKey) => this.administrationToDepartment[administrationKey])
+      .filter(Boolean);
+
+    if (mappedDepartments.length === 0) return;
+
+    const currentDepartments = Array.isArray(user.departments) ? user.departments : [];
+    user.departments = Array.from(new Set([...currentDepartments, ...mappedDepartments]));
+
+    const nextPermissions = { ...(user.departmentPermissions || {}) };
+    for (const dept of mappedDepartments) {
+      if (!nextPermissions[dept] || nextPermissions[dept] === 'none') {
+        nextPermissions[dept] = true;
+      }
+    }
+    user.departmentPermissions = nextPermissions;
+
+    await this.userRepository.save(user);
   }
 
   async checkExpiredSubscriptions(): Promise<void> {
@@ -226,6 +279,7 @@ export class SubscriptionService {
         status: SubscriptionStatus.ACTIVE,
       })
       .andWhere('subscription.endDate < :now', { now })
+      .andWhere('subscription.noExpiry = false')
       .getMany();
 
     for (const subscription of expiredSubscriptions) {
@@ -248,5 +302,67 @@ export class SubscriptionService {
       relations: ['user', 'property'],
       order: { createdAt: 'DESC' },
     });
+  }
+
+  async getSubscriptionStatus(userId: string): Promise<{ active: boolean; daysLeft: number; noExpiry: boolean; subscription?: Subscription }> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Find the root admin/manager if this is an employee
+    let targetUserId = userId;
+    if (user.role === 'employee' && user.parentId) {
+      // Find the root of the tree
+      let current = user;
+      const seen = new Set([user.id]);
+      while (current.role === 'employee' && current.parentId) {
+        if (seen.has(current.parentId)) break; // Prevent cycles
+        const parent = await this.userRepository.findOne({ where: { id: current.parentId } });
+        if (!parent) break;
+        current = parent;
+        seen.add(current.id);
+      }
+      targetUserId = current.id;
+    }
+
+    const subscription = await this.subscriptionRepository.findOne({
+      where: {
+        userId: targetUserId,
+        status: SubscriptionStatus.ACTIVE,
+      },
+      order: { endDate: 'DESC' },
+    });
+
+    if (!subscription) {
+      // Check if there are any subscriptions at all (maybe expired)
+      const lastSub = await this.subscriptionRepository.findOne({
+        where: { userId: targetUserId },
+        order: { endDate: 'DESC' },
+      });
+      
+      return { 
+        active: false, 
+        daysLeft: 0, 
+        noExpiry: false,
+        subscription: lastSub ?? undefined,
+      };
+    }
+
+    if (subscription.noExpiry) {
+      return { active: true, daysLeft: 9999, noExpiry: true, subscription };
+    }
+
+    const now = new Date();
+    const end = new Date(subscription.endDate);
+    const diffTime = end.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return {
+      active: diffDays > 0,
+      daysLeft: Math.max(0, diffDays),
+      noExpiry: false,
+      subscription,
+    };
   }
 }

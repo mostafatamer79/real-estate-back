@@ -44,14 +44,14 @@ export class FinancialTransaction {
   @Column({ nullable: true })
   fromUserId: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'fromUserId' })
   fromUser: User;
 
   @Column({ nullable: true })
   toUserId: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'toUserId' })
   toUser: User;
 
@@ -91,9 +91,9 @@ export class FinancialTransaction {
   @Column({ nullable: true })
   description: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   transactionDate: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }

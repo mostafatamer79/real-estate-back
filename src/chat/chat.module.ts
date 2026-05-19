@@ -20,9 +20,7 @@ import { User } from '../user/user-entity';
 // Guards & Strategies
 import { WsJwtStrategy } from '../common/guards/ws-auth.strategy';
 import { WsAuthGuard } from '../common/guards/ws-jwt.guard';
-import { WsRolesGuard } from '../common/guards/ws-roles.guard';
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
 
 
 // Modules
@@ -57,16 +55,13 @@ import { NotificationModule } from '../notification/notification.module';
     // Guards & Strategies
     WsJwtStrategy,
     WsAuthGuard,
-    WsRolesGuard,
     JwtAuthGuard,
-    RolesGuard,
   ],
   controllers: [ChatController],
   exports: [
     ChatService,
     ChatGateway,
     WsAuthGuard,
-    WsRolesGuard,
   ],
 })
 export class ChatModule {}

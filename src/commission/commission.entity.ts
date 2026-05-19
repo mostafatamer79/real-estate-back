@@ -119,7 +119,7 @@ import {
     finalCommissionAmount: number;
   
     // Parties Information
-    @ManyToOne(() => User)
+    @ManyToOne(() => User, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'creatorId' })
     creator: User;
   
@@ -179,7 +179,7 @@ import {
     @Column({ type: 'timestamp', nullable: true })
     paidAt: Date;
   
-    @ManyToOne(() => User, { nullable: true })
+    @ManyToOne(() => User, { nullable: true, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'reviewedById' })
     reviewedBy: User;
   
@@ -189,10 +189,10 @@ import {
     @Column({ nullable: true })
     rejectionReason: string;
   
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;
   
-    @UpdateDateColumn()
+    @UpdateDateColumn({ type: 'timestamptz' })
     updatedAt: Date;
   
     @BeforeInsert()

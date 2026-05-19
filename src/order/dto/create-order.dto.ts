@@ -1,4 +1,5 @@
 import { IsString, IsNumber, IsOptional, IsEnum } from 'class-validator';
+import { Department } from '../../user/department.enum';
 
 export class CreateOrderDto {
   @IsString()
@@ -78,4 +79,31 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   additionalDetails?: string;
+
+  @IsOptional()
+  @IsEnum(Department)
+  department?: Department;
+
+  @IsOptional()
+  @IsString()
+  status?: string;
+
+  @IsOptional()
+  @IsString()
+  clientName?: string;
+
+  @IsOptional()
+  @IsString()
+  clientPhone?: string;
+
+  @IsOptional()
+  @IsString()
+  userId?: string;
+
+  @IsOptional()
+  @IsString()
+  assignedToId?: string;
 }
+
+import { PartialType } from '@nestjs/mapped-types';
+export class UpdateOrderDto extends PartialType(CreateOrderDto) {}

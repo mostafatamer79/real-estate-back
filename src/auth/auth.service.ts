@@ -4,6 +4,7 @@
       ConflictException,
       Injectable,
       NotFoundException,
+      ServiceUnavailableException,
       UnauthorizedException,
     } from '@nestjs/common';
     import { JwtService } from '@nestjs/jwt';
@@ -13,6 +14,8 @@
     import * as bcrypt from 'bcrypt';
     import { User } from '../user/user-entity';
     import { ConfigService } from '@nestjs/config';
+import { ActivityService } from '../activity/activity.service';
+import { ActivityType } from '../common/entities/activity.entity';
 
 import { MailService } from '../mail/mail.service';
     
@@ -24,12 +27,19 @@ import { MailService } from '../mail/mail.service';
         private readonly jwtService: JwtService,
         private readonly configService: ConfigService,
         private readonly mailService: MailService,
+        private readonly activityService: ActivityService,
       ) {}
     
       private async generateTokens(user: User) {
         const authCfg = this.configService.get('auth');
     
-        const payload = { sub: user.id, email: user.email, role: user.role };
+        const payload = {
+          sub: user.id,
+          email: user.email,
+          role: user.role,
+          departments: user.departments,
+          departmentPermissions: user.departmentPermissions,
+        };
     
         const accessToken = this.jwtService.sign(payload, {
           secret: authCfg.secret,
@@ -45,24 +55,45 @@ import { MailService } from '../mail/mail.service';
       }
     
       async register(createUserDto: CreateUserDto) {
+        if (!createUserDto.email && !createUserDto.phone) {
+          throw new BadRequestException('Email or phone is required');
+        }
+
+        if (createUserDto.phone && !createUserDto.email) {
+          throw new BadRequestException('Phone OTP is not supported yet');
+        }
+
+        const otp = await this.generateOtp();
+        const expireOtp = Date.now() + 5 * 60 * 1000;
+        createUserDto.expiredOtp = new Date(expireOtp);
+
         if (createUserDto.phone) {
-          const otp = await this.generateAndSendOtp(createUserDto);
-          const expireOtp = Date.now() + 5 * 60 * 1000; // OTP valid for 5 minutes
-          createUserDto.expiredOtp = new Date(expireOtp);
           await this.userService.createUserByphone(createUserDto, otp);
         } else if (createUserDto.email) {
-          const otp = await this.generateAndSendOtp(createUserDto);
-          const expireOtp = Date.now() + 5 * 60 * 1000; // OTP valid for 5 minutes
-          createUserDto.expiredOtp = new Date(expireOtp);
           await this.userService.createUserByemail(createUserDto, otp);
         }
+
+        await this.generateAndSendOtp(createUserDto, otp);
+
+        return {
+          message: 'auth.otp_sent',
+        };
       }
     
-      async generateAndSendOtp(createUserDto: CreateUserDto): Promise<string> {
-        const otp = await this.generateOtp();
-        await this.mailService.sendOtp(createUserDto, otp);
-        // console.log(`Generated OTP for ${createUserDto.email || createUserDto.phone}: ${otp}`);
-        return otp;
+      async generateAndSendOtp(createUserDto: CreateUserDto, otp?: string): Promise<string> {
+        const otpCode = otp || await this.generateOtp();
+        if (!createUserDto.email) {
+          throw new BadRequestException('Email OTP is not available for this account');
+        }
+
+        try {
+          await this.mailService.sendOtp(createUserDto, otpCode);
+        } catch (err) {
+          console.error('[OTP Mail] SMTP error:', err?.message);
+          throw new ServiceUnavailableException('Failed to send verification email');
+        }
+
+        return otpCode;
       } 
 
       
@@ -79,11 +110,11 @@ import { MailService } from '../mail/mail.service';
         if (!user.otp || !user.expireOtp) {
           throw new UnauthorizedException('auth.otp_not_set');
         }
-        if (user.otp !== otp && otp !== '123456') {
+        if (user.otp !== otp) {
           throw new UnauthorizedException('auth.otp_invalid');
         }
         
-        if (otp !== '123456' && user.expireOtp < new Date()) {
+        if (user.expireOtp < new Date()) {
           throw new UnauthorizedException('auth.otp_invalid');
         }
       
@@ -93,6 +124,20 @@ import { MailService } from '../mail/mail.service';
         user.expireOtp = null;
       
         await this.userService.updateUser(user);
+      
+        // Log activity
+        await this.activityService.create(
+          ActivityType.USER_JOINED,
+          'New User Joined',
+          `${user.firstName || ''} ${user.lastName || ''} joined the system`,
+          { 
+            userId: user.id,
+            email: user.email || 'N/A',
+            phone: user.phone || 'N/A',
+            method: user.email ? 'Email' : 'Phone'
+          },
+          user.id
+        );
       
         // Generate Auth Tokens
         const tokens = await this.generateTokens(user);
@@ -107,6 +152,8 @@ import { MailService } from '../mail/mail.service';
             phone: user.phone,
             email: user.email,
             role: user.role,
+            departments: user.departments,
+            departmentPermissions: user.departmentPermissions,
             isVerified: user.isVerified,
             isActive: user.isActive,
           },
@@ -126,7 +173,22 @@ import { MailService } from '../mail/mail.service';
     
           const user = await this.userService.findOne(payload.sub);
           if(user) {
-            return this.generateTokens(user);
+            const tokens = await this.generateTokens(user);
+            return {
+              ...tokens,
+              user: {
+                id: user.id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                phone: user.phone,
+                email: user.email,
+                role: user.role,
+                departments: user.departments,
+                departmentPermissions: user.departmentPermissions,
+                isVerified: user.isVerified,
+                isActive: user.isActive,
+              },
+            };
           } else {
             throw new NotFoundException('auth.user_not_found');
           }
@@ -180,9 +242,12 @@ import { MailService } from '../mail/mail.service';
         user.otp = newOtp;
         user.expireOtp = expireOtp;
     
+        if (!user.email) {
+          throw new BadRequestException('Email OTP is not available for this account');
+        }
+
         // Send the OTP via email
         await this.mailService.sendOtp(user, newOtp);
-        // console.log(`New OTP for ${user.email || user.phone}: ${newOtp}`);
     
         await this.userService.updateUser(user);
     

@@ -6,6 +6,7 @@ import {
   IsUUID,
   IsDate,
   Min,
+  IsBoolean,
 } from 'class-validator';
 import { PaymentMethod, SubscriptionType } from '../subscription.entity';
 import { Type } from 'class-transformer';
@@ -22,6 +23,10 @@ export class CreateSubscriptionDto {
   @IsOptional()
   @IsUUID()
   packageId?: string;
+
+  @IsOptional()
+  @IsString()
+  departmentSlug?: string;
 
   @IsEnum(SubscriptionType)
   @IsOptional()
@@ -51,6 +56,23 @@ export class CreateSubscriptionDto {
   @IsOptional()
   @IsString()
   paymentReference?: string;
+
+  @IsOptional()
+  @IsUUID()
+  userId?: string;
+
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  endDate?: Date;
+
+  @IsOptional()
+  @IsString()
+  status?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  noExpiry?: boolean;
 }
 
 export class UpdateSubscriptionDto {
@@ -70,6 +92,23 @@ export class UpdateSubscriptionDto {
   @IsOptional()
   @IsString()
   paymentReference?: string;
+
+  @IsOptional()
+  @IsUUID()
+  userId?: string;
+
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  endDate?: Date;
+
+  @IsOptional()
+  @IsString()
+  status?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  noExpiry?: boolean;
 }
 
 export class CancelSubscriptionDto {

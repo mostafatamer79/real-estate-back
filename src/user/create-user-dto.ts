@@ -1,7 +1,8 @@
-import { IsDate, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Length, MinLength } from "class-validator"
+import { IsArray, IsDate, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Length, MinLength } from "class-validator"
 import { IsSaudiPhoneNumber } from "../validator/IsSaudiNumber"
 import { Transform } from "class-transformer"
 import { Role, FinancialAgreementType } from "./user-entity"
+import { Department } from "./department.enum"
 
 export class CreateUserDto{
     @IsOptional()
@@ -34,6 +35,15 @@ export class CreateUserDto{
 
     @IsOptional()
     departmentPermissions: any
+
+    @IsOptional()
+    @IsArray()
+    @IsEnum(Department, { each: true })
+    departments?: Department[]
+
+    @IsOptional()
+    @IsString()
+    parentId?: string
  }
 
  export class VerifyOtpDto {
@@ -137,4 +147,13 @@ export class CreateUserDto{
 
     @IsOptional()
     departmentPermissions?: any;
+
+    @IsOptional()
+    @IsArray()
+    @IsEnum(Department, { each: true })
+    departments?: Department[];
+
+    @IsOptional()
+    @IsString()
+    parentId?: string;
   }

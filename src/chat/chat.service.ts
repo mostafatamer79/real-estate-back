@@ -1,7 +1,7 @@
 // src/chat/chat.service.ts - Simplified version
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Not } from 'typeorm';
 import { Message, ChatRoom } from './message.entity';
 import { User } from '../user/user-entity';
 import { NotificationService } from '../notification/notification.service';
@@ -20,6 +20,27 @@ export class ChatService {
     private notificationService: NotificationService,
     private notificationGateway: NotificationGateway,
   ) {}
+
+  async createRoom(data: { name: string; description?: string; userIds: string[]; isGroup?: boolean; isPublic?: boolean; serviceRequestId?: string; offerId?: string; orderId?: string; disputeId?: string }, creator: User) {
+    const participants = await this.userRepository.find({
+      where: { id: (require('typeorm').In)(data.userIds) }
+    });
+
+    const room = this.chatRoomRepository.create({
+      name: data.name,
+      description: data.description,
+      participants,
+      createdBy: creator.id,
+      isGroup: data.isGroup ?? false,
+      isPublic: data.isPublic ?? false,
+      serviceRequestId: data.serviceRequestId,
+      offerId: data.offerId,
+      orderId: data.orderId,
+      disputeId: data.disputeId,
+    });
+
+    return await this.chatRoomRepository.save(room);
+  }
 
 async getRoomById(roomId: string) {
   return this.chatRoomRepository.findOne({
@@ -113,6 +134,32 @@ async getOrCreateDisputeChat(disputeId: string, userId: string, otherId: string,
     return room;
 }
 
+async getOrCreateServiceRequestChat(serviceRequestId: string, userId: string, clientId: string, title?: string) {
+    let room = await this.chatRoomRepository.findOne({
+        where: { serviceRequestId, createdBy: userId },
+        relations: ['participants'],
+    });
+
+    if (!room) {
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        const client = await this.userRepository.findOne({ where: { id: clientId } });
+
+        if (!user || !client) throw new Error('User or Client not found');
+
+        room = this.chatRoomRepository.create({
+            name: title || `Service Request #${serviceRequestId.substring(0, 8)}`,
+            description: `محادثة حول طلب الخدمة: ${title || serviceRequestId}`,
+            participants: [user, client],
+            createdBy: userId,
+            serviceRequestId,
+            isGroup: false,
+        });
+
+        await this.chatRoomRepository.save(room);
+    }
+    return room;
+}
+
   // Send message
   async sendMessage(roomId: string, senderId: string, content: string) {
     const room = await this.chatRoomRepository.findOne({
@@ -156,14 +203,56 @@ async getOrCreateDisputeChat(disputeId: string, userId: string, otherId: string,
     return savedMessage;
   }
 
-  // Get messages for a room
-  async getRoomMessages(roomId: string, limit = 50) {
+  // Get messages for a room (marks them as read if userId is provided)
+  async getRoomMessages(roomId: string, limit = 50, userId?: string) {
+    if (userId) {
+      await this.messageRepository
+        .createQueryBuilder()
+        .update(Message)
+        .set({ isRead: true })
+        .where('roomId = :roomId AND senderId != :userId AND isRead = false', { roomId, userId })
+        .execute();
+
+      // Mark matching chat notifications as read
+      await this.notificationService.markChatNotificationsAsRead(roomId, userId);
+    }
+
     return this.messageRepository.find({
       where: { room: { id: roomId } },
       relations: ['sender'],
       order: { createdAt: 'ASC' },
       take: limit,
     });
+  }
+
+  // Get unread messages count for a specific room and user
+  async getUnreadCount(roomId: string, userId: string): Promise<number> {
+    const count = await this.messageRepository.count({
+      where: {
+        room: { id: roomId },
+        sender: { id: Not(userId) },
+        isRead: false,
+      }
+    });
+
+    if (count === 0) {
+      await this.notificationService.markChatNotificationsAsRead(roomId, userId);
+    }
+
+    return count;
+  }
+
+  // Mark all messages in a room as read for a user
+  async markRoomAsRead(roomId: string, userId: string) {
+    await this.messageRepository
+      .createQueryBuilder()
+      .update(Message)
+      .set({ isRead: true })
+      .where('roomId = :roomId AND senderId != :userId AND isRead = false', { roomId, userId })
+      .execute();
+
+    // Mark matching chat notifications as read
+    await this.notificationService.markChatNotificationsAsRead(roomId, userId);
   }
 
   // Get user's chat rooms

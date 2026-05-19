@@ -25,6 +25,6 @@ export class Expense {
     @Column({ type: 'text', nullable: true })
     description: string;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;
 }

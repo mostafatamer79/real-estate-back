@@ -1,5 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { Role } from '../../user/user-entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Role, User } from '../../user/user-entity';
 
 export enum MarketingCategory {
   ORDERS = 'orders', // الطلبات
@@ -18,6 +18,13 @@ export enum MarketingFrequency {
 export class EmailMarketing {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({ nullable: true })
+  ownerId: string;
+
+  @ManyToOne(() => User, { nullable: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'ownerId' })
+  owner: User;
 
   @Column({
     type: 'enum',
@@ -57,9 +64,18 @@ export class EmailMarketing {
   @Column({ type: 'timestamp', nullable: true })
   lastSentAt: Date;
 
-  @CreateDateColumn()
+  @Column({ default: 0 })
+  totalSent: number;
+
+  @Column({ default: 0 })
+  openCount: number;
+
+  @Column({ default: 0 })
+  clickCount: number;
+
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }

@@ -41,6 +41,6 @@ export class UtilityBill {
     @Column({ type: 'enum', enum: ['owner', 'tenant'], default: 'tenant' })
     responsibility: 'owner' | 'tenant'; // Who pays?
 
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;
 }

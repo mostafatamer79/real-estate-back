@@ -14,7 +14,7 @@ export class Lease {
     @Column()
     unitId: string;
 
-    @ManyToOne(() => TenantProfile)
+    @ManyToOne(() => TenantProfile, (tenant) => tenant.leases)
     @JoinColumn({ name: 'tenantId' })
     tenant: TenantProfile;
 
@@ -46,9 +46,9 @@ export class Lease {
     @Column({ default: true })
     isActive: boolean;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ type: 'timestamptz' })
     updatedAt: Date;
 }

@@ -51,6 +51,6 @@ export class Payment {
     @Column({ nullable: true })
     transactionReference: string;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;
 }

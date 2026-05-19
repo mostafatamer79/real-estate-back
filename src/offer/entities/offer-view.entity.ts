@@ -12,7 +12,7 @@ export class OfferView {
   @Column()
   ip: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
   @ManyToOne(() => Offer)

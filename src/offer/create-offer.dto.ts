@@ -1,9 +1,10 @@
 import {
   IsString, IsNumber, IsOptional, IsBoolean, IsArray,
-  Min, Max, IsEnum, IsUrl
+  Min, Max, IsEnum, IsUrl, IsUUID
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
+import { Department } from '../user/department.enum';
 
 export class CreateOfferDto {
   @IsString()
@@ -164,6 +165,22 @@ export class CreateOfferDto {
   @IsOptional()
   @IsString()
   status?: string;
+
+  @IsOptional()
+  @IsEnum(Department)
+  department?: Department;
+
+  @IsOptional()
+  @IsUUID()
+  userId?: string;
+
+  @IsOptional()
+  @IsString()
+  clientName?: string;
+
+  @IsOptional()
+  @IsString()
+  clientPhone?: string;
 }
 
 export class UpdateOfferDto extends PartialType(CreateOfferDto) {}

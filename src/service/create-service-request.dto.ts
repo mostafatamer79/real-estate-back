@@ -32,6 +32,11 @@ export class CreateServiceRequestDto {
   @Min(1)
   quantity: number;
 
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  price?: number;
+
   @IsString()
   @IsOptional()
   description?: string;
@@ -88,4 +93,21 @@ export class UpdateServiceRequestDto {
   @IsNumber()
   @IsOptional()
   price?: number;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+}
+
+export class AddDepartmentPriceDto {
+  @IsNumber()
+  price: number;
+
+  @IsString()
+  @IsOptional()
+  note?: string;
+
+  @IsString()
+  @IsOptional()
+  deptSlug?: string;
 }

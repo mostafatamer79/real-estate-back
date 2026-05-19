@@ -12,6 +12,8 @@ import { MarketingCronService } from './marketing-cron.service';
 import { MailModule } from '../mail/mail.module';
 import { NotificationModule } from '../notification/notification.module';
 import { User } from '../user/user-entity';
+import { DepartmentsGuard } from '../common/guards/departments.guard';
+import { SettingsModule } from '../settings/settings.module';
 
 @Module({
   imports: [
@@ -25,9 +27,10 @@ import { User } from '../user/user-entity';
     MailModule,
     NotificationModule,
     ScheduleModule.forRoot(),
+    SettingsModule,
   ],
   controllers: [MarketingController],
-  providers: [MarketingService, SocialMediaService, MarketingCronService],
+  providers: [MarketingService, SocialMediaService, MarketingCronService, DepartmentsGuard],
   exports: [MarketingService, SocialMediaService],
 })
 export class MarketingModule {}

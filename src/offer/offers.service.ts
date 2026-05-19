@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Offer } from './offer-entity';
 import { CreateOfferDto, UpdateOfferDto } from './create-offer.dto';
-import { Role } from '../user/user-entity';
+import { Role, User } from '../user/user-entity';
 import { PurchaseRequest, PurchaseRequestStatus } from './entities/purchase-request.entity';
 import { VisitRequest, VisitStatus, VisitType } from './entities/visit-request.entity';
 import { Invoice, InvoiceStatus } from '../financial/entities/invoice.entity';
@@ -24,8 +24,23 @@ export class OffersService {
     private readonly invoiceRepository: Repository<Invoice>,
     @InjectRepository(OfferView)
     private readonly offerViewRepository: Repository<OfferView>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     private readonly settingsService: SettingsService,
   ) {}
+
+  private async getOwnerIds(ownerId: string): Promise<string[]> {
+    const user = await this.userRepository.findOne({ where: { id: ownerId } });
+    if (!user) return [ownerId];
+    
+    // Use Role.MANGER from user-entity
+    if (user.role === Role.MANGER) {
+        const subUsers = await this.userRepository.find({ where: { parentId: ownerId } });
+        return [ownerId, ...subUsers.map(u => u.id)];
+    }
+    
+    return [ownerId];
+  }
 
   // ✅ Increment view count by IP
   async incrementViewCount(offerId: string, ip: string): Promise<void> {
@@ -52,9 +67,17 @@ export class OffersService {
   // ✅ Create offer with user
   async create(dto: CreateOfferDto, user: any): Promise<Offer> {
     console.log('Creating offer for user:', user);
+    
+    // If admin provides a userId, use it; otherwise use the requester's ID
+    // If admin and no userId provided, it's anonymous
+    const targetUserId = (user.role === Role.ADMIN && dto.userId) 
+      ? dto.userId 
+      : (user.role === Role.ADMIN && !dto.userId ? null : (user.sub || user.userId || user.id));
+
     const offer = this.offersRepository.create({
       ...dto,
-      userId: user.userId,
+      userId: targetUserId,
+      department: dto.department || (user.departments && user.departments.length > 0 ? user.departments[0] : null),
       isActive: true,
     });
     return this.offersRepository.save(offer);
@@ -71,6 +94,19 @@ export class OffersService {
     if (filters?.minPrice) query.andWhere('offer.price >= :minPrice', { minPrice: filters.minPrice });
     if (filters?.maxPrice) query.andWhere('offer.price <= :maxPrice', { maxPrice: filters.maxPrice });
     if (filters?.isActive !== undefined) query.andWhere('offer.isActive = :isActive', { isActive: filters.isActive });
+
+    // Scoping
+    if (user && user.role !== Role.ADMIN) {
+      const departments = user.departments || [];
+      const userId = user.sub || user.userId || user.id;
+      const ownerIds = await this.getOwnerIds(userId);
+      
+      if (departments.length > 0) {
+        query.andWhere('(offer.userId IN (:...ownerIds) OR offer.department IN (:...departments))', { ownerIds, departments });
+      } else {
+        query.andWhere('offer.userId IN (:...ownerIds)', { ownerIds });
+      }
+    }
 
     return query.orderBy('offer.createdAt', 'DESC').getMany();
   }
@@ -95,6 +131,16 @@ export class OffersService {
   async remove(id: string, user: any): Promise<Offer> {
     const offer = await this.findOne(id, user);
     offer.isActive = false;
+    return this.offersRepository.save(offer);
+  }
+
+  // ✅ Toggle active (admin)
+  async setActive(id: string, isActive: boolean, user: any): Promise<Offer> {
+    const offer = await this.findOne(id, user);
+    if (user?.role !== Role.ADMIN) {
+      throw new ForbiddenException('Only admins can change offer visibility');
+    }
+    offer.isActive = !!isActive;
     return this.offersRepository.save(offer);
   }
 

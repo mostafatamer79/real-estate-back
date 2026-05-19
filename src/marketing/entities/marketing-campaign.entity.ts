@@ -30,9 +30,9 @@ export class MarketingCampaign {
   @Column({ nullable: true })
   publishedUrl: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }

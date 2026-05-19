@@ -60,21 +60,21 @@ export class Booking {
   @Column({ type: 'text', nullable: true })
   notes: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 
   // Relations
-  @ManyToOne(() => User, (user) => user.bookings)
+  @ManyToOne(() => User, (user) => user.bookings, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
 
   @Column({ nullable: true })
   userId: string;
 
-  @ManyToOne(() => User, { nullable: true }) // Agent or Service Provider
+  @ManyToOne(() => User, { nullable: true, onDelete: 'CASCADE' }) // Agent or Service Provider
   @JoinColumn({ name: 'agentId' })
   agent: User;
 

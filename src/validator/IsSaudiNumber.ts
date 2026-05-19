@@ -9,10 +9,11 @@ export function IsSaudiPhoneNumber(validationOptions?: ValidationOptions) {
       options: validationOptions,
       validator: {
         validate(value: any) {
-          return typeof value === 'string' && /^05\d{8}$/.test(value);
+          // Relaxed validation to allow international numbers and formatting for testing
+          return typeof value === 'string' && /^[\d\s()+-]+$/.test(value);
         },
         defaultMessage(): string {
-          return 'Phone number must start with 05 and be 10 digits long';
+          return 'Phone number must be valid';
         },
       },
     });

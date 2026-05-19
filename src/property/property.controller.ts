@@ -1,113 +1,117 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Request } from '@nestjs/common';
 import { PropertyService } from './property.service';
 import { CreatePropertyDto, UpdatePropertyDto } from './dto/property.dto';
 import { CreateUnitDto, UpdateUnitDto } from './dto/unit.dto';
 import { CreateTenantDto } from './dto/tenant.dto';
 import { CreateLeaseDto, CreatePaymentDto } from './dto/lease.dto';
 import { CreateMaintenanceRequestDto } from './dto/maintenance.dto';
-// import { JwtAuthGuard } from '../common/guards/jwt.guard';
+import { JwtAuthGuard } from '../common/guards/jwt.guard';
+import { Departments } from '../common/decorators/departments.decorators';
+import { DepartmentsGuard } from '../common/guards/departments.guard';
 
 @Controller('properties')
-// @UseGuards(JwtAuthGuard) // Uncomment when Auth is fully integrated
+@UseGuards(JwtAuthGuard, DepartmentsGuard)
+@Departments('properties')
 export class PropertyController {
     constructor(private readonly propertyService: PropertyService) {}
 
     // Property Endpoints
     @Post()
-    createProperty(@Body() createPropertyDto: CreatePropertyDto) {
-        return this.propertyService.createProperty(createPropertyDto);
+    createProperty(@Body() createPropertyDto: CreatePropertyDto, @Request() req) {
+        return this.propertyService.createProperty(createPropertyDto, req.user);
     }
 
     @Get()
-    findAllProperties(@Query('ownerId') ownerId?: string) {
-        return this.propertyService.findAllProperties(ownerId);
+    findAllProperties(@Request() req, @Query('ownerId') ownerId?: string) {
+        return this.propertyService.findAllProperties(req.user, ownerId);
     }
 
     @Get(':id')
-    findOneProperty(@Param('id') id: string) {
-        return this.propertyService.findOneProperty(id);
+    findOneProperty(@Param('id') id: string, @Request() req) {
+        return this.propertyService.findOneProperty(id, req.user);
     }
 
     @Patch(':id')
-    updateProperty(@Param('id') id: string, @Body() updatePropertyDto: UpdatePropertyDto) {
-        return this.propertyService.updateProperty(id, updatePropertyDto);
+    updateProperty(@Param('id') id: string, @Body() updatePropertyDto: UpdatePropertyDto, @Request() req) {
+        return this.propertyService.updateProperty(id, updatePropertyDto, req.user);
     }
 
     @Delete(':id')
-    removeProperty(@Param('id') id: string) {
-        return this.propertyService.removeProperty(id);
+    removeProperty(@Param('id') id: string, @Request() req) {
+        return this.propertyService.removeProperty(id, req.user);
     }
 
     // Unit Endpoints
     @Post('units')
-    createUnit(@Body() createUnitDto: CreateUnitDto) {
-        return this.propertyService.createUnit(createUnitDto);
+    createUnit(@Body() createUnitDto: CreateUnitDto, @Request() req) {
+        return this.propertyService.createUnit(createUnitDto, req.user);
     }
 
     @Get(':id/units')
-    getPropertyUnits(@Param('id') id: string) {
-        return this.propertyService.findUnitsByProperty(id);
+    getPropertyUnits(@Param('id') id: string, @Request() req) {
+        return this.propertyService.findUnitsByProperty(id, req.user);
     }
     
     @Patch('units/:id')
-    updateUnit(@Param('id') id: string, @Body() updateUnitDto: UpdateUnitDto) {
-        return this.propertyService.updateUnit(id, updateUnitDto);
+    updateUnit(@Param('id') id: string, @Body() updateUnitDto: UpdateUnitDto, @Request() req) {
+        return this.propertyService.updateUnit(id, updateUnitDto, req.user);
     }
 
     // Tenant Endpoints
     @Post('tenants')
-    createTenant(@Body() createTenantDto: CreateTenantDto) {
-        return this.propertyService.createTenant(createTenantDto);
+    createTenant(@Body() createTenantDto: CreateTenantDto, @Request() req) {
+        return this.propertyService.createTenant(createTenantDto, req.user);
     }
 
     @Get('tenants/all')
-    async findAllTenants() {
-        return this.propertyService.findAllTenants();
+    async findAllTenants(@Request() req, @Query('ownerId') ownerId?: string) {
+        return this.propertyService.findAllTenants(req.user, ownerId);
     }
 
     @Delete('tenants/:id')
-    async removeTenant(@Param('id') id: string) {
-        return this.propertyService.removeTenant(id);
+    async removeTenant(@Param('id') id: string, @Request() req) {
+        return this.propertyService.removeTenant(id, req.user);
     }
 
     // Lease Endpoints
     @Post('leases')
-    createLease(@Body() createLeaseDto: CreateLeaseDto) {
-        return this.propertyService.createLease(createLeaseDto);
+    createLease(@Body() createLeaseDto: CreateLeaseDto, @Request() req) {
+        return this.propertyService.createLease(createLeaseDto, req.user);
     }
 
     @Get('leases/all')
-    findAllLeases() {
-        return this.propertyService.findAllLeases();
+    findAllLeases(@Request() req, @Query('ownerId') ownerId?: string) {
+        return this.propertyService.findAllLeases(req.user, ownerId);
     }
 
     // Payment Endpoints
     @Post('payments')
-    createPayment(@Body() createPaymentDto: CreatePaymentDto) {
-        return this.propertyService.createPayment(createPaymentDto);
+    createPayment(@Body() createPaymentDto: CreatePaymentDto, @Request() req) {
+        return this.propertyService.createPayment(createPaymentDto, req.user);
     }
 
     @Get('payments/all')
-    findAllPayments() {
-        return this.propertyService.findAllPayments();
+    findAllPayments(@Request() req, @Query('ownerId') ownerId?: string) {
+        return this.propertyService.findAllPayments(req.user, ownerId);
     }
 
     // Maintenance Endpoints
     @Post('maintenance')
-    createMaintenance(@Body() createDto: CreateMaintenanceRequestDto) {
-        return this.propertyService.createMaintenance(createDto);
+    createMaintenance(@Body() createDto: CreateMaintenanceRequestDto, @Request() req) {
+        return this.propertyService.createMaintenance(createDto, req.user);
     }
 
     @Get('maintenance/all')
-    findAllMaintenance() {
-        return this.propertyService.findAllMaintenance();
+    findAllMaintenance(@Request() req, @Query('ownerId') ownerId?: string) {
+        return this.propertyService.findAllMaintenance(req.user, ownerId);
     }
 
     @Get('stats')
     getStats(
+        @Request() req,
         @Query('ownerId') ownerId?: string,
         @Query('status') status?: string
     ) {
-        return this.propertyService.getStats(ownerId, status);
+        return this.propertyService.getStats(req.user, ownerId, status);
     }
 }

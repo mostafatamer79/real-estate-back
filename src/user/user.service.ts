@@ -57,7 +57,11 @@ export class UserService {
         return await this.userRepository.save(newUser);
       }
       public async createUserByemail(createUserDto: CreateUserDto,otp:string): Promise<User> {
-        createUserDto.email = this.normalizeEmail(createUserDto.email);
+        const normalizedEmail = this.normalizeEmail(createUserDto.email);
+        if (!normalizedEmail) {
+          throw new BadRequestException('User must have email');
+        }
+        createUserDto.email = normalizedEmail;
         const existingUser =  await this.findOneByEmail(createUserDto.email);
     
         if(existingUser){
@@ -86,7 +90,11 @@ export class UserService {
         }
 
         if (createUserDto.email) {
-            createUserDto.email = this.normalizeEmail(createUserDto.email);
+            const normalizedEmail = this.normalizeEmail(createUserDto.email);
+            if (!normalizedEmail) {
+                throw new BadRequestException('User must have email');
+            }
+            createUserDto.email = normalizedEmail;
             const existingUser = await this.findOneByEmail(createUserDto.email);
             if (existingUser) {
                 throw new ConflictException('البريد الإلكتروني مستخدم مسبقاً');

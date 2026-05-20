@@ -14,6 +14,10 @@ export class UserService {
         private readonly passwordService : PasswordService
     ){}
 
+    private normalizeEmail(email?: string | null): string | undefined {
+        return email?.trim().toLowerCase();
+    }
+
     public async findAll(): Promise<any[]> {
         const users = await this.userRepository.find({
             order: { createAt: 'DESC' }
@@ -32,7 +36,8 @@ export class UserService {
         return user;
       }
       public async findOneByEmail(email: string): Promise<User | null> {
-        const user = await this.userRepository.findOne({ where: { email } });
+        const normalizedEmail = this.normalizeEmail(email);
+        const user = await this.userRepository.findOne({ where: { email: normalizedEmail } });
         if (!user) {
           return null
         }
@@ -52,6 +57,7 @@ export class UserService {
         return await this.userRepository.save(newUser);
       }
       public async createUserByemail(createUserDto: CreateUserDto,otp:string): Promise<User> {
+        createUserDto.email = this.normalizeEmail(createUserDto.email);
         const existingUser =  await this.findOneByEmail(createUserDto.email);
     
         if(existingUser){
@@ -80,6 +86,7 @@ export class UserService {
         }
 
         if (createUserDto.email) {
+            createUserDto.email = this.normalizeEmail(createUserDto.email);
             const existingUser = await this.findOneByEmail(createUserDto.email);
             if (existingUser) {
                 throw new ConflictException('البريد الإلكتروني مستخدم مسبقاً');

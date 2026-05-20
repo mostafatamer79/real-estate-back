@@ -29,6 +29,10 @@ import { MailService } from '../mail/mail.service';
         private readonly mailService: MailService,
         private readonly activityService: ActivityService,
       ) {}
+
+      private normalizeIdentifier(identifier: string): string {
+        return identifier.trim().toLowerCase();
+      }
     
       private async generateTokens(user: User) {
         const authCfg = this.configService.get('auth');
@@ -55,6 +59,10 @@ import { MailService } from '../mail/mail.service';
       }
     
       async register(createUserDto: CreateUserDto) {
+        if (createUserDto.email) {
+          createUserDto.email = this.normalizeIdentifier(createUserDto.email);
+        }
+
         if (!createUserDto.email && !createUserDto.phone) {
           throw new BadRequestException('Email or phone is required');
         }
@@ -98,9 +106,10 @@ import { MailService } from '../mail/mail.service';
 
       
       async verifyOtp(identifier: string, otp: string) {
+        const normalizedIdentifier = this.normalizeIdentifier(identifier);
         // identifier can be email OR phone
         const user =
-          await this.userService.findOneByEmail(identifier) ||
+          await this.userService.findOneByEmail(normalizedIdentifier) ||
           await this.userService.findOneByPhone(identifier);
       
         if (!user) {
@@ -218,9 +227,10 @@ import { MailService } from '../mail/mail.service';
       }
 
       async resetOtp(identifier: string): Promise<{ message: string }> {
+        const normalizedIdentifier = this.normalizeIdentifier(identifier);
         // Find user by email or phone
         const user =
-          (await this.userService.findOneByEmail(identifier)) ||
+          (await this.userService.findOneByEmail(normalizedIdentifier)) ||
           (await this.userService.findOneByPhone(identifier));
     
         if (!user) {

@@ -4,15 +4,18 @@ import { Global, Module } from '@nestjs/common';
 import { MailService } from './mail.service';
 import { join } from 'path';
 import { ConfigService } from '@nestjs/config';
-const BrevoTransport = require('nodemailer-brevo-transport');
+const mailgunTransport = require('nodemailer-mailgun-transport');
 
 @Global()
 @Module({
   imports: [
     MailerModule.forRootAsync({
       useFactory: async (config: ConfigService) => ({
-        transport: new BrevoTransport({
-          apiKey: config.get('BREVO_API_KEY'),
+        transport: mailgunTransport({
+          auth: {
+            api_key: config.get('MAILGUN_API_KEY'),
+            domain: config.get('MAILGUN_DOMAIN'),
+          }
         }),
         defaults: {
           from: config.get('SMTP_FROM') || `"No Reply" <${config.get('SMTP_USER')}>`,

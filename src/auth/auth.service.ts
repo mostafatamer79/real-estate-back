@@ -106,6 +106,8 @@ import { MailService } from '../mail/mail.service';
 
       
       async verifyOtp(identifier: string, otp: string) {
+        console.log(`[verifyOtp] Start verification for identifier: ${identifier}, otp: ${otp}`);
+        
         const normalizedIdentifier = this.normalizeIdentifier(identifier);
         // identifier can be email OR phone
         const user =
@@ -113,13 +115,18 @@ import { MailService } from '../mail/mail.service';
           await this.userService.findOneByPhone(identifier);
       
         if (!user) {
+          console.log(`[verifyOtp] User not found for identifier: ${normalizedIdentifier}`);
           throw new NotFoundException('auth.user_not_found');
         }
       
         if (!user.otp || !user.expireOtp) {
+          console.log(`[verifyOtp] OTP or expireOtp is not set for user: ${user.id}`);
           throw new UnauthorizedException('auth.otp_not_set');
         }
-        if (user.otp !== otp.trim()) {
+        
+        const otpString = String(otp).trim();
+        if (user.otp !== otpString) {
+          console.log(`[verifyOtp] OTP mismatch. Expected: '${user.otp}', Received: '${otpString}'`);
           throw new UnauthorizedException('auth.otp_invalid');
         }
         
@@ -129,9 +136,12 @@ import { MailService } from '../mail/mail.service';
         const now = new Date().getTime();
         const expireTime = new Date(user.expireOtp).getTime();
         
+        console.log(`[verifyOtp] now: ${now} (${new Date().toISOString()}), expireTime: ${expireTime} (${new Date(user.expireOtp).toISOString()})`);
+        
         // If the timezone shifted the time backwards by 3 hours (e.g. UTC to KSA),
         // the difference could be large. We'll give it a 24 hour buffer just in case.
         if (now > expireTime + (24 * 60 * 60 * 1000)) {
+          console.log(`[verifyOtp] OTP expired!`);
           throw new UnauthorizedException('auth.otp_expired');
         }
       

@@ -47,8 +47,16 @@ export class CreateUserDto{
  }
 
  export class VerifyOtpDto {
+    @IsOptional()
+    @IsString()
     email?: string;
+
+    @IsOptional()
+    @IsString()
     phone?: string;
+
+    @IsNotEmpty()
+    @IsString()
     otp: string;
   }
 

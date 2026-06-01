@@ -15,7 +15,8 @@ const mailgunTransport = require('nodemailer-mailgun-transport');
           auth: {
             api_key: config.get('MAILGUN_API_KEY'),
             domain: config.get('MAILGUN_DOMAIN'),
-          }
+          },
+          // host: 'api.eu.mailgun.net' // Uncomment this if your Mailgun account is in the EU region
         }),
         defaults: {
           from: config.get('SMTP_FROM') || `"No Reply" <${config.get('SMTP_USER')}>`,

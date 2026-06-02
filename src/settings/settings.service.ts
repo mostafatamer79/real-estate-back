@@ -96,8 +96,9 @@ export class SettingsService {
             { key: 'theme_appName', value: 'الوساطة الرقمية', description: 'اسم النظام (العلامة التجارية)' },
             { key: 'txt_project.name', value: 'الوساطة الرقمية', description: 'اسم المشروع العام' },
             { key: 'theme_description', value: 'الوساطة الرقمية - منصة عقارية شاملة لإدارة الأملاك والتسويق العقاري', description: 'وصف النظام (لتحسين محركات البحث)' },
-            { key: 'theme_contactEmail', value: 'info@deeraqarak.com', description: 'البريد الإلكتروني للتواصل' },
+            { key: 'theme_contactEmail', value: 'info@digital-brokerage.com', description: 'البريد الإلكتروني للتواصل' },
             { key: 'theme_contactPhone', value: '+966555555555', description: 'رقم الهاتف للتواصل' },
+            { key: 'theme_contactTwitter', value: '@DigitalBrokerage', description: 'حساب X / تويتر للتواصل' },
             { key: 'theme_soonBadgeBg', value: '#ffffff', description: 'خلفية شارة "قريباً"' },
             { key: 'theme_soonBadgeText', value: '#000000', description: 'لون نص شارة "قريباً"' },
             // Pricing

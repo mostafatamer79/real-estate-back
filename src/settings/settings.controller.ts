@@ -21,7 +21,7 @@ export class SettingsController {
     @SkipSubscriptionGuard()
     @Get('public/:key')
     async getPublicSetting(@Param('key') key: string) {
-        const setting = await this.settingsService.findOne(key);
+        const setting = await this.settingsService.findPublicOne(key);
         return { value: setting ? setting.value : null };
     }
 

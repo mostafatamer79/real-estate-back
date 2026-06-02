@@ -26,6 +26,11 @@ export class SettingsService {
         return setting;
     }
 
+    async findPublicOne(key: string): Promise<Setting | null> {
+        const setting = await this.findOne(key);
+        return setting ? this.normalizeLegacyPublicSetting(setting) : null;
+    }
+
     async setSetting(key: string, value: string, description?: string): Promise<Setting> {
         let setting = await this.settingsRepository.findOne({ where: { key } });
         if (setting) {
@@ -53,7 +58,7 @@ export class SettingsService {
     }
 
     async findAllPublic(): Promise<Setting[]> {
-        return this.settingsRepository.createQueryBuilder('setting')
+        const settings = await this.settingsRepository.createQueryBuilder('setting')
             .where('setting.key LIKE :theme', { theme: 'theme_%' })
             .orWhere('setting.key LIKE :txt', { txt: 'txt_%' })
             .orWhere('setting.key LIKE :section', { section: 'section_%' })
@@ -64,6 +69,25 @@ export class SettingsService {
             .orWhere('setting.key LIKE :ui', { ui: 'ui_%' })
             .orWhere('setting.key IN (:...keys)', { keys: ['appointment_price', 'purchase_service_fee_percentage', 'tax_percentage'] })
             .getMany();
+
+        return settings.map((setting) => this.normalizeLegacyPublicSetting(setting));
+    }
+
+    private normalizeLegacyPublicSetting(setting: Setting): Setting {
+        const normalized = { ...setting };
+
+        if (normalized.key === 'theme_appName' || normalized.key === 'txt_project.name') {
+            if (normalized.value === 'دير عقارك') normalized.value = 'الوساطة الرقمية';
+            if (normalized.value === 'Deer Aqarak') normalized.value = 'Digital Brokerage';
+        }
+
+        if (normalized.key === 'theme_description') {
+            normalized.value = normalized.value
+                .replace(/دير عقارك/g, 'الوساطة الرقمية')
+                .replace(/Deer Aqarak/g, 'Digital Brokerage');
+        }
+
+        return normalized as Setting;
     }
 
     /**
@@ -97,7 +121,7 @@ export class SettingsService {
             { key: 'txt_project.name', value: 'الوساطة الرقمية', description: 'اسم المشروع العام' },
             { key: 'theme_description', value: 'الوساطة الرقمية - منصة عقارية شاملة لإدارة الأملاك والتسويق العقاري', description: 'وصف النظام (لتحسين محركات البحث)' },
             { key: 'theme_contactEmail', value: 'info@digital-brokerage.com', description: 'البريد الإلكتروني للتواصل' },
-            { key: 'theme_contactPhone', value: '+966555555555', description: 'رقم الهاتف للتواصل' },
+            { key: 'theme_contactPhone', value: '', description: 'رقم الهاتف للتواصل' },
             { key: 'theme_contactTwitter', value: '@DigitalBrokerage', description: 'حساب X / تويتر للتواصل' },
             { key: 'theme_soonBadgeBg', value: '#ffffff', description: 'خلفية شارة "قريباً"' },
             { key: 'theme_soonBadgeText', value: '#000000', description: 'لون نص شارة "قريباً"' },

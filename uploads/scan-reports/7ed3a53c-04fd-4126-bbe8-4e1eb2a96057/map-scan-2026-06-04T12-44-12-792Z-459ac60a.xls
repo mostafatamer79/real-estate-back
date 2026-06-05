@@ -1,0 +1,2267 @@
+﻿<!doctype html>
+      <html dir="rtl" lang="ar">
+        <head>
+          <meta charset="utf-8" />
+          <style>
+            body { font-family: Arial, Tahoma, sans-serif; direction: rtl; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: right; }
+            th { background: #0f172a; color: #fff; }
+            .meta td { background: #f8fafc; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <h1>تقرير مسح المنطقة</h1>
+          <table class="meta">
+            <tr><td>تاريخ الإصدار</td><td>٠٤‏/٠٦‏/٢٠٢٦، ٠٣:٤٤ م</td></tr>
+            <tr><td>الإحداثيات</td><td>21.442927, 39.824699</td></tr>
+            <tr><td>نطاق البحث</td><td>2,000 متر</td></tr>
+            <tr><td>عدد المواقع</td><td>223</td></tr>
+          </table>
+          <br />
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>الاسم</th>
+                <th>النوع</th>
+                <th>المسافة بالمتر</th>
+                <th>خط العرض</th>
+                <th>خط الطول</th>
+                <th>المدينة</th>
+              </tr>
+            </thead>
+            <tbody>
+      <tr>
+        <td>1</td>
+        <td>مسجد أحمد الأنصاري</td>
+        <td>place_of_worship</td>
+        <td>203</td>
+        <td>21.444300</td>
+        <td>39.823406</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>2</td>
+        <td>مسجد أم المؤمنين خديجة</td>
+        <td>place_of_worship</td>
+        <td>222</td>
+        <td>21.441123</td>
+        <td>39.825612</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>3</td>
+        <td>جامع محمد المنصوري</td>
+        <td>place_of_worship</td>
+        <td>271</td>
+        <td>21.440493</td>
+        <td>39.824806</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>4</td>
+        <td>مسجد سعاف عبدالله اللحياني الهذلي</td>
+        <td>place_of_worship</td>
+        <td>276</td>
+        <td>21.444924</td>
+        <td>39.823119</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>5</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>322</td>
+        <td>21.442486</td>
+        <td>39.821628</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>6</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>350</td>
+        <td>21.442962</td>
+        <td>39.821316</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>7</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>378</td>
+        <td>21.440322</td>
+        <td>39.827040</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>8</td>
+        <td>مسجد عباد</td>
+        <td>place_of_worship</td>
+        <td>417</td>
+        <td>21.443172</td>
+        <td>39.820682</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>9</td>
+        <td>مسجد معتوق صعيدي</td>
+        <td>place_of_worship</td>
+        <td>517</td>
+        <td>21.439110</td>
+        <td>39.821839</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>10</td>
+        <td>مسجد عبدالرحمن بن مقرن</td>
+        <td>place_of_worship</td>
+        <td>529</td>
+        <td>21.447658</td>
+        <td>39.825200</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>11</td>
+        <td>مسجد الشنقيطي</td>
+        <td>place_of_worship</td>
+        <td>535</td>
+        <td>21.446616</td>
+        <td>39.821385</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>12</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>549</td>
+        <td>21.440100</td>
+        <td>39.820352</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>13</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>555</td>
+        <td>21.438110</td>
+        <td>39.826087</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>14</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>571</td>
+        <td>21.444776</td>
+        <td>39.819553</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>15</td>
+        <td>مسجد المجزرة الجديدة</td>
+        <td>place_of_worship</td>
+        <td>576</td>
+        <td>21.442638</td>
+        <td>39.819138</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>16</td>
+        <td>كفتريا السعودي</td>
+        <td>restaurant</td>
+        <td>581</td>
+        <td>21.447058</td>
+        <td>39.821262</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>17</td>
+        <td>Al Rajhi Bank</td>
+        <td>bank</td>
+        <td>585</td>
+        <td>21.438456</td>
+        <td>39.821728</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>18</td>
+        <td>مسجد صالح العويسي</td>
+        <td>place_of_worship</td>
+        <td>603</td>
+        <td>21.441213</td>
+        <td>39.819175</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>19</td>
+        <td>مسجد أنس بن مالك</td>
+        <td>place_of_worship</td>
+        <td>616</td>
+        <td>21.442053</td>
+        <td>39.818826</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>20</td>
+        <td>مسجد الاميرة حصة</td>
+        <td>place_of_worship</td>
+        <td>622</td>
+        <td>21.437330</td>
+        <td>39.824752</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>21</td>
+        <td>جمال المركزية</td>
+        <td>pharmacy</td>
+        <td>623</td>
+        <td>21.437331</td>
+        <td>39.824465</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>22</td>
+        <td>مسجد الوفيان</td>
+        <td>place_of_worship</td>
+        <td>625</td>
+        <td>21.446439</td>
+        <td>39.819986</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>23</td>
+        <td>مسجد عيد بن محمد المطرفي</td>
+        <td>place_of_worship</td>
+        <td>625</td>
+        <td>21.448103</td>
+        <td>39.827063</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>24</td>
+        <td>مسجد مبارك</td>
+        <td>place_of_worship</td>
+        <td>626</td>
+        <td>21.448424</td>
+        <td>39.823387</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>25</td>
+        <td>مسجد ابوتراب</td>
+        <td>place_of_worship</td>
+        <td>631</td>
+        <td>21.437351</td>
+        <td>39.825832</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>26</td>
+        <td>مسجد الكويتي</td>
+        <td>place_of_worship</td>
+        <td>641</td>
+        <td>21.447637</td>
+        <td>39.821122</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>27</td>
+        <td>دفاع مدني الحجون</td>
+        <td>fire_station</td>
+        <td>642</td>
+        <td>21.437158</td>
+        <td>39.825035</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>28</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>682</td>
+        <td>21.438914</td>
+        <td>39.829686</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>29</td>
+        <td>مسجد بن ملوح</td>
+        <td>place_of_worship</td>
+        <td>694</td>
+        <td>21.439610</td>
+        <td>39.819021</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>30</td>
+        <td>pharmacy</td>
+        <td>pharmacy</td>
+        <td>695</td>
+        <td>21.448447</td>
+        <td>39.821548</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>31</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>700</td>
+        <td>21.437163</td>
+        <td>39.821984</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>32</td>
+        <td>مطعم افعاني</td>
+        <td>restaurant</td>
+        <td>712</td>
+        <td>21.448726</td>
+        <td>39.821778</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>33</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>747</td>
+        <td>21.441019</td>
+        <td>39.817774</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>34</td>
+        <td>مسجد بن ملوح</td>
+        <td>place_of_worship</td>
+        <td>749</td>
+        <td>21.438274</td>
+        <td>39.819470</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>35</td>
+        <td>مسجد طيبة</td>
+        <td>place_of_worship</td>
+        <td>775</td>
+        <td>21.444851</td>
+        <td>39.817503</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>36</td>
+        <td>مسجد الاميرة العنود</td>
+        <td>place_of_worship</td>
+        <td>845</td>
+        <td>21.450512</td>
+        <td>39.825175</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>37</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>857</td>
+        <td>21.437461</td>
+        <td>39.818860</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>38</td>
+        <td>مسجد العيوني</td>
+        <td>place_of_worship</td>
+        <td>863</td>
+        <td>21.436658</td>
+        <td>39.819789</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>39</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>881</td>
+        <td>21.435150</td>
+        <td>39.823068</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>40</td>
+        <td>مسجد عبدالله بن مسعود</td>
+        <td>place_of_worship</td>
+        <td>908</td>
+        <td>21.435748</td>
+        <td>39.820526</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>41</td>
+        <td>bureau_de_change</td>
+        <td>bureau_de_change</td>
+        <td>948</td>
+        <td>21.437594</td>
+        <td>39.831842</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>42</td>
+        <td>bureau_de_change</td>
+        <td>bureau_de_change</td>
+        <td>948</td>
+        <td>21.437161</td>
+        <td>39.831443</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>43</td>
+        <td>مسجد بن معتق</td>
+        <td>place_of_worship</td>
+        <td>954</td>
+        <td>21.437603</td>
+        <td>39.817476</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>44</td>
+        <td>bureau_de_change</td>
+        <td>bureau_de_change</td>
+        <td>957</td>
+        <td>21.437991</td>
+        <td>39.832271</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>45</td>
+        <td>Al Bait</td>
+        <td>fast_food</td>
+        <td>960</td>
+        <td>21.438325</td>
+        <td>39.832547</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>46</td>
+        <td>مسجد سعد براك الصاعدي</td>
+        <td>place_of_worship</td>
+        <td>968</td>
+        <td>21.446822</td>
+        <td>39.816331</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>47</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>983</td>
+        <td>21.434362</td>
+        <td>39.827052</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>48</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>993</td>
+        <td>21.434232</td>
+        <td>39.826876</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>49</td>
+        <td>مسجد منيرة المشرف</td>
+        <td>place_of_worship</td>
+        <td>993</td>
+        <td>21.435890</td>
+        <td>39.818784</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>50</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>995</td>
+        <td>21.438985</td>
+        <td>39.833332</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>51</td>
+        <td>مسجد باعارمة</td>
+        <td>place_of_worship</td>
+        <td>1000</td>
+        <td>21.439853</td>
+        <td>39.815620</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>52</td>
+        <td>Samba Bank</td>
+        <td>bank</td>
+        <td>1000</td>
+        <td>21.438683</td>
+        <td>39.833222</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>53</td>
+        <td>Nahdi Pharmacy</td>
+        <td>pharmacy</td>
+        <td>1003</td>
+        <td>21.438659</td>
+        <td>39.833232</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>54</td>
+        <td>مطعم لذيذ البخاري</td>
+        <td>restaurant</td>
+        <td>1004</td>
+        <td>21.435636</td>
+        <td>39.818973</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>55</td>
+        <td>Asian Restaurant</td>
+        <td>restaurant</td>
+        <td>1006</td>
+        <td>21.439488</td>
+        <td>39.833689</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>56</td>
+        <td>مسجد حسن العنزي</td>
+        <td>place_of_worship</td>
+        <td>1010</td>
+        <td>21.444367</td>
+        <td>39.815066</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>57</td>
+        <td>مطبق السندي</td>
+        <td>restaurant</td>
+        <td>1019</td>
+        <td>21.439067</td>
+        <td>39.833627</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>58</td>
+        <td>مسجد حمدان المفرح</td>
+        <td>place_of_worship</td>
+        <td>1020</td>
+        <td>21.436184</td>
+        <td>39.818019</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>59</td>
+        <td>مصرف ١</td>
+        <td>bank</td>
+        <td>1029</td>
+        <td>21.436385</td>
+        <td>39.831727</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>60</td>
+        <td>Quraish Pharmacy</td>
+        <td>pharmacy</td>
+        <td>1036</td>
+        <td>21.435715</td>
+        <td>39.818355</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>61</td>
+        <td>مسجد الشيخ أحمد محمد جمال</td>
+        <td>place_of_worship</td>
+        <td>1041</td>
+        <td>21.452286</td>
+        <td>39.824968</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>62</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1043</td>
+        <td>21.435233</td>
+        <td>39.830469</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>63</td>
+        <td>bureau_de_change</td>
+        <td>bureau_de_change</td>
+        <td>1046</td>
+        <td>21.438282</td>
+        <td>39.833485</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>64</td>
+        <td>مسجد حمود الرويس</td>
+        <td>place_of_worship</td>
+        <td>1067</td>
+        <td>21.441603</td>
+        <td>39.834910</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>65</td>
+        <td>Kebab al-Miro</td>
+        <td>restaurant</td>
+        <td>1068</td>
+        <td>21.439961</td>
+        <td>39.834511</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>66</td>
+        <td>Kabeebat al-Falaq</td>
+        <td>restaurant</td>
+        <td>1068</td>
+        <td>21.439842</td>
+        <td>39.834471</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>67</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>1075</td>
+        <td>21.439517</td>
+        <td>39.814976</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>68</td>
+        <td>دفاع مدني الغزة</td>
+        <td>fire_station</td>
+        <td>1086</td>
+        <td>21.434653</td>
+        <td>39.830278</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>69</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1088</td>
+        <td>21.439323</td>
+        <td>39.814923</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>70</td>
+        <td>مسجد سليمان الراجحي</td>
+        <td>place_of_worship</td>
+        <td>1090</td>
+        <td>21.434246</td>
+        <td>39.819809</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>71</td>
+        <td>هلال احمر الحجون</td>
+        <td>doctors</td>
+        <td>1094</td>
+        <td>21.434537</td>
+        <td>39.830210</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>72</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1095</td>
+        <td>21.437918</td>
+        <td>39.815591</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>73</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>1097</td>
+        <td>21.433058</td>
+        <td>39.824672</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>74</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>1099</td>
+        <td>21.434039</td>
+        <td>39.829348</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>75</td>
+        <td>شرطة القرارة</td>
+        <td>police</td>
+        <td>1101</td>
+        <td>21.434428</td>
+        <td>39.830155</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>76</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1104</td>
+        <td>21.434352</td>
+        <td>39.830084</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>77</td>
+        <td>بلدية الغزة</td>
+        <td>townhall</td>
+        <td>1109</td>
+        <td>21.434244</td>
+        <td>39.829967</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>78</td>
+        <td>مسجد السده</td>
+        <td>place_of_worship</td>
+        <td>1114</td>
+        <td>21.443073</td>
+        <td>39.835464</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>79</td>
+        <td>مجمع الفهد الطبي</td>
+        <td>hospital</td>
+        <td>1122</td>
+        <td>21.443137</td>
+        <td>39.835535</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>80</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>1123</td>
+        <td>21.433137</td>
+        <td>39.827364</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>81</td>
+        <td>مسجد الخيمة</td>
+        <td>place_of_worship</td>
+        <td>1133</td>
+        <td>21.434364</td>
+        <td>39.818768</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>82</td>
+        <td>مسجد الجن</td>
+        <td>place_of_worship</td>
+        <td>1142</td>
+        <td>21.433454</td>
+        <td>39.828966</td>
+        <td>Makkah</td>
+      </tr>
+    
+      <tr>
+        <td>83</td>
+        <td>كافتريا خيرات</td>
+        <td>restaurant</td>
+        <td>1148</td>
+        <td>21.439847</td>
+        <td>39.835284</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>84</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>1148</td>
+        <td>21.434000</td>
+        <td>39.830272</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>85</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1155</td>
+        <td>21.437703</td>
+        <td>39.834339</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>86</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1169</td>
+        <td>21.432582</td>
+        <td>39.826707</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>87</td>
+        <td>مطعم خليج عدن</td>
+        <td>restaurant</td>
+        <td>1169</td>
+        <td>21.433182</td>
+        <td>39.828942</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>88</td>
+        <td>مسجد بن شويش</td>
+        <td>place_of_worship</td>
+        <td>1171</td>
+        <td>21.444048</td>
+        <td>39.835952</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>89</td>
+        <td>أمانة العاصمة المقدسة</td>
+        <td>townhall</td>
+        <td>1172</td>
+        <td>21.440807</td>
+        <td>39.835787</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>90</td>
+        <td>مسجد الامير متعب</td>
+        <td>place_of_worship</td>
+        <td>1173</td>
+        <td>21.434735</td>
+        <td>39.817557</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>91</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1201</td>
+        <td>21.437346</td>
+        <td>39.834629</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>92</td>
+        <td>Pharmacy Kingdom Med</td>
+        <td>pharmacy</td>
+        <td>1217</td>
+        <td>21.432854</td>
+        <td>39.829309</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>93</td>
+        <td>restaurant</td>
+        <td>restaurant</td>
+        <td>1218</td>
+        <td>21.432142</td>
+        <td>39.826767</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>94</td>
+        <td>مطاعم ومطابخ بن علي</td>
+        <td>restaurant</td>
+        <td>1221</td>
+        <td>21.433960</td>
+        <td>39.817890</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>95</td>
+        <td>مطعم زمزم</td>
+        <td>restaurant</td>
+        <td>1223</td>
+        <td>21.432824</td>
+        <td>39.829360</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>96</td>
+        <td>مسجد الحبشي</td>
+        <td>place_of_worship</td>
+        <td>1226</td>
+        <td>21.439798</td>
+        <td>39.836054</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>97</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>1233</td>
+        <td>21.432347</td>
+        <td>39.828274</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>98</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1238</td>
+        <td>21.433069</td>
+        <td>39.830258</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>99</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1242</td>
+        <td>21.435485</td>
+        <td>39.833646</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>100</td>
+        <td>Money Exchange - Al Jumaie Exchange</td>
+        <td>bureau_de_change</td>
+        <td>1254</td>
+        <td>21.432256</td>
+        <td>39.828626</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>101</td>
+        <td>Adan Restaurant</td>
+        <td>restaurant</td>
+        <td>1264</td>
+        <td>21.432148</td>
+        <td>39.828589</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>102</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1267</td>
+        <td>21.437513</td>
+        <td>39.813924</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>103</td>
+        <td>restaurant</td>
+        <td>restaurant</td>
+        <td>1273</td>
+        <td>21.431968</td>
+        <td>39.828249</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>104</td>
+        <td>باوزير</td>
+        <td>pharmacy</td>
+        <td>1275</td>
+        <td>21.432040</td>
+        <td>39.828552</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>105</td>
+        <td>مسجد الجندراوي</td>
+        <td>place_of_worship</td>
+        <td>1278</td>
+        <td>21.431980</td>
+        <td>39.828469</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>106</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1290</td>
+        <td>21.436962</td>
+        <td>39.814008</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>107</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1293</td>
+        <td>21.432555</td>
+        <td>39.830357</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>108</td>
+        <td>Nahdi Pharmacy</td>
+        <td>pharmacy</td>
+        <td>1310</td>
+        <td>21.431889</td>
+        <td>39.829135</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>109</td>
+        <td>مطم داكا</td>
+        <td>restaurant</td>
+        <td>1314</td>
+        <td>21.432232</td>
+        <td>39.830108</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>110</td>
+        <td>مكتبة إحياء التراث الإسلامي</td>
+        <td>library</td>
+        <td>1318</td>
+        <td>21.441764</td>
+        <td>39.812022</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>111</td>
+        <td>مسجد الريان</td>
+        <td>place_of_worship</td>
+        <td>1322</td>
+        <td>21.442540</td>
+        <td>39.811935</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>112</td>
+        <td>مسجد بركة الشامي</td>
+        <td>place_of_worship</td>
+        <td>1344</td>
+        <td>21.431578</td>
+        <td>39.829166</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>113</td>
+        <td>مسجد عمر عبدالجبار</td>
+        <td>place_of_worship</td>
+        <td>1345</td>
+        <td>21.445341</td>
+        <td>39.811967</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>114</td>
+        <td>نعيم البيلي</td>
+        <td>library</td>
+        <td>1357</td>
+        <td>21.440373</td>
+        <td>39.811878</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>115</td>
+        <td>الدار للمشويات الشامية</td>
+        <td>restaurant</td>
+        <td>1367</td>
+        <td>21.442131</td>
+        <td>39.811523</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>116</td>
+        <td>مسجد مزنة العليان</td>
+        <td>place_of_worship</td>
+        <td>1401</td>
+        <td>21.433083</td>
+        <td>39.833140</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>117</td>
+        <td>مسجد الإجابة</td>
+        <td>place_of_worship</td>
+        <td>1406</td>
+        <td>21.442113</td>
+        <td>39.838260</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>118</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1420</td>
+        <td>21.434106</td>
+        <td>39.834624</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>119</td>
+        <td>مسجد الملك بالزاهر</td>
+        <td>place_of_worship</td>
+        <td>1426</td>
+        <td>21.440634</td>
+        <td>39.811138</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>120</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1442</td>
+        <td>21.444468</td>
+        <td>39.838534</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>121</td>
+        <td>البيك</td>
+        <td>restaurant</td>
+        <td>1446</td>
+        <td>21.442104</td>
+        <td>39.810761</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>122</td>
+        <td>مسجد الملك عبدالعزيز</td>
+        <td>place_of_worship</td>
+        <td>1458</td>
+        <td>21.440597</td>
+        <td>39.838558</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>123</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1464</td>
+        <td>21.431687</td>
+        <td>39.832071</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>124</td>
+        <td>البريد السعودي</td>
+        <td>post_office</td>
+        <td>1468</td>
+        <td>21.432558</td>
+        <td>39.815924</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>125</td>
+        <td>رقية</td>
+        <td>pharmacy</td>
+        <td>1471</td>
+        <td>21.432928</td>
+        <td>39.815397</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>126</td>
+        <td>Jarwal&#039;s Civil Defense</td>
+        <td>fire_station</td>
+        <td>1477</td>
+        <td>21.432380</td>
+        <td>39.816020</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>127</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1481</td>
+        <td>21.444004</td>
+        <td>39.810435</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>128</td>
+        <td>مبنى ي</td>
+        <td>university</td>
+        <td>1503</td>
+        <td>21.440625</td>
+        <td>39.810385</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>129</td>
+        <td>صراف بنك البلاد</td>
+        <td>atm</td>
+        <td>1508</td>
+        <td>21.435477</td>
+        <td>39.812528</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>130</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1516</td>
+        <td>21.432086</td>
+        <td>39.833589</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>131</td>
+        <td>مواقف الغزة</td>
+        <td>parking</td>
+        <td>1524</td>
+        <td>21.430336</td>
+        <td>39.830505</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>132</td>
+        <td>مسجد باعثمان</td>
+        <td>place_of_worship</td>
+        <td>1525</td>
+        <td>21.435331</td>
+        <td>39.812428</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>133</td>
+        <td>Toilet for Men</td>
+        <td>toilets</td>
+        <td>1562</td>
+        <td>21.429517</td>
+        <td>39.829182</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>134</td>
+        <td>مسجد الكعكي</td>
+        <td>place_of_worship</td>
+        <td>1572</td>
+        <td>21.431299</td>
+        <td>39.816051</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>135</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1579</td>
+        <td>21.430810</td>
+        <td>39.832646</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>136</td>
+        <td>محطة حافلات جرول مكة</td>
+        <td>bus_station</td>
+        <td>1591</td>
+        <td>21.430409</td>
+        <td>39.817255</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>137</td>
+        <td>Murthaba</td>
+        <td>fast_food</td>
+        <td>1609</td>
+        <td>21.429071</td>
+        <td>39.829177</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>138</td>
+        <td>Al Najoom Fastfood</td>
+        <td>fast_food</td>
+        <td>1613</td>
+        <td>21.430561</td>
+        <td>39.832845</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>139</td>
+        <td>school</td>
+        <td>school</td>
+        <td>1615</td>
+        <td>21.438981</td>
+        <td>39.839715</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>140</td>
+        <td>مسجد بن عبيد</td>
+        <td>place_of_worship</td>
+        <td>1621</td>
+        <td>21.436171</td>
+        <td>39.838573</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>141</td>
+        <td>مسجد ال ثاني</td>
+        <td>place_of_worship</td>
+        <td>1626</td>
+        <td>21.449196</td>
+        <td>39.838892</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>142</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1638</td>
+        <td>21.432161</td>
+        <td>39.835498</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>143</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1641</td>
+        <td>21.428174</td>
+        <td>39.824883</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>144</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1641</td>
+        <td>21.428207</td>
+        <td>39.825880</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>145</td>
+        <td>taxi</td>
+        <td>taxi</td>
+        <td>1643</td>
+        <td>21.428734</td>
+        <td>39.829130</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>146</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1645</td>
+        <td>21.437709</td>
+        <td>39.839568</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>147</td>
+        <td>Al-Gazza Station</td>
+        <td>bus_station</td>
+        <td>1645</td>
+        <td>21.429176</td>
+        <td>39.830554</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>148</td>
+        <td>مسجد احمد بن عواض المسعودي</td>
+        <td>place_of_worship</td>
+        <td>1646</td>
+        <td>21.450540</td>
+        <td>39.838333</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>149</td>
+        <td>زمزم</td>
+        <td>drinking_water</td>
+        <td>1651</td>
+        <td>21.428626</td>
+        <td>39.828997</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>150</td>
+        <td>Nahdi Pharmacy</td>
+        <td>pharmacy</td>
+        <td>1655</td>
+        <td>21.445889</td>
+        <td>39.809030</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>151</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>1658</td>
+        <td>21.430798</td>
+        <td>39.834017</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>152</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1668</td>
+        <td>21.427931</td>
+        <td>39.824897</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>153</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>1676</td>
+        <td>21.430557</td>
+        <td>39.833953</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>154</td>
+        <td>school</td>
+        <td>school</td>
+        <td>1677</td>
+        <td>21.438680</td>
+        <td>39.840247</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>155</td>
+        <td>school</td>
+        <td>school</td>
+        <td>1679</td>
+        <td>21.438710</td>
+        <td>39.840272</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>156</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1679</td>
+        <td>21.427852</td>
+        <td>39.823828</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>157</td>
+        <td>جامعة أم القرى قسم البنات</td>
+        <td>university</td>
+        <td>1684</td>
+        <td>21.440298</td>
+        <td>39.808678</td>
+        <td>Makkah</td>
+      </tr>
+    
+      <tr>
+        <td>158</td>
+        <td>مسجد القطري</td>
+        <td>place_of_worship</td>
+        <td>1684</td>
+        <td>21.435493</td>
+        <td>39.838879</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>159</td>
+        <td>جامعة</td>
+        <td>university</td>
+        <td>1686</td>
+        <td>21.440293</td>
+        <td>39.808660</td>
+        <td>Makkah</td>
+      </tr>
+    
+      <tr>
+        <td>160</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1687</td>
+        <td>21.427792</td>
+        <td>39.825852</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>161</td>
+        <td>جامعة</td>
+        <td>university</td>
+        <td>1689</td>
+        <td>21.440269</td>
+        <td>39.808635</td>
+        <td>Makkah</td>
+      </tr>
+    
+      <tr>
+        <td>162</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1694</td>
+        <td>21.427693</td>
+        <td>39.824939</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>163</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1698</td>
+        <td>21.430965</td>
+        <td>39.834889</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>164</td>
+        <td>Bab Al-Salam</td>
+        <td>fast_food</td>
+        <td>1704</td>
+        <td>21.428383</td>
+        <td>39.829878</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>165</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1706</td>
+        <td>21.433507</td>
+        <td>39.811689</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>166</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1707</td>
+        <td>21.427595</td>
+        <td>39.823849</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>167</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1709</td>
+        <td>21.438731</td>
+        <td>39.840581</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>168</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1735</td>
+        <td>21.427344</td>
+        <td>39.823849</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>169</td>
+        <td>المكتبة العامة بالعاصمة المقدسة</td>
+        <td>library</td>
+        <td>1736</td>
+        <td>21.445686</td>
+        <td>39.808190</td>
+        <td>Makkah</td>
+      </tr>
+    
+      <tr>
+        <td>170</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1739</td>
+        <td>21.440938</td>
+        <td>39.841365</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>171</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>1748</td>
+        <td>21.428058</td>
+        <td>39.819214</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>172</td>
+        <td>fuel</td>
+        <td>fuel</td>
+        <td>1756</td>
+        <td>21.448722</td>
+        <td>39.808911</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>173</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>1758</td>
+        <td>21.432295</td>
+        <td>39.812131</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>174</td>
+        <td>Diyar Hadramount Restaurant</td>
+        <td>restaurant</td>
+        <td>1759</td>
+        <td>21.427836</td>
+        <td>39.829795</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>175</td>
+        <td>Masjid Raniaan Bin Mohammed Al-Amiri مسجد غنيان بن محمد العميري</td>
+        <td>place_of_worship</td>
+        <td>1763</td>
+        <td>21.450577</td>
+        <td>39.839615</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>176</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>1766</td>
+        <td>21.446946</td>
+        <td>39.808188</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>177</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1795</td>
+        <td>21.426942</td>
+        <td>39.822285</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>178</td>
+        <td>مستشفى الملك عبد العزيز</td>
+        <td>hospital</td>
+        <td>1810</td>
+        <td>21.441777</td>
+        <td>39.807258</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>179</td>
+        <td>مستشفى الحرم للطوارئ</td>
+        <td>hospital</td>
+        <td>1810</td>
+        <td>21.426707</td>
+        <td>39.823266</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>180</td>
+        <td>مسجد الوزير</td>
+        <td>place_of_worship</td>
+        <td>1812</td>
+        <td>21.429174</td>
+        <td>39.815313</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>181</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1814</td>
+        <td>21.430946</td>
+        <td>39.836587</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>182</td>
+        <td>Masjid al Homimidi</td>
+        <td>place_of_worship</td>
+        <td>1814</td>
+        <td>21.430408</td>
+        <td>39.835931</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>183</td>
+        <td>مسجد المعابدة</td>
+        <td>place_of_worship</td>
+        <td>1821</td>
+        <td>21.441331</td>
+        <td>39.842208</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>184</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1822</td>
+        <td>21.426567</td>
+        <td>39.825760</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>185</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1824</td>
+        <td>21.426530</td>
+        <td>39.825344</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>186</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1825</td>
+        <td>21.426646</td>
+        <td>39.822476</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>187</td>
+        <td>مسجد عبد الرحمن كوشك</td>
+        <td>place_of_worship</td>
+        <td>1827</td>
+        <td>21.437694</td>
+        <td>39.807970</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>188</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1829</td>
+        <td>21.453024</td>
+        <td>39.810745</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>189</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1849</td>
+        <td>21.426415</td>
+        <td>39.822603</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>190</td>
+        <td>مسجد تركي الصاعدي</td>
+        <td>place_of_worship</td>
+        <td>1849</td>
+        <td>21.457186</td>
+        <td>39.815503</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>191</td>
+        <td>atm</td>
+        <td>atm</td>
+        <td>1850</td>
+        <td>21.449788</td>
+        <td>39.808412</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>192</td>
+        <td>Masjid Hajr As Salmi</td>
+        <td>place_of_worship</td>
+        <td>1855</td>
+        <td>21.453150</td>
+        <td>39.838861</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>193</td>
+        <td>دورات مياه النساء - 14</td>
+        <td>toilets</td>
+        <td>1863</td>
+        <td>21.426224</td>
+        <td>39.826077</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>194</td>
+        <td>fuel</td>
+        <td>fuel</td>
+        <td>1869</td>
+        <td>21.449825</td>
+        <td>39.808233</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>195</td>
+        <td>دورات مياه الرجال - 13</td>
+        <td>toilets</td>
+        <td>1873</td>
+        <td>21.426090</td>
+        <td>39.825112</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>196</td>
+        <td>Domino&#039;s Pizza</td>
+        <td>fast_food</td>
+        <td>1873</td>
+        <td>21.447325</td>
+        <td>39.807232</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>197</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1880</td>
+        <td>21.426030</td>
+        <td>39.823934</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>198</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1886</td>
+        <td>21.425968</td>
+        <td>39.824727</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>199</td>
+        <td>مسجد بخيت الصاعدي</td>
+        <td>place_of_worship</td>
+        <td>1888</td>
+        <td>21.455763</td>
+        <td>39.812762</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>200</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1892</td>
+        <td>21.436320</td>
+        <td>39.807850</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>201</td>
+        <td>مسجد المصموم</td>
+        <td>place_of_worship</td>
+        <td>1896</td>
+        <td>21.437594</td>
+        <td>39.842094</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>202</td>
+        <td>مجمع الرواد الطبي العام</td>
+        <td>hospital</td>
+        <td>1901</td>
+        <td>21.450591</td>
+        <td>39.808279</td>
+        <td>مكة المكرمة</td>
+      </tr>
+    
+      <tr>
+        <td>203</td>
+        <td>Masjid Sheikh Said al-saaedi</td>
+        <td>place_of_worship</td>
+        <td>1901</td>
+        <td>21.460017</td>
+        <td>39.825271</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>204</td>
+        <td>Masjid Zaidi</td>
+        <td>place_of_worship</td>
+        <td>1905</td>
+        <td>21.438791</td>
+        <td>39.842557</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>205</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1905</td>
+        <td>21.426073</td>
+        <td>39.821393</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>206</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1906</td>
+        <td>21.425813</td>
+        <td>39.823582</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>207</td>
+        <td>fuel</td>
+        <td>fuel</td>
+        <td>1907</td>
+        <td>21.441380</td>
+        <td>39.806348</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>208</td>
+        <td>مسجد المحطة</td>
+        <td>place_of_worship</td>
+        <td>1924</td>
+        <td>21.457761</td>
+        <td>39.815137</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>209</td>
+        <td>شرطة جرول</td>
+        <td>police</td>
+        <td>1928</td>
+        <td>21.459908</td>
+        <td>39.820936</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>210</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1929</td>
+        <td>21.425809</td>
+        <td>39.821669</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>211</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1944</td>
+        <td>21.425638</td>
+        <td>39.821917</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>212</td>
+        <td>مسجد طلحة البخاري</td>
+        <td>place_of_worship</td>
+        <td>1952</td>
+        <td>21.426800</td>
+        <td>39.817246</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>213</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1954</td>
+        <td>21.435628</td>
+        <td>39.807523</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>214</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>1954</td>
+        <td>21.432848</td>
+        <td>39.840169</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>215</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1965</td>
+        <td>21.451642</td>
+        <td>39.808186</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>216</td>
+        <td>مطعم ربوع بلادي</td>
+        <td>restaurant</td>
+        <td>1967</td>
+        <td>21.452422</td>
+        <td>39.808665</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>217</td>
+        <td>drinking_water</td>
+        <td>drinking_water</td>
+        <td>1978</td>
+        <td>21.425182</td>
+        <td>39.823320</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>218</td>
+        <td>مسجد الحوازم</td>
+        <td>place_of_worship</td>
+        <td>1980</td>
+        <td>21.437426</td>
+        <td>39.806503</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>219</td>
+        <td>دورات مياه النساء - 11</td>
+        <td>toilets</td>
+        <td>1986</td>
+        <td>21.425107</td>
+        <td>39.823360</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>220</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1988</td>
+        <td>21.425420</td>
+        <td>39.820791</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>221</td>
+        <td>hospital</td>
+        <td>hospital</td>
+        <td>1991</td>
+        <td>21.454557</td>
+        <td>39.839330</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>222</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>1997</td>
+        <td>21.425275</td>
+        <td>39.821145</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>223</td>
+        <td>toilets</td>
+        <td>toilets</td>
+        <td>2005</td>
+        <td>21.425163</td>
+        <td>39.821357</td>
+        <td></td>
+      </tr>
+    </tbody>
+          </table>
+        </body>
+      </html>

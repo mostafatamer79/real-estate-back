@@ -10,9 +10,10 @@ import { Booking } from '../booking/entities/booking.entity';
 import { ServiceRequest } from '../service/service-request.entity';
 import { DepartmentsGuard } from '../common/guards/departments.guard';
 import { SettingsModule } from '../settings/settings.module';
+import { PlacesModule } from '../place/place.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([FinancialTransaction, Invoice, Commission, User, Booking, ServiceRequest]), SettingsModule],
+  imports: [TypeOrmModule.forFeature([FinancialTransaction, Invoice, Commission, User, Booking, ServiceRequest]), SettingsModule, PlacesModule],
   controllers: [FinancialController],
   providers: [FinancialService, DepartmentsGuard],
   exports: [FinancialService],

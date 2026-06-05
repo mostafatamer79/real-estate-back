@@ -15,7 +15,7 @@ import helmet from 'helmet';
 dotenv.config();
 
 async function configureApp(app: NestExpressApplication) {
-  const uploadDir = join(__dirname, '..', '..', '/uploads');
+  const uploadDir = join(process.cwd(), 'uploads');
   const corsOrigins = (process.env.CORS_ORIGIN || '')
     .split(',')
     .map((origin) => origin.trim())

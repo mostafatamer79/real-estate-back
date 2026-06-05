@@ -123,6 +123,14 @@ export class FinancialController {
     return this.financialService.getUserFiles(req.user.userId);
   }
 
+  @Post('scan-report')
+  async generateScanReport(
+    @Request() req,
+    @Body() body: { latitude: number; longitude: number; radius: number; mapImage?: string; locationName?: string },
+  ) {
+    return this.financialService.generateScanReportFiles(req.user.userId, body);
+  }
+
   @Post('invoices/:id/pay')
   async payInvoice(
     @Request() req,

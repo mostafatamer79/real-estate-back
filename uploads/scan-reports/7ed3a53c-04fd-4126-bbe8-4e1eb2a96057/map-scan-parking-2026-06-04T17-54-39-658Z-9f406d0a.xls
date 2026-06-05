@@ -1,0 +1,57 @@
+﻿<!doctype html>
+      <html dir="rtl" lang="ar">
+        <head>
+          <meta charset="utf-8" />
+          <style>
+            body { font-family: Arial, Tahoma, sans-serif; direction: rtl; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: right; }
+            th { background: #0f172a; color: #fff; }
+            .meta td { background: #f8fafc; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <h1>تقرير مسح المنطقة</h1>
+          <table class="meta">
+            <tr><td>تاريخ الإصدار</td><td>٠٤‏/٠٦‏/٢٠٢٦، ٠٨:٥٤ م</td></tr>
+            <tr><td>الإحداثيات</td><td>24.940050, 46.810627</td></tr>
+            <tr><td>نطاق البحث</td><td>2,000 متر</td></tr>
+            <tr><td>عدد المواقع</td><td>2</td></tr>
+          </table>
+          <br />
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>الاسم</th>
+                <th>النوع</th>
+                <th>المسافة بالمتر</th>
+                <th>خط العرض</th>
+                <th>خط الطول</th>
+                <th>المدينة</th>
+              </tr>
+            </thead>
+            <tbody>
+      <tr>
+        <td>1</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>1700</td>
+        <td>24.953749</td>
+        <td>46.803131</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>2</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>1853</td>
+        <td>24.926263</td>
+        <td>46.820953</td>
+        <td></td>
+      </tr>
+    </tbody>
+          </table>
+        </body>
+      </html>

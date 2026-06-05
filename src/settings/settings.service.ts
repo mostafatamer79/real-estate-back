@@ -123,6 +123,7 @@ export class SettingsService {
             { key: 'theme_contactEmail', value: 'info@digital-brokerage.com', description: 'البريد الإلكتروني للتواصل' },
             { key: 'theme_contactPhone', value: '', description: 'رقم الهاتف للتواصل' },
             { key: 'theme_contactTwitter', value: '@DigitalBrokerage', description: 'حساب X / تويتر للتواصل' },
+            { key: 'theme_reportCoverUrl', value: '', description: 'صورة غلاف تقارير مسح الخريطة' },
             { key: 'theme_soonBadgeBg', value: '#ffffff', description: 'خلفية شارة "قريباً"' },
             { key: 'theme_soonBadgeText', value: '#000000', description: 'لون نص شارة "قريباً"' },
             // Pricing

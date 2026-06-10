@@ -73,6 +73,11 @@ export class PropertyController {
         return this.propertyService.removeTenant(id, req.user);
     }
 
+    @Patch('tenants/:id')
+    async updateTenant(@Param('id') id: string, @Body() dto: Partial<CreateTenantDto>, @Request() req) {
+        return this.propertyService.updateTenant(id, dto, req.user);
+    }
+
     // Lease Endpoints
     @Post('leases')
     createLease(@Body() createLeaseDto: CreateLeaseDto, @Request() req) {
@@ -82,6 +87,16 @@ export class PropertyController {
     @Get('leases/all')
     findAllLeases(@Request() req, @Query('ownerId') ownerId?: string) {
         return this.propertyService.findAllLeases(req.user, ownerId);
+    }
+
+    @Patch('leases/:id')
+    updateLease(@Param('id') id: string, @Body() dto: Partial<CreateLeaseDto>, @Request() req) {
+        return this.propertyService.updateLease(id, dto, req.user);
+    }
+
+    @Delete('leases/:id')
+    removeLease(@Param('id') id: string, @Request() req) {
+        return this.propertyService.removeLease(id, req.user);
     }
 
     // Payment Endpoints
@@ -95,6 +110,16 @@ export class PropertyController {
         return this.propertyService.findAllPayments(req.user, ownerId);
     }
 
+    @Patch('payments/:id')
+    updatePayment(@Param('id') id: string, @Body() dto: Partial<CreatePaymentDto>, @Request() req) {
+        return this.propertyService.updatePayment(id, dto, req.user);
+    }
+
+    @Delete('payments/:id')
+    removePayment(@Param('id') id: string, @Request() req) {
+        return this.propertyService.removePayment(id, req.user);
+    }
+
     // Maintenance Endpoints
     @Post('maintenance')
     createMaintenance(@Body() createDto: CreateMaintenanceRequestDto, @Request() req) {
@@ -104,6 +129,16 @@ export class PropertyController {
     @Get('maintenance/all')
     findAllMaintenance(@Request() req, @Query('ownerId') ownerId?: string) {
         return this.propertyService.findAllMaintenance(req.user, ownerId);
+    }
+
+    @Patch('maintenance/:id')
+    updateMaintenance(@Param('id') id: string, @Body() dto: Partial<CreateMaintenanceRequestDto>, @Request() req) {
+        return this.propertyService.updateMaintenance(id, dto, req.user);
+    }
+
+    @Delete('maintenance/:id')
+    removeMaintenance(@Param('id') id: string, @Request() req) {
+        return this.propertyService.removeMaintenance(id, req.user);
     }
 
     @Get('stats')

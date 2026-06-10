@@ -836,7 +836,20 @@ export class ServiceRequestService {
 
     // Check access: admin, agent, the client, or any dept contributor
     const isOwner = serviceRequest.userId === user.id;
-    const isStaff = user.role === Role.ADMIN || user.role === Role.AGENT;
+    const targetToSlugMap: Record<string, string> = {
+      [TargetDepartment.MARKETING]: 'marketing',
+      [TargetDepartment.FINANCE]: 'finance',
+      [TargetDepartment.LEGAL]: 'legal',
+      [TargetDepartment.REAL_ESTATE]: 'properties',
+      [TargetDepartment.EMPLOYEES]: 'employees',
+    };
+    const requiredDeptSlug = targetToSlugMap[serviceRequest.targetDepartment];
+    const userDepts = user.departments || [];
+    const hasDeptAccess = userDepts.includes(requiredDeptSlug as Department) ||
+      user.departmentPermissions?.[requiredDeptSlug] === true ||
+      user.departmentPermissions?.[requiredDeptSlug] === 'manage' ||
+      user.departmentPermissions?.[requiredDeptSlug] === 'view';
+    const isStaff = user.role === Role.ADMIN || user.role === Role.AGENT || hasDeptAccess;
     const isContributor = Object.values(serviceRequest.departmentPrices || {}).some(e => e.addedBy === user.id);
     const isViewer = (user.role === Role.USER || user.role === Role.VIEWER) && isOwner;
 
@@ -847,11 +860,6 @@ export class ServiceRequestService {
     // If a chat room already exists, return it (staff can open/read/reply)
     if (serviceRequest.chatRoomId) {
       return { chatRoomId: serviceRequest.chatRoomId };
-    }
-
-    // Only the request owner can create the group chat. Staff cannot initiate it.
-    if (serviceRequest.userId !== user.id) {
-      throw new ForbiddenException('Only the client can start this chat');
     }
 
     // Collect all participants: client + contributors + admins
@@ -870,6 +878,7 @@ export class ServiceRequestService {
         userIds: Array.from(participantIds),
         isGroup: true,
         isPublic: false,
+        serviceRequestId: serviceRequest.id,
       },
       user,
     );

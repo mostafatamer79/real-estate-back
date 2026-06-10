@@ -49,6 +49,12 @@ export class PropertyService {
         return [ownerId];
     }
 
+    private getEffectiveOwnerId(user: any, ownerId?: string): string | undefined {
+        if (ownerId) return ownerId;
+        if (user?.role === Role.ADMIN) return undefined;
+        return user?.userId || user?.id;
+    }
+
     // Property Methods
     async createProperty(createPropertyDto: CreatePropertyDto, user: any): Promise<Property> {
         const ownerId = (createPropertyDto as any).ownerId || user?.userId || user?.id;
@@ -72,9 +78,10 @@ export class PropertyService {
     }
 
     async findAllProperties(user: any, ownerId?: string): Promise<Property[]> {
-        const effectiveOwnerId = ownerId || user?.userId || user?.id;
+        const effectiveOwnerId = this.getEffectiveOwnerId(user, ownerId);
         const query = this.propertyRepository.createQueryBuilder('property')
-            .leftJoinAndSelect('property.units', 'units');
+            .leftJoinAndSelect('property.units', 'units')
+            .leftJoinAndSelect('property.owner', 'owner');
         
         if (effectiveOwnerId) {
             const ownerIds = await this.getOwnerIds(effectiveOwnerId);
@@ -148,7 +155,7 @@ export class PropertyService {
     }
 
     async findAllTenants(user: any, ownerId?: string): Promise<TenantProfile[]> {
-        const effectiveOwnerId = ownerId || user?.userId || user?.id;
+        const effectiveOwnerId = this.getEffectiveOwnerId(user, ownerId);
         const query = this.tenantRepository.createQueryBuilder('tenant');
         
         if (effectiveOwnerId) {
@@ -177,6 +184,22 @@ export class PropertyService {
         if (result.affected === 0) throw new NotFoundException(`Tenant with ID ${id} not found`);
     }
 
+    async updateTenant(id: string, dto: Partial<CreateTenantDto>, user: any): Promise<TenantProfile> {
+        const tenant = await this.tenantRepository.findOne({ where: { id }, relations: ['leases'] as any });
+        if (!tenant) throw new NotFoundException(`Tenant with ID ${id} not found`);
+        if (user?.role !== Role.ADMIN) {
+            const leases = await this.leaseRepository.find({ where: { tenantId: id } as any });
+            for (const lease of leases) {
+                const unit = await this.unitRepository.findOne({ where: { id: lease.unitId } });
+                if (unit) await this.findOneProperty(unit.propertyId, user);
+            }
+        }
+        await this.tenantRepository.update(id, dto as any);
+        const updated = await this.tenantRepository.findOne({ where: { id } });
+        if (!updated) throw new NotFoundException(`Tenant with ID ${id} not found`);
+        return updated;
+    }
+
     // Lease Methods
     async createLease(createLeaseDto: CreateLeaseDto, user: any): Promise<Lease> {
         // Ensure lease is created under a unit the user can access
@@ -203,7 +226,7 @@ export class PropertyService {
     }
 
     async findAllLeases(user: any, ownerId?: string): Promise<Lease[]> {
-        const effectiveOwnerId = ownerId || user?.userId || user?.id;
+        const effectiveOwnerId = this.getEffectiveOwnerId(user, ownerId);
         const query = this.leaseRepository.createQueryBuilder('lease')
             .leftJoinAndSelect('lease.unit', 'unit')
             .leftJoinAndSelect('lease.tenant', 'tenant')
@@ -215,6 +238,26 @@ export class PropertyService {
         }
         
         return await query.getMany();
+    }
+
+    async updateLease(id: string, dto: Partial<CreateLeaseDto>, user: any): Promise<Lease> {
+        const lease = await this.leaseRepository.findOne({ where: { id } });
+        if (!lease) throw new NotFoundException(`Lease with ID ${id} not found`);
+        const unit = await this.unitRepository.findOne({ where: { id: (dto as any).unitId || lease.unitId } });
+        if (unit) await this.findOneProperty(unit.propertyId, user);
+        await this.leaseRepository.update(id, dto as any);
+        const updated = await this.leaseRepository.findOne({ where: { id }, relations: ['unit', 'tenant'] });
+        if (!updated) throw new NotFoundException(`Lease with ID ${id} not found`);
+        return updated;
+    }
+
+    async removeLease(id: string, user: any): Promise<void> {
+        const lease = await this.leaseRepository.findOne({ where: { id } });
+        if (!lease) throw new NotFoundException(`Lease with ID ${id} not found`);
+        const unit = await this.unitRepository.findOne({ where: { id: lease.unitId } });
+        if (unit) await this.findOneProperty(unit.propertyId, user);
+        const result = await this.leaseRepository.delete(id);
+        if (result.affected === 0) throw new NotFoundException(`Lease with ID ${id} not found`);
     }
 
     // Payment Methods
@@ -247,7 +290,7 @@ export class PropertyService {
     }
 
     async findAllPayments(user: any, ownerId?: string): Promise<Payment[]> {
-        const effectiveOwnerId = ownerId || user?.userId || user?.id;
+        const effectiveOwnerId = this.getEffectiveOwnerId(user, ownerId);
         const query = this.paymentRepository.createQueryBuilder('payment')
             .leftJoinAndSelect('payment.lease', 'lease')
             .leftJoinAndSelect('lease.tenant', 'tenant')
@@ -262,6 +305,32 @@ export class PropertyService {
         return await query.getMany();
     }
 
+    async updatePayment(id: string, dto: Partial<CreatePaymentDto>, user: any): Promise<Payment> {
+        const payment = await this.paymentRepository.findOne({ where: { id } });
+        if (!payment) throw new NotFoundException(`Payment with ID ${id} not found`);
+        const lease = await this.leaseRepository.findOne({ where: { id: (dto as any).leaseId || payment.leaseId } });
+        if (lease) {
+            const unit = await this.unitRepository.findOne({ where: { id: lease.unitId } });
+            if (unit) await this.findOneProperty(unit.propertyId, user);
+        }
+        await this.paymentRepository.update(id, dto as any);
+        const updated = await this.paymentRepository.findOne({ where: { id }, relations: ['lease'] });
+        if (!updated) throw new NotFoundException(`Payment with ID ${id} not found`);
+        return updated;
+    }
+
+    async removePayment(id: string, user: any): Promise<void> {
+        const payment = await this.paymentRepository.findOne({ where: { id } });
+        if (!payment) throw new NotFoundException(`Payment with ID ${id} not found`);
+        const lease = await this.leaseRepository.findOne({ where: { id: payment.leaseId } });
+        if (lease) {
+            const unit = await this.unitRepository.findOne({ where: { id: lease.unitId } });
+            if (unit) await this.findOneProperty(unit.propertyId, user);
+        }
+        const result = await this.paymentRepository.delete(id);
+        if (result.affected === 0) throw new NotFoundException(`Payment with ID ${id} not found`);
+    }
+
     // Maintenance Methods
     async createMaintenance(createDto: CreateMaintenanceRequestDto, user: any): Promise<MaintenanceRequest> {
         if ((createDto as any).propertyId) await this.findOneProperty((createDto as any).propertyId, user);
@@ -270,7 +339,7 @@ export class PropertyService {
     }
 
     async findAllMaintenance(user: any, ownerId?: string): Promise<MaintenanceRequest[]> {
-        const effectiveOwnerId = ownerId || user?.userId || user?.id;
+        const effectiveOwnerId = this.getEffectiveOwnerId(user, ownerId);
         const query = this.maintenanceRepository.createQueryBuilder('maintenance')
             .leftJoinAndSelect('maintenance.property', 'property')
             .leftJoinAndSelect('maintenance.unit', 'unit');
@@ -285,8 +354,27 @@ export class PropertyService {
         return await query.getMany();
     }
 
+    async updateMaintenance(id: string, dto: Partial<CreateMaintenanceRequestDto>, user: any): Promise<MaintenanceRequest> {
+        const request = await this.maintenanceRepository.findOne({ where: { id } });
+        if (!request) throw new NotFoundException(`Maintenance with ID ${id} not found`);
+        const propertyId = (dto as any).propertyId || request.propertyId;
+        if (propertyId) await this.findOneProperty(propertyId, user);
+        await this.maintenanceRepository.update(id, dto as any);
+        const updated = await this.maintenanceRepository.findOne({ where: { id }, relations: ['property', 'unit'] });
+        if (!updated) throw new NotFoundException(`Maintenance with ID ${id} not found`);
+        return updated;
+    }
+
+    async removeMaintenance(id: string, user: any): Promise<void> {
+        const request = await this.maintenanceRepository.findOne({ where: { id } });
+        if (!request) throw new NotFoundException(`Maintenance with ID ${id} not found`);
+        if (request.propertyId) await this.findOneProperty(request.propertyId, user);
+        const result = await this.maintenanceRepository.delete(id);
+        if (result.affected === 0) throw new NotFoundException(`Maintenance with ID ${id} not found`);
+    }
+
     async getStats(user: any, ownerId?: string, status?: string) {
-        const effectiveOwnerId = ownerId || user?.userId || user?.id;
+        const effectiveOwnerId = this.getEffectiveOwnerId(user, ownerId);
         const query = this.propertyRepository.createQueryBuilder('property');
         
         if (effectiveOwnerId) {

@@ -42,8 +42,8 @@ export class Invoice {
   @Column({ nullable: true })
   referenceId: string;
 
-  @Column({ nullable: true })
-  documentUrl: string;
+  @Column({ type: 'text', nullable: true })
+  documentUrl: string | null;
 
   @ManyToOne(() => User, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })

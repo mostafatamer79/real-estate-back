@@ -958,6 +958,19 @@ export class FinancialService {
     return this.transactionRepository.save(transaction);
   }
 
+  async updateTransaction(id: string, dto: Partial<CreateTransactionDto>): Promise<FinancialTransaction> {
+    const transaction = await this.transactionRepository.findOne({ where: { id } });
+    if (!transaction) throw new Error('Transaction not found');
+    Object.assign(transaction, dto);
+    return this.transactionRepository.save(transaction);
+  }
+
+  async deleteTransaction(id: string): Promise<void> {
+    const transaction = await this.transactionRepository.findOne({ where: { id } });
+    if (!transaction) throw new Error('Transaction not found');
+    await this.transactionRepository.remove(transaction);
+  }
+
   async createExpense(createDto: CreateTransactionDto): Promise<FinancialTransaction> {
     createDto.type = TransactionType.EXPENSE;
     createDto.status = TransactionStatus.COMPLETED; // Expenses are usually recorded as completed
@@ -1105,7 +1118,7 @@ export class FinancialService {
       if (tx.toUserId === userId && tx.status === TransactionStatus.COMPLETED) {
         balance += Number(tx.amount);
       }
-      
+
       // Outgoing (including pending withdrawals to freeze amount)
       if (tx.fromUserId === userId && (tx.status === TransactionStatus.COMPLETED || tx.type === TransactionType.WITHDRAWAL)) {
         balance -= Number(tx.amount);
@@ -1121,7 +1134,7 @@ export class FinancialService {
     // Financial Stats
     const totalSales = await this.sumAmountByType(TransactionType.SALE, user);
     const totalRentals = await this.sumAmountByType(TransactionType.RENT, user);
-    const totalCommission = await this.sumCommission(user); 
+    const totalCommission = await this.sumCommission(user);
     const totalRevenue = totalCommission; // Assuming revenue is commission
     const totalTax = await this.sumTax(user);
     const totalExpenses = await this.sumAmountByType(TransactionType.EXPENSE, user);
@@ -1131,7 +1144,7 @@ export class FinancialService {
     const totalUsers = this.isAdmin(user)
       ? await this.userRepository.count()
       : scopedIds.length;
-    
+
     // Operations Stats (Bookings)
     // Active = Pending, Accepted, Paid (Not Completed or Cancelled)
     const bookingWhere = this.isAdmin(user)
@@ -1219,6 +1232,7 @@ export class FinancialService {
     referenceType?: string;
     referenceId?: string;
     description?: string;
+    documentUrl?: string;
   }): Promise<Invoice> {
     const serviceFee = 0;
     const tax = dto.amount * 0.15;
@@ -1233,6 +1247,7 @@ export class FinancialService {
       referenceType: dto.referenceType,
       referenceId: dto.referenceId,
       description: dto.description,
+      documentUrl: dto.documentUrl,
     });
     return this.invoiceRepository.save(invoice);
   }
@@ -1242,6 +1257,15 @@ export class FinancialService {
       where: { userId },
       order: { createdAt: 'DESC' },
     });
+  }
+
+  async getAllInvoices(user: any): Promise<Invoice[]> {
+    const query = this.invoiceRepository
+      .createQueryBuilder('inv')
+      .leftJoinAndSelect('inv.user', 'user')
+      .orderBy('inv.createdAt', 'DESC');
+    await this.applyInvoiceScope(query, 'inv', user);
+    return query.getMany();
   }
 
   async findInvoiceById(id: string): Promise<Invoice | null> {
@@ -1255,8 +1279,44 @@ export class FinancialService {
     return this.invoiceRepository.save(invoice);
   }
 
+  async updateInvoice(id: string, dto: {
+    amount?: number;
+    description?: string;
+    status?: string;
+    documentUrl?: string | null;
+  }): Promise<Invoice> {
+    const invoice = await this.invoiceRepository.findOne({ where: { id } });
+    if (!invoice) throw new Error('Invoice not found');
+
+    if (typeof dto.amount === 'number' && dto.amount >= 0) {
+      invoice.amount = dto.amount;
+      invoice.tax = dto.amount * 0.15;
+      invoice.total = dto.amount + Number(invoice.serviceFee || 0) + Number(invoice.tax || 0);
+    }
+
+    if (dto.description !== undefined) {
+      invoice.description = dto.description;
+    }
+
+    if (dto.status !== undefined && Object.values(InvoiceStatus).includes(dto.status as InvoiceStatus)) {
+      invoice.status = dto.status as InvoiceStatus;
+    }
+
+    if (dto.documentUrl !== undefined) {
+      invoice.documentUrl = dto.documentUrl || null;
+    }
+
+    return this.invoiceRepository.save(invoice);
+  }
+
+  async deleteInvoice(id: string): Promise<void> {
+    const invoice = await this.invoiceRepository.findOne({ where: { id } });
+    if (!invoice) throw new Error('Invoice not found');
+    await this.invoiceRepository.remove(invoice);
+  }
+
   async payInvoice(userId: string, invoiceId: string, paymentMethod: PaymentMethod): Promise<Invoice> {
-    let invoice = await this.invoiceRepository.findOne({ 
+    let invoice = await this.invoiceRepository.findOne({
         where: [
             { id: invoiceId, userId },
             { referenceId: invoiceId, userId, referenceType: 'ServiceRequest' }
@@ -1308,7 +1368,7 @@ export class FinancialService {
     }
 
     invoice.status = InvoiceStatus.PAID;
-    
+
     // IF this invoice is linked to a ServiceRequest, update the ServiceRequest status
     if (invoice.referenceType === 'ServiceRequest' && invoice.referenceId) {
       const serviceRequest = await this.serviceRequestRepository.findOne({ where: { id: invoice.referenceId } });
@@ -1332,11 +1392,92 @@ export class FinancialService {
     });
   }
 
+  async updateCommissionForAdmin(id: string, dto: {
+    status?: string;
+    finalCommissionAmount?: number;
+    notes?: string;
+    attachmentUrl?: string;
+  }, user: any): Promise<Commission> {
+    const commission = await this.commissionRepository.findOne({ where: { id } });
+    if (!commission) throw new Error('Commission not found');
+
+    const previousStatus = commission.status;
+
+    if (dto.status !== undefined && Object.values(CommissionStatus).includes(dto.status as CommissionStatus)) {
+      commission.status = dto.status as CommissionStatus;
+      if (commission.status === CommissionStatus.APPROVED && !commission.approvedAt) {
+        commission.approvedAt = new Date();
+        commission.reviewedAt = new Date();
+        commission.reviewedById = user?.userId || user?.id;
+      } else if (commission.status === CommissionStatus.REJECTED) {
+        commission.reviewedAt = new Date();
+        commission.reviewedById = user?.userId || user?.id;
+      } else if (commission.status === CommissionStatus.PAID && !commission.paidAt) {
+        commission.paidAt = new Date();
+      }
+    }
+
+    if (typeof dto.finalCommissionAmount === 'number' && dto.finalCommissionAmount >= 0) {
+      commission.finalCommissionAmount = dto.finalCommissionAmount;
+    }
+
+    if (dto.notes !== undefined) {
+      commission.notes = dto.notes;
+    }
+
+    if (dto.attachmentUrl) {
+      commission.attachments = [...(commission.attachments || []), dto.attachmentUrl];
+    }
+
+    const saved = await this.commissionRepository.save(commission);
+    if (
+      dto.status &&
+      (saved.status === CommissionStatus.APPROVED || saved.status === CommissionStatus.PAID) &&
+      previousStatus !== saved.status
+    ) {
+      await this.createCommissionTransaction(saved);
+    }
+
+    return saved;
+  }
+
+  async deleteCommissionForAdmin(id: string): Promise<void> {
+    const commission = await this.commissionRepository.findOne({ where: { id } });
+    if (!commission) throw new Error('Commission not found');
+    await this.commissionRepository.remove(commission);
+  }
+
+  async removeCommissionAttachment(id: string, url: string): Promise<Commission> {
+    const commission = await this.commissionRepository.findOne({ where: { id } });
+    if (!commission) throw new Error('Commission not found');
+    commission.attachments = (commission.attachments || []).filter((item) => item !== url);
+    return this.commissionRepository.save(commission);
+  }
+
+  private async createCommissionTransaction(commission: Commission): Promise<void> {
+    const existing = await this.transactionRepository.findOne({
+      where: { referenceType: 'commission', referenceId: commission.id, toUserId: commission.creatorId },
+    });
+    if (existing) return;
+
+    await this.createTransaction({
+      type: TransactionType.COMMISSION,
+      amount: commission.finalCommissionAmount || commission.commissionAmount,
+      toUserId: commission.creatorId,
+      commissionAmount: commission.commissionAmount,
+      taxAmount: commission.taxAmount,
+      status: TransactionStatus.COMPLETED,
+      referenceType: 'commission',
+      referenceId: commission.id,
+      description: `Commission ${commission.commissionNumber} - ${commission.type}`,
+    });
+  }
+
   async getUserFiles(userId: string): Promise<any[]> {
     const invoices = await this.invoiceRepository.find({
       where: { userId },
       // Select all necessary fields for the modal
-      select: ['id', 'documentUrl', 'createdAt', 'referenceType', 'description', 'amount', 'total', 'status', 'serviceFee', 'tax'], 
+      select: ['id', 'documentUrl', 'createdAt', 'referenceType', 'description', 'amount', 'total', 'status', 'serviceFee', 'tax'],
     });
 
     const commissions = await this.commissionRepository.find({
@@ -1384,6 +1525,23 @@ export class FinancialService {
     files.push(...scanReports);
 
     return files.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
+
+  async getAllFiles(user: any): Promise<any[]> {
+    const scopedUserIds = await this.getScopedUserIds(user);
+    const users = this.isAdmin(user)
+      ? await this.userRepository.find({ select: ['id', 'firstName', 'lastName', 'email', 'phone'] as any })
+      : await this.userRepository.find({
+          where: scopedUserIds.map((id) => ({ id })) as any,
+          select: ['id', 'firstName', 'lastName', 'email', 'phone'] as any,
+        });
+
+    const allFiles = await Promise.all(users.map(async (fileUser) => {
+      const files = await this.getUserFiles(fileUser.id);
+      return files.map((file) => ({ ...file, user: fileUser, userId: fileUser.id }));
+    }));
+
+    return allFiles.flat().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 
   async getCommissions(user: any) {
@@ -1506,7 +1664,7 @@ export class FinancialService {
         const monthIndex = d.getMonth();
         result.push(monthlyData[monthIndex]);
     }
-    
-    return result; 
+
+    return result;
   }
 }

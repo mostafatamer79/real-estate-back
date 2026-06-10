@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Request, Param, Query, ParseUUIDPipe, Res } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, UseGuards, Request, Param, Query, ParseUUIDPipe, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { FinancialService } from './financial.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
@@ -46,6 +46,19 @@ export class FinancialController {
   @Departments('finance')
   findAll(@Request() req) {
     return this.financialService.findAll(req.user);
+  }
+
+  @Put('transactions/:id')
+  @Departments('finance')
+  updateTransaction(@Param('id', ParseUUIDPipe) id: string, @Body() body: Partial<CreateTransactionDto>) {
+    return this.financialService.updateTransaction(id, body);
+  }
+
+  @Delete('transactions/:id')
+  @Departments('finance')
+  async deleteTransaction(@Param('id', ParseUUIDPipe) id: string) {
+    await this.financialService.deleteTransaction(id);
+    return { success: true };
   }
 
   @Get('transactions/export')
@@ -103,14 +116,46 @@ export class FinancialController {
     return this.financialService.createInvoice(req.user.userId, body);
   }
 
+  @Post('invoices/user/:userId')
+  @Departments('finance')
+  async createUserInvoice(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body() body: { amount: number; referenceType?: string; referenceId?: string; description?: string; documentUrl?: string },
+  ) {
+    return this.financialService.createInvoice(userId, body);
+  }
+
   @Get('invoices/my')
   async getMyInvoices(@Request() req) {
     return this.financialService.getUserInvoices(req.user.userId);
   }
 
+  @Get('invoices')
+  @Departments('finance')
+  async getAllInvoices(@Request() req) {
+    return this.financialService.getAllInvoices(req.user);
+  }
+
   @Get('invoices/user/:userId')
+  @Departments('finance')
   async getUserInvoices(@Param('userId', ParseUUIDPipe) userId: string) {
     return this.financialService.getUserInvoices(userId);
+  }
+
+  @Put('invoices/:id')
+  @Departments('finance')
+  async updateInvoice(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { amount?: number; description?: string; status?: string; documentUrl?: string | null },
+  ) {
+    return this.financialService.updateInvoice(id, body);
+  }
+
+  @Delete('invoices/:id')
+  @Departments('finance')
+  async deleteInvoice(@Param('id', ParseUUIDPipe) id: string) {
+    await this.financialService.deleteInvoice(id);
+    return { success: true };
   }
 
   @Get('commissions/my')
@@ -118,9 +163,70 @@ export class FinancialController {
     return this.financialService.getUserCommissions(req.user.userId);
   }
 
+  @Get('commissions/user/:userId')
+  @Departments('finance')
+  async getUserCommissions(@Param('userId', ParseUUIDPipe) userId: string) {
+    return this.financialService.getUserCommissions(userId);
+  }
+
+  @Put('commissions/:id')
+  @Departments('finance')
+  async updateCommission(
+    @Request() req,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { status?: string; finalCommissionAmount?: number; notes?: string; attachmentUrl?: string },
+  ) {
+    return this.financialService.updateCommissionForAdmin(id, body, req.user);
+  }
+
+  @Delete('commissions/:id')
+  @Departments('finance')
+  async deleteCommission(@Param('id', ParseUUIDPipe) id: string) {
+    await this.financialService.deleteCommissionForAdmin(id);
+    return { success: true };
+  }
+
   @Get('files/my')
   async getMyFiles(@Request() req) {
     return this.financialService.getUserFiles(req.user.userId);
+  }
+
+  @Get('files')
+  @Departments('finance')
+  async getAllFiles(@Request() req) {
+    return this.financialService.getAllFiles(req.user);
+  }
+
+  @Get('files/user/:userId')
+  @Departments('finance')
+  async getUserFiles(@Param('userId', ParseUUIDPipe) userId: string) {
+    return this.financialService.getUserFiles(userId);
+  }
+
+  @Put('files/invoice/:id')
+  @Departments('finance')
+  async updateInvoiceDocument(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { documentUrl?: string | null },
+  ) {
+    return this.financialService.updateInvoice(id, { documentUrl: body.documentUrl || null });
+  }
+
+  @Delete('files/commission/:id/attachments')
+  @Departments('finance')
+  async removeCommissionAttachment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { url: string },
+  ) {
+    return this.financialService.removeCommissionAttachment(id, body.url);
+  }
+
+  @Get('wallet/user/:userId')
+  @Departments('finance')
+  async getUserWallet(@Param('userId', ParseUUIDPipe) userId: string) {
+    const balance = await this.financialService.getUserBalance(userId);
+    const transactions = await this.financialService.getUserTransactions(userId);
+    return { balance, transactions };
   }
 
   @Post('scan-report')

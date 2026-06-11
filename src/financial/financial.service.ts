@@ -5,7 +5,7 @@ import { execFile } from 'child_process';
 import { randomUUID } from 'crypto';
 import { existsSync } from 'fs';
 import { copyFile, mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'fs/promises';
-import { tmpdir } from 'os';
+import { homedir, tmpdir } from 'os';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
 import { promisify } from 'util';
@@ -844,7 +844,21 @@ export class FinancialService {
 
   private async renderPdfFromHtml(html: string, htmlPath: string, pdfPath: string) {
     await writeFile(htmlPath, html, 'utf8');
-    const tempDir = await mkdtemp(join(tmpdir(), 'scan-report-'));
+    const tempRootCandidates = [
+      process.env.CHROME_TEMP_DIR,
+      '/root/snap/chromium/common',
+      join(homedir(), 'snap', 'chromium', 'common'),
+      tmpdir(),
+    ].filter(Boolean) as string[];
+    const tempRoot = tempRootCandidates.find((dir) => {
+      try {
+        return existsSync(dir);
+      } catch {
+        return false;
+      }
+    }) || tmpdir();
+    await mkdir(tempRoot, { recursive: true });
+    const tempDir = await mkdtemp(join(tempRoot, 'scan-report-'));
     const tempHtmlPath = join(tempDir, 'report.html');
     const tempPdfPath = join(tempDir, 'report.pdf');
     await writeFile(tempHtmlPath, html, 'utf8');

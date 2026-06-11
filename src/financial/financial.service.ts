@@ -4,8 +4,10 @@ import { Repository, SelectQueryBuilder, In, ObjectLiteral } from 'typeorm';
 import { execFile } from 'child_process';
 import { randomUUID } from 'crypto';
 import { existsSync } from 'fs';
-import { mkdir, readdir, readFile, stat, writeFile } from 'fs/promises';
+import { copyFile, mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'fs/promises';
+import { tmpdir } from 'os';
 import { join } from 'path';
+import { pathToFileURL } from 'url';
 import { promisify } from 'util';
 import { FinancialTransaction, TransactionType, TransactionStatus } from './entities/financial-transaction.entity';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
@@ -842,6 +844,12 @@ export class FinancialService {
 
   private async renderPdfFromHtml(html: string, htmlPath: string, pdfPath: string) {
     await writeFile(htmlPath, html, 'utf8');
+    const tempDir = await mkdtemp(join(tmpdir(), 'scan-report-'));
+    const tempHtmlPath = join(tempDir, 'report.html');
+    const tempPdfPath = join(tempDir, 'report.pdf');
+    await writeFile(tempHtmlPath, html, 'utf8');
+    const htmlUrl = pathToFileURL(tempHtmlPath).href;
+
     const candidates = [
       process.env.CHROME_PATH,
       'google-chrome',
@@ -857,26 +865,38 @@ export class FinancialService {
 
     const failures: string[] = [];
 
-    for (const browser of candidates) {
-      try {
-        await execFileAsync(browser, [
-          '--headless',
-          '--disable-gpu',
-          '--no-sandbox',
-          '--disable-dev-shm-usage',
-          `--print-to-pdf=${pdfPath}`,
-          htmlPath,
-        ]);
-        if (!existsSync(pdfPath)) {
-          throw new Error(`Chrome command completed but PDF was not created at ${pdfPath}`);
+    try {
+      for (const browser of candidates) {
+        try {
+          const result = await execFileAsync(browser, [
+            '--headless',
+            '--disable-gpu',
+            '--no-sandbox',
+            '--disable-dev-shm-usage',
+            '--allow-file-access-from-files',
+            `--user-data-dir=${join(tempDir, 'chrome-profile')}`,
+            `--print-to-pdf=${tempPdfPath}`,
+            htmlUrl,
+          ]);
+          if (!existsSync(tempPdfPath)) {
+            const stdout = String((result as any)?.stdout || '').trim();
+            const stderr = String((result as any)?.stderr || '').trim();
+            throw new Error(`Chrome command completed but PDF was not created at ${tempPdfPath}${stdout ? ` stdout=${stdout}` : ''}${stderr ? ` stderr=${stderr}` : ''}`);
+          }
+          await copyFile(tempPdfPath, pdfPath);
+          if (!existsSync(pdfPath)) {
+            throw new Error(`PDF was created in temp but could not be copied to ${pdfPath}`);
+          }
+          return;
+        } catch (error: any) {
+          failures.push(`${browser}: ${error?.code || 'ERROR'} ${error?.message || ''}`.trim());
         }
-        return;
-      } catch (error: any) {
-        failures.push(`${browser}: ${error?.code || 'ERROR'} ${error?.message || ''}`.trim());
       }
-    }
 
-    throw new Error(`Unable to render scan report PDF. Attempts: ${failures.join(' | ')}`);
+      throw new Error(`Unable to render scan report PDF. Attempts: ${failures.join(' | ')}`);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true }).catch(() => undefined);
+    }
   }
 
   private async listUserScanReportFiles(userId: string): Promise<ScanReportFile[]> {

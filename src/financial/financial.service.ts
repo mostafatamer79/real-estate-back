@@ -864,9 +864,29 @@ export class FinancialService {
     ].filter(Boolean) as string[];
 
     const failures: string[] = [];
+    const waitForPdf = async (filePath: string) => {
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        try {
+          const fileStat = await stat(filePath);
+          if (fileStat.size > 0) return true;
+        } catch {
+          // Chromium snap can report "bytes written" before the host sees the file.
+        }
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      return false;
+    };
+    const copyRenderedPdf = async () => {
+      await copyFile(tempPdfPath, pdfPath);
+      const copied = await waitForPdf(pdfPath);
+      if (!copied) {
+        throw new Error(`PDF was created in temp but could not be copied to ${pdfPath}`);
+      }
+    };
 
     try {
       for (const browser of candidates) {
+        await rm(tempPdfPath, { force: true }).catch(() => undefined);
         try {
           const result = await execFileAsync(browser, [
             '--headless',
@@ -878,17 +898,18 @@ export class FinancialService {
             `--print-to-pdf=${tempPdfPath}`,
             htmlUrl,
           ]);
-          if (!existsSync(tempPdfPath)) {
+          if (!(await waitForPdf(tempPdfPath))) {
             const stdout = String((result as any)?.stdout || '').trim();
             const stderr = String((result as any)?.stderr || '').trim();
             throw new Error(`Chrome command completed but PDF was not created at ${tempPdfPath}${stdout ? ` stdout=${stdout}` : ''}${stderr ? ` stderr=${stderr}` : ''}`);
           }
-          await copyFile(tempPdfPath, pdfPath);
-          if (!existsSync(pdfPath)) {
-            throw new Error(`PDF was created in temp but could not be copied to ${pdfPath}`);
-          }
+          await copyRenderedPdf();
           return;
         } catch (error: any) {
+          if (await waitForPdf(tempPdfPath)) {
+            await copyRenderedPdf();
+            return;
+          }
           failures.push(`${browser}: ${error?.code || 'ERROR'} ${error?.message || ''}`.trim());
         }
       }

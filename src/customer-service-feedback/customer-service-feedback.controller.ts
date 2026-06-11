@@ -26,10 +26,29 @@ export class CustomerServiceFeedbackController {
     return { success: true, data };
   }
 
+  @Get('my')
+  async listMine(@Req() req: Request) {
+    const data = await this.service.findMine((req as any).user);
+    return { success: true, data };
+  }
+
   @Roles([Role.ADMIN])
   @Patch(':id')
   async update(@Param('id') id: string, @Body() dto: UpdateCustomerServiceFeedbackDto) {
     const data = await this.service.update(id, dto);
+    return { success: true, data };
+  }
+
+  @Roles([Role.ADMIN])
+  @Patch(':id/admin-reply')
+  async adminReply(@Param('id') id: string, @Body('reply') reply: string, @Req() req: Request) {
+    const data = await this.service.replyAsAdmin(id, reply, (req as any).user?.id ?? null);
+    return { success: true, data };
+  }
+
+  @Patch(':id/user-reply')
+  async userReply(@Param('id') id: string, @Body('reply') reply: string, @Req() req: Request) {
+    const data = await this.service.replyAsUser(id, reply, (req as any).user);
     return { success: true, data };
   }
 

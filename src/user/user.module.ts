@@ -7,13 +7,34 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserService } from './user.service';
 import { PasswordService } from '../password/password.service';
 import { UserController } from './user.controller';
-
 import { DocumentModule } from '../document/document.module';
 import { AuthModule } from '../auth/auth.module';
+import { Offer } from '../offer/offer-entity';
+import { ServiceRequest } from '../service/service-request.entity';
+import { Activity } from '../common/entities/activity.entity';
+import { ChatRoom, Message } from '../chat/message.entity';
+import { Booking } from '../booking/entities/booking.entity';
+import { Order } from '../order/entities/order.entity';
+import { Invoice } from '../financial/entities/invoice.entity';
+import { Commission } from '../commission/commission.entity';
+import { Document } from '../document/document.entity';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([Permission,User]),
+        TypeOrmModule.forFeature([
+          Permission,
+          User,
+          Offer,
+          ServiceRequest,
+          Activity,
+          ChatRoom,
+          Message,
+          Booking,
+          Order,
+          Invoice,
+          Commission,
+          Document,
+        ]),
         DocumentModule,
         forwardRef(() => AuthModule),
         ConfigModule.forFeature(authConfig),

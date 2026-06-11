@@ -43,6 +43,18 @@ export class UserController {
         return this.userService.getUserProfile(req.user.id);
     }
 
+    @Get(':id/overview')
+    @UseGuards(EmployeeManagementGuard)
+    async getAdminOverview(@Param('id') userId: string) {
+        return this.userService.getAdminUserOverview(userId);
+    }
+
+    @Get(':id')
+    @UseGuards(EmployeeManagementGuard)
+    async findOneById(@Param('id') userId: string) {
+        return this.userService.getAdminUserDetails(userId);
+    }
+
     @Put('profile')
     async updateProfile(@Request() req, @Body() updateUserDto: UpdateUserDto) {
         return this.userService.updateUserDetails(req.user.id, updateUserDto);

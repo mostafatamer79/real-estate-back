@@ -7,6 +7,8 @@ export enum CustomerServiceContactMethod {
 
 export enum CustomerServiceFeedbackStatus {
   NEW = 'new',
+  REPLIED = 'replied',
+  CUSTOMER_REPLIED = 'customer_replied',
   RESOLVED = 'resolved',
 }
 
@@ -39,10 +41,24 @@ export class CustomerServiceFeedback {
   @Column({ type: 'enum', enum: CustomerServiceFeedbackStatus, default: CustomerServiceFeedbackStatus.NEW })
   status: CustomerServiceFeedbackStatus;
 
+  @Column({ type: 'text', nullable: true })
+  adminReply?: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  adminRepliedAt?: Date | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  adminRepliedById?: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  userReply?: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  userRepliedAt?: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
 }
-

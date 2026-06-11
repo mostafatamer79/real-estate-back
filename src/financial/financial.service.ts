@@ -842,15 +842,41 @@ export class FinancialService {
 
   private async renderPdfFromHtml(html: string, htmlPath: string, pdfPath: string) {
     await writeFile(htmlPath, html, 'utf8');
-    const chrome = process.env.CHROME_PATH || 'google-chrome';
-    await execFileAsync(chrome, [
-      '--headless',
-      '--disable-gpu',
-      '--no-sandbox',
-      '--disable-dev-shm-usage',
-      `--print-to-pdf=${pdfPath}`,
-      htmlPath,
-    ]);
+    const candidates = [
+      process.env.CHROME_PATH,
+      'google-chrome',
+      'google-chrome-stable',
+      'chromium-browser',
+      'chromium',
+      '/usr/bin/google-chrome',
+      '/usr/bin/google-chrome-stable',
+      '/usr/bin/chromium-browser',
+      '/usr/bin/chromium',
+    ].filter(Boolean) as string[];
+
+    let lastError: any = null;
+
+    for (const browser of candidates) {
+      try {
+        await execFileAsync(browser, [
+          '--headless',
+          '--disable-gpu',
+          '--no-sandbox',
+          '--disable-dev-shm-usage',
+          `--print-to-pdf=${pdfPath}`,
+          htmlPath,
+        ]);
+        return;
+      } catch (error: any) {
+        lastError = error;
+        if (error?.code !== 'ENOENT') {
+          throw error;
+        }
+      }
+    }
+
+    const attempted = candidates.join(', ');
+    throw new Error(`No Chrome/Chromium executable found for PDF rendering. Attempted: ${attempted}. Last error: ${lastError?.message || 'unknown error'}`);
   }
 
   private async listUserScanReportFiles(userId: string): Promise<ScanReportFile[]> {

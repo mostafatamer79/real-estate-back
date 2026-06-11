@@ -1,18 +1,54 @@
 import { ConflictException, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Department, Role, User, VerifyStatus } from './user-entity';
-import { AuthService } from '../auth/auth.service';
 import { CreateUserDto, UpdateUserDto } from './create-user-dto';
 import { PasswordService } from '../password/password.service';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Offer } from '../offer/offer-entity';
+import { ServiceRequest, TargetDepartment } from '../service/service-request.entity';
+import { Activity } from '../common/entities/activity.entity';
+import { Booking } from '../booking/entities/booking.entity';
+import { Order } from '../order/entities/order.entity';
+import { ChatRoom, Message } from '../chat/message.entity';
+import { Invoice } from '../financial/entities/invoice.entity';
+import { Commission } from '../commission/commission.entity';
+import { Document } from '../document/document.entity';
 
 @Injectable()
 export class UserService {
     constructor(
         @InjectRepository(User)
         private readonly userRepository : Repository<User>,
+        @InjectRepository(Offer)
+        private readonly offerRepository: Repository<Offer>,
+        @InjectRepository(ServiceRequest)
+        private readonly serviceRequestRepository: Repository<ServiceRequest>,
+        @InjectRepository(Activity)
+        private readonly activityRepository: Repository<Activity>,
+        @InjectRepository(Booking)
+        private readonly bookingRepository: Repository<Booking>,
+        @InjectRepository(Order)
+        private readonly orderRepository: Repository<Order>,
+        @InjectRepository(ChatRoom)
+        private readonly chatRoomRepository: Repository<ChatRoom>,
+        @InjectRepository(Message)
+        private readonly messageRepository: Repository<Message>,
+        @InjectRepository(Invoice)
+        private readonly invoiceRepository: Repository<Invoice>,
+        @InjectRepository(Commission)
+        private readonly commissionRepository: Repository<Commission>,
+        @InjectRepository(Document)
+        private readonly documentRepository: Repository<Document>,
         private readonly passwordService : PasswordService
     ){}
+
+    private readonly targetDepartmentMap: Partial<Record<Department, TargetDepartment>> = {
+        [Department.PROPERTIES]: TargetDepartment.REAL_ESTATE,
+        [Department.MARKETING]: TargetDepartment.MARKETING,
+        [Department.LEGAL]: TargetDepartment.LEGAL,
+        [Department.FINANCE]: TargetDepartment.FINANCE,
+        [Department.EMPLOYEES]: TargetDepartment.EMPLOYEES,
+    };
 
     private normalizeEmail(email?: string | null): string | undefined {
         return email?.trim().toLowerCase();
@@ -176,12 +212,180 @@ export class UserService {
         
         return await this.userRepository.save(newUser);
     }
-      public async findOne(id: string): Promise<User | null> {
+    public async findOne(id: string): Promise<User | null> {
         const user = await this.userRepository.findOne({ where: { id } });
         if (!user) {
           return null
         }
         return user;
+      }
+
+      public async getAdminUserDetails(userId: string): Promise<User> {
+        const user = await this.findOne(userId);
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+        return user;
+      }
+
+      public async getAdminUserOverview(userId: string): Promise<any> {
+        const user = await this.getAdminUserDetails(userId);
+        const userDepartments = Array.isArray(user.departments) ? user.departments : [];
+        const targetDepartments = userDepartments
+            .map((dept) => this.targetDepartmentMap[dept])
+            .filter(Boolean) as TargetDepartment[];
+
+        const [
+            offers,
+            serviceRequests,
+            departmentRequests,
+            activities,
+            bookings,
+            orders,
+            chatRooms,
+            invoices,
+            commissions,
+            documents,
+        ] = await Promise.all([
+            this.offerRepository.find({
+                where: { userId },
+                order: { createdAt: 'DESC' },
+                take: 20,
+            }),
+            this.serviceRequestRepository.find({
+                where: { userId },
+                order: { createdAt: 'DESC' },
+                take: 20,
+            }),
+            targetDepartments.length
+                ? this.serviceRequestRepository
+                    .createQueryBuilder('request')
+                    .where('request.targetDepartment IN (:...targetDepartments)', { targetDepartments })
+                    .orderBy('request.createdAt', 'DESC')
+                    .take(20)
+                    .getMany()
+                : Promise.resolve([]),
+            this.activityRepository.find({
+                where: { userId },
+                order: { createdAt: 'DESC' },
+                take: 30,
+            }),
+            this.bookingRepository
+                .createQueryBuilder('booking')
+                .leftJoinAndSelect('booking.offer', 'offer')
+                .where('booking.userId = :userId OR booking.agentId = :userId', { userId })
+                .orderBy('booking.createdAt', 'DESC')
+                .take(20)
+                .getMany(),
+            this.orderRepository.find({
+                where: { user: { id: userId } as any },
+                order: { createdAt: 'DESC' },
+                take: 20,
+            }),
+            this.chatRoomRepository
+                .createQueryBuilder('room')
+                .leftJoinAndSelect('room.participants', 'participant')
+                .where('participant.id = :userId', { userId })
+                .orderBy('room.createdAt', 'DESC')
+                .take(20)
+                .getMany(),
+            this.invoiceRepository.find({
+                where: { userId },
+                order: { createdAt: 'DESC' },
+                take: 20,
+            }),
+            this.commissionRepository.find({
+                where: { creatorId: userId },
+                order: { createdAt: 'DESC' },
+                take: 20,
+            }),
+            this.documentRepository.find({
+                where: [{ recipientId: userId }, { uploadedById: userId }],
+                order: { createdAt: 'DESC' },
+                take: 30,
+            }),
+        ]);
+
+        const roomIds = chatRooms.map((room) => room.id);
+        const roomMessages = roomIds.length
+            ? await this.messageRepository
+                .createQueryBuilder('message')
+                .leftJoinAndSelect('message.sender', 'sender')
+                .leftJoinAndSelect('message.room', 'room')
+                .where('room.id IN (:...roomIds)', { roomIds })
+                .orderBy('message.createdAt', 'DESC')
+                .getMany()
+            : [];
+
+        const messagesByRoom = roomMessages.reduce<Record<string, any[]>>((acc, message) => {
+            const roomId = message.room?.id;
+            if (!roomId) return acc;
+            if (!acc[roomId]) acc[roomId] = [];
+            if (acc[roomId].length < 10) {
+                acc[roomId].push({
+                    id: message.id,
+                    content: message.content,
+                    createdAt: message.createdAt,
+                    isRead: message.isRead,
+                    sender: message.sender
+                        ? {
+                            id: message.sender.id,
+                            firstName: message.sender.firstName,
+                            lastName: message.sender.lastName,
+                            email: message.sender.email,
+                          }
+                        : null,
+                });
+            }
+            return acc;
+        }, {});
+
+        const chats = chatRooms.map((room) => ({
+            id: room.id,
+            name: room.name,
+            description: room.description,
+            createdAt: room.createdAt,
+            offerId: room.offerId,
+            orderId: room.orderId,
+            disputeId: room.disputeId,
+            serviceRequestId: room.serviceRequestId,
+            participants: Array.isArray(room.participants)
+                ? room.participants.map((participant) => ({
+                    id: participant.id,
+                    firstName: participant.firstName,
+                    lastName: participant.lastName,
+                    email: participant.email,
+                    phone: participant.phone,
+                  }))
+                : [],
+            recentMessages: messagesByRoom[room.id] || [],
+        }));
+
+        return {
+            user,
+            stats: {
+                offers: offers.length,
+                serviceRequests: serviceRequests.length,
+                departmentRequests: departmentRequests.length,
+                chats: chats.length,
+                bookings: bookings.length,
+                orders: orders.length,
+                activities: activities.length,
+                invoices: invoices.length,
+                commissions: commissions.length,
+                documents: documents.length,
+            },
+            offers,
+            serviceRequests,
+            departmentRequests,
+            chats,
+            activities,
+            bookings,
+            orders,
+            invoices,
+            commissions,
+            documents,
+        };
       }
       
       public async updateUser(user: User): Promise<User> {

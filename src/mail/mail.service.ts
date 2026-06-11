@@ -157,4 +157,34 @@ export class MailService {
       console.error(`Error sending legal decision email to ${email}:`, error);
     }
   }
+
+  async sendCustomerServiceReply(email: string, ticket: any, reply: string) {
+    if (!email || !email.includes('@')) return;
+
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        subject: 'رد خدمة العملاء على تذكرتك',
+        html: `
+          <div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8;color:#0f172a">
+            <h2 style="margin:0 0 16px">رد خدمة العملاء</h2>
+            <p>مرحباً ${ticket.name || 'عميلنا'},</p>
+            <p>تم الرد على تذكرتك رقم <strong>${String(ticket.id || '').slice(0, 8)}</strong>.</p>
+            <div style="margin:16px 0;padding:16px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc">
+              <strong>استفسارك:</strong>
+              <p style="white-space:pre-wrap;margin:8px 0 0">${ticket.question || ''}</p>
+            </div>
+            <div style="margin:16px 0;padding:16px;border:1px solid #dbeafe;border-radius:12px;background:#eff6ff">
+              <strong>رد الإدارة:</strong>
+              <p style="white-space:pre-wrap;margin:8px 0 0">${reply}</p>
+            </div>
+            <p>يمكنك مراجعة التذكرة والرد عليها من صفحة خدمة العملاء داخل المنصة.</p>
+          </div>
+        `,
+      });
+      console.log(`Customer service reply sent to ${email}`);
+    } catch (error) {
+      console.error(`Error sending customer service reply to ${email}:`, error);
+    }
+  }
 }

@@ -1,0 +1,1761 @@
+<!doctype html>
+      <html dir="rtl" lang="ar">
+        <head>
+          <meta charset="utf-8" />
+          <style>
+            @page { size: A4; margin: 0; }
+            * { box-sizing: border-box; }
+            body { margin: 0; font-family: Arial, Tahoma, sans-serif; color: #111827; background: #fff; direction: rtl; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .page { width: 210mm; min-height: 297mm; padding: 34px 42px; page-break-after: always; position: relative; overflow: hidden; }
+            .cover { background: linear-gradient(135deg, #08111f 0%, #0f172a 52%, #1e293b 100%); color: #fff; display: flex; flex-direction: column; justify-content: space-between; }
+            .cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .34; }
+            .cover-shade { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(8,17,31,.95), rgba(15,23,42,.82), rgba(30,41,59,.72)); }
+            .cover-content { position: relative; z-index: 2; }
+            .cover:before { content: ""; position: absolute; inset: 42px; border: 1px solid rgba(255,255,255,.14); border-radius: 34px; pointer-events: none; }
+            .brand { font-size: 18px; font-weight: 900; letter-spacing: 1px; }
+            .eyebrow { color: #94a3b8; font-size: 13px; font-weight: 800; margin-top: 95px; }
+            .title { font-size: 50px; line-height: 1.18; font-weight: 900; margin: 18px 0; letter-spacing: 0; }
+            .subtitle { color: #cbd5e1; font-size: 17px; line-height: 1.9; max-width: 650px; }
+            .cover-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 44px; }
+            .cover-card { border: 1px solid rgba(255,255,255,.18); border-radius: 18px; padding: 18px; background: rgba(255,255,255,.08); }
+            .cover-card span { display: block; color: #94a3b8; font-size: 12px; margin-bottom: 8px; }
+            .cover-card strong { font-size: 20px; }
+            .footer { position: absolute; bottom: 28px; left: 42px; right: 42px; display: flex; justify-content: space-between; color: #94a3b8; font-size: 12px; z-index: 2; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e5e7eb; padding-bottom: 16px; margin-bottom: 26px; }
+            .header h2 { margin: 0; font-size: 23px; font-weight: 900; color: #0f172a; }
+            .header p { margin: 6px 0 0; color: #64748b; font-size: 12px; }
+            .page-no { font-size: 18px; color: #94a3b8; font-weight: 900; }
+            .section-title { font-size: 22px; font-weight: 900; color: #0f172a; margin: 0 0 16px; }
+            .notice { border: 1px solid #e2e8f0; background: #f8fafc; padding: 20px; border-radius: 18px; line-height: 2.05; color: #334155; font-size: 14px; }
+            .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
+            .stat { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; min-height: 94px; }
+            .stat span { display: block; color: #64748b; font-size: 11px; margin-bottom: 8px; font-weight: 800; }
+            .stat strong { font-size: 25px; color: #0f172a; }
+            .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+            .panel { border: 1px solid #e2e8f0; background: #fff; border-radius: 18px; padding: 18px; }
+            .panel.dark { background: #0f172a; color: #fff; border-color: #0f172a; }
+            .muted { color: #64748b; line-height: 1.8; font-size: 13px; }
+            .large-number { font-size: 42px; font-weight: 900; color: #0f172a; }
+            table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 11px; }
+            th { background: #0f172a; color: #fff; padding: 9px; text-align: right; font-weight: 900; }
+            td { border-bottom: 1px solid #e5e7eb; padding: 8px; color: #1f2937; }
+            tr:nth-child(even) td { background: #f8fafc; }
+            .agenda td:first-child { color: #64748b; width: 80px; font-weight: 900; }
+            .diagram { width: 100%; border: 1px solid #e2e8f0; border-radius: 20px; background: #f8fafc; overflow: hidden; margin-top: 16px; }
+            .rec { font-size: 18px; line-height: 2; font-weight: 800; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 22px; padding: 24px; color: #0f172a; }
+            .small-list { margin: 0; padding-right: 20px; color: #334155; line-height: 2; font-size: 13px; }
+            .bottom { position: absolute; bottom: 24px; left: 42px; right: 42px; color: #94a3b8; font-size: 11px; display: flex; justify-content: space-between; border-top: 1px solid #e5e7eb; padding-top: 10px; }
+            .ai-badge { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(34,197,94,.14); color: #bbf7d0; border: 1px solid rgba(34,197,94,.35); padding: 9px 14px; font-size: 12px; font-weight: 900; margin-top: 18px; }
+            .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+            .metric { border: 1px solid #e2e8f0; border-radius: 20px; padding: 18px; background: #fff; min-height: 118px; }
+            .metric span { display: block; color: #64748b; font-size: 11px; font-weight: 900; margin-bottom: 10px; }
+            .metric strong { display: block; color: #0f172a; font-size: 30px; font-weight: 900; }
+            .metric p { margin: 8px 0 0; color: #64748b; font-size: 11px; line-height: 1.6; }
+            .decision-hero { display: grid; grid-template-columns: 190px 1fr; gap: 18px; align-items: stretch; margin-bottom: 18px; }
+            .decision-score { border-radius: 26px; background: #0f172a; color: #fff; padding: 24px; text-align: center; }
+            .decision-score span { display: block; color: #cbd5e1; font-size: 12px; font-weight: 900; margin-bottom: 12px; }
+            .decision-score strong { display: block; font-size: 54px; font-weight: 900; line-height: 1; }
+            .decision-score p { margin: 12px 0 0; color: #e2e8f0; font-size: 13px; font-weight: 900; }
+            .score-note { border: 1px solid #e2e8f0; border-radius: 22px; padding: 20px; background: #f8fafc; line-height: 1.9; color: #334155; font-size: 14px; }
+            .risk-pill { display: inline-block; min-width: 62px; text-align: center; border-radius: 999px; padding: 6px 10px; font-size: 10px; font-weight: 900; }
+            .risk-low { color: #166534; background: #dcfce7; }
+            .risk-mid { color: #92400e; background: #fef3c7; }
+            .risk-high { color: #991b1b; background: #fee2e2; }
+          </style>
+        </head>
+        <body>
+          <section class="page cover">
+            
+            <div class="cover-content">
+              <div class="brand">DIGITALBROKERAGE</div>
+              <div class="eyebrow">تقرير عقار كامل • Map Scan Research Report</div>
+              <h1 class="title">DigitalBrokerage</h1>
+              <p class="subtitle">دراسة مكانية تلقائية للمرافق والخدمات المحيطة بـ محطة الدريس، مدعومة بمؤشرات كمية ورسوم بيانية وملف Excel تفصيلي.</p>
+              <div class="ai-badge">AI GENERATED • تم إنشاء وتحليل هذا التقرير بواسطة الذكاء الاصطناعي</div>
+              <div class="cover-grid">
+                <div class="cover-card"><span>رقم التقرير</span><strong>MS-96702970</strong></div>
+                <div class="cover-card"><span>تم إصدار التقرير في</span><strong>١١‏/٠٦‏/٢٠٢٦، ٠٧:٥١ م</strong></div>
+                <div class="cover-card"><span>اسم المكان</span><strong>محطة الدريس</strong></div>
+                <div class="cover-card"><span>نطاق البحث</span><strong>2,500 م</strong></div>
+              </div>
+            </div>
+            <div class="footer"><span>DigitalBrokerage AI Research</span><span>01</span></div>
+          </section>
+
+          <section class="page">
+            <div class="header"><div><h2>تقرير مسح المنطقة</h2><p>محطة الدريس • 24.71360, 46.67530 • ١١‏/٠٦‏/٢٠٢٦، ٠٧:٥١ م</p></div><div class="page-no">02</div></div>
+            <h3 class="section-title">إخلاء مسؤولية</h3>
+            <div class="notice">
+              تم تقديم المعلومات والبيانات في هذا التقرير بهدف تقديم معلومات عامة وتحليل أولي للموقع فقط. تم إنشاء التحليل بواسطة الذكاء الاصطناعي اعتماداً على بيانات المسح المتاحة وقت إنشاء التقرير،
+              وقد تتغير البيانات أو تختلف عن الواقع بسبب تحديثات السوق أو تغيّر الخدمات أو جودة بيانات المصدر. لا يشكل هذا التقرير نصيحة مالية أو قانونية أو هندسية،
+              وينصح المستخدم بالتحقق بشكل مستقل من المعلومات قبل اتخاذ أي قرار استثماري أو تشغيلي.
+            </div>
+            <h3 class="section-title" style="margin-top:32px">الأجندة</h3>
+            <table class="agenda">
+              <tr><td>01</td><td>إخلاء مسؤولية</td></tr>
+              <tr><td>02</td><td>تفاصيل الموقع ونطاق البحث</td></tr>
+              <tr><td>03</td><td>منهجية المسح والمعالجة</td></tr>
+              <tr><td>04</td><td>مؤشرات الخدمات العامة</td></tr>
+              <tr><td>05</td><td>توزيع التصنيفات والخدمات</td></tr>
+              <tr><td>06</td><td>مخطط مكاني وصورة تحليلية للموقع</td></tr>
+              <tr><td>07</td><td>نموذج ثلاثي الأبعاد لكثافة الخدمات</td></tr>
+              <tr><td>08</td><td>تحليل المسافات والوصول</td></tr>
+              <tr><td>09</td><td>لوحة أرقام البحث التفصيلية</td></tr>
+              <tr><td>10</td><td>لوحة قرار الاستثمار</td></tr>
+              <tr><td>11</td><td>فجوات الخدمات والفرص</td></tr>
+              <tr><td>12</td><td>مصفوفة المخاطر وملاءمة الاستخدام</td></tr>
+              <tr><td>13</td><td>التوصية النهائية وملحق البيانات</td></tr>
+            </table>
+            <div class="bottom"><span>DigitalBrokerage</span><span>MS-96702970</span></div>
+          </section>
+
+          <section class="page">
+            <div class="header"><div><h2>تفاصيل الموقع</h2><p>ملخص كمي للمسح الحالي</p></div><div class="page-no">03</div></div>
+            <div class="stats">
+              <div class="stat"><span>عدد المواقع</span><strong>409</strong></div>
+              <div class="stat"><span>عدد التصنيفات</span><strong>27</strong></div>
+              <div class="stat"><span>متوسط المسافة</span><strong>1533م</strong></div>
+              <div class="stat"><span>كثافة المواقع/كم²</span><strong>20.83</strong></div>
+            </div>
+            <div class="two-col">
+              <div class="panel"><h3 class="section-title">إحداثيات المركز</h3><div class="large-number" style="font-size:26px">24.71360</div><div class="large-number" style="font-size:26px">46.67530</div><p class="muted">تم حساب المسافات من نقطة المركز المختارة في الخريطة.</p></div>
+              <div class="panel"><h3 class="section-title">نطاق البحث</h3><div class="large-number">2,500م</div><p class="muted">المساحة التقريبية المغطاة: 19.63 كم²</p></div>
+            </div>
+            <div class="bottom"><span>تفاصيل الموقع</span><span>03</span></div>
+          </section>
+
+          <section class="page">
+            <div class="header"><div><h2>منهجية المسح</h2><p>طريقة تجميع وتحليل بيانات الخريطة</p></div><div class="page-no">04</div></div>
+            <div class="notice">
+              يقوم النظام بجلب جميع المواقع الواقعة داخل نصف قطر البحث، ثم يحسب المسافة الجغرافية بين كل موقع ونقطة المركز باستخدام معادلة Haversine.
+              بعد ذلك يتم ترتيب النتائج حسب القرب، واستخراج التوزيع حسب التصنيف، وحساب كثافة الخدمات، ومؤشرات التنوع وسهولة الوصول.
+            </div>
+            <div class="two-col" style="margin-top:20px">
+              <div class="panel dark"><h3>مصادر القياس</h3><ul class="small-list" style="color:#cbd5e1"><li>الإحداثيات المختارة من المستخدم</li><li>نطاق البحث بالمتر</li><li>قاعدة بيانات الأماكن المحيطة</li><li>حسابات مسافة مباشرة</li></ul></div>
+              <div class="panel"><h3 class="section-title">حدود التحليل</h3><p class="muted">التقرير يقيس القرب المكاني وليس جودة الخدمة أو الازدحام أو ساعات العمل. لذلك يعتبر أداة بحث أولية قوية وليست بديلاً عن التحقق الميداني.</p></div>
+            </div>
+            <div class="bottom"><span>منهجية المسح</span><span>04</span></div>
+          </section>
+
+          <section class="page">
+            <div class="header"><div><h2>مؤشرات الخدمات العامة</h2><p>درجات كمية مركبة من نتائج المسح</p></div><div class="page-no">05</div></div>
+            <div class="stats">
+              <div class="stat"><span>درجة الجاذبية</span><strong>87%</strong></div>
+              <div class="stat"><span>تنوع الخدمات</span><strong>100%</strong></div>
+              <div class="stat"><span>سهولة الوصول</span><strong>72%</strong></div>
+              <div class="stat"><span>داخل 1000م</span><strong>88</strong></div>
+            </div>
+            <div class="diagram">
+              <svg width="100%" height="300" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+                <rect width="640" height="300" fill="#f8fafc"/>
+                
+        <text x="560" y="74" font-size="14" fill="#334155" text-anchor="end">درجة الجاذبية الخدمية</text>
+        <rect x="120" y="56" width="390" height="24" rx="12" fill="#e2e8f0"/>
+        <rect x="171" y="56" width="339" height="24" rx="12" fill="#0f172a"/>
+        <text x="82" y="74" font-size="14" fill="#0f172a" font-weight="900">87%</text>
+      
+        <text x="560" y="132" font-size="14" fill="#334155" text-anchor="end">تنوع الخدمات</text>
+        <rect x="120" y="114" width="390" height="24" rx="12" fill="#e2e8f0"/>
+        <rect x="120" y="114" width="390" height="24" rx="12" fill="#0f172a"/>
+        <text x="82" y="132" font-size="14" fill="#0f172a" font-weight="900">100%</text>
+      
+        <text x="560" y="190" font-size="14" fill="#334155" text-anchor="end">سهولة الوصول</text>
+        <rect x="120" y="172" width="390" height="24" rx="12" fill="#e2e8f0"/>
+        <rect x="229" y="172" width="281" height="24" rx="12" fill="#0f172a"/>
+        <text x="82" y="190" font-size="14" fill="#0f172a" font-weight="900">72%</text>
+      
+        <text x="560" y="248" font-size="14" fill="#334155" text-anchor="end">كثافة الخدمات</text>
+        <rect x="120" y="230" width="390" height="24" rx="12" fill="#e2e8f0"/>
+        <rect x="120" y="230" width="390" height="24" rx="12" fill="#0f172a"/>
+        <text x="82" y="248" font-size="14" fill="#0f172a" font-weight="900">100%</text>
+      
+              </svg>
+            </div>
+            <div class="bottom"><span>مؤشرات الخدمات</span><span>05</span></div>
+          </section>
+
+          <section class="page">
+            <div class="header"><div><h2>توزيع التصنيفات</h2><p>أكثر التصنيفات تكراراً ضمن نطاق البحث</p></div><div class="page-no">06</div></div>
+            <div class="diagram">
+              <svg width="100%" height="410" viewBox="0 0 640 410" xmlns="http://www.w3.org/2000/svg">
+                <rect width="640" height="410" fill="#f8fafc"/>
+                
+        <text x="585" y="47" font-size="12" fill="#334155" text-anchor="end">parking_space</text>
+        <rect x="190" y="32" width="380" height="18" rx="8" fill="#0f172a"/>
+        <text x="175" y="46" font-size="12" fill="#0f172a" font-weight="700">111</text>
+      
+        <text x="585" y="81" font-size="12" fill="#334155" text-anchor="end">restaurant</text>
+        <rect x="330" y="66" width="240" height="18" rx="8" fill="#0f172a"/>
+        <text x="175" y="80" font-size="12" fill="#0f172a" font-weight="700">70</text>
+      
+        <text x="585" y="115" font-size="12" fill="#334155" text-anchor="end">place_of_worship</text>
+        <rect x="368" y="100" width="202" height="18" rx="8" fill="#0f172a"/>
+        <text x="175" y="114" font-size="12" fill="#0f172a" font-weight="700">59</text>
+      
+        <text x="585" y="149" font-size="12" fill="#334155" text-anchor="end">parking</text>
+        <rect x="454" y="134" width="116" height="18" rx="8" fill="#0f172a"/>
+        <text x="175" y="148" font-size="12" fill="#0f172a" font-weight="700">34</text>
+      
+        <text x="585" y="183" font-size="12" fill="#334155" text-anchor="end">cafe</text>
+        <rect x="467" y="168" width="103" height="18" rx="8" fill="#0f172a"/>
+        <text x="175" y="182" font-size="12" fill="#0f172a" font-weight="700">30</text>
+      
+        <text x="585" y="217" font-size="12" fill="#334155" text-anchor="end">fast_food</text>
+        <rect x="478" y="202" width="92" height="18" rx="8" fill="#0f172a"/>
+        <text x="175" y="216" font-size="12" fill="#0f172a" font-weight="700">27</text>
+      
+        <text x="585" y="251" font-size="12" fill="#334155" text-anchor="end">bank</text>
+        <rect x="512" y="236" width="58" height="18" rx="8" fill="#0f172a"/>
+        <text x="175" y="250" font-size="12" fill="#0f172a" font-weight="700">17</text>
+      
+        <text x="585" y="285" font-size="12" fill="#334155" text-anchor="end">hospital</text>
+        <rect x="515" y="270" width="55" height="18" rx="8" fill="#0f172a"/>
+        <text x="175" y="284" font-size="12" fill="#0f172a" font-weight="700">16</text>
+      
+        <text x="585" y="319" font-size="12" fill="#334155" text-anchor="end">fuel</text>
+        <rect x="543" y="304" width="27" height="18" rx="8" fill="#0f172a"/>
+        <text x="175" y="318" font-size="12" fill="#0f172a" font-weight="700">8</text>
+      
+        <text x="585" y="353" font-size="12" fill="#334155" text-anchor="end">atm</text>
+        <rect x="546" y="338" width="24" height="18" rx="8" fill="#0f172a"/>
+        <text x="175" y="352" font-size="12" fill="#0f172a" font-weight="700">7</text>
+      
+              </svg>
+            </div>
+            <table><thead><tr><th>#</th><th>التصنيف</th><th>العدد</th><th>النسبة</th></tr></thead><tbody>
+      <tr>
+        <td>1</td>
+        <td>parking_space</td>
+        <td>111</td>
+        <td>27.1%</td>
+      </tr>
+    
+      <tr>
+        <td>2</td>
+        <td>restaurant</td>
+        <td>70</td>
+        <td>17.1%</td>
+      </tr>
+    
+      <tr>
+        <td>3</td>
+        <td>place_of_worship</td>
+        <td>59</td>
+        <td>14.4%</td>
+      </tr>
+    
+      <tr>
+        <td>4</td>
+        <td>parking</td>
+        <td>34</td>
+        <td>8.3%</td>
+      </tr>
+    
+      <tr>
+        <td>5</td>
+        <td>cafe</td>
+        <td>30</td>
+        <td>7.3%</td>
+      </tr>
+    
+      <tr>
+        <td>6</td>
+        <td>fast_food</td>
+        <td>27</td>
+        <td>6.6%</td>
+      </tr>
+    
+      <tr>
+        <td>7</td>
+        <td>bank</td>
+        <td>17</td>
+        <td>4.2%</td>
+      </tr>
+    
+      <tr>
+        <td>8</td>
+        <td>hospital</td>
+        <td>16</td>
+        <td>3.9%</td>
+      </tr>
+    
+      <tr>
+        <td>9</td>
+        <td>fuel</td>
+        <td>8</td>
+        <td>2.0%</td>
+      </tr>
+    
+      <tr>
+        <td>10</td>
+        <td>atm</td>
+        <td>7</td>
+        <td>1.7%</td>
+      </tr>
+    </tbody></table>
+            <div class="bottom"><span>توزيع التصنيفات</span><span>06</span></div>
+          </section>
+
+          <section class="page">
+            <div class="header"><div><h2>صورة تحليلية للموقع</h2><p>تمثيل مكاني تقريبي لتوزيع المواقع حول نقطة المركز</p></div><div class="page-no">07</div></div>
+            <div class="diagram">
+              <svg width="100%" height="315" viewBox="0 0 640 315" xmlns="http://www.w3.org/2000/svg">
+          <rect width="640" height="315" fill="#eef2f7"/>
+          <circle cx="300" cy="210" r="70" fill="none" stroke="#cbd5e1" stroke-width="2"/>
+          <circle cx="300" cy="210" r="140" fill="none" stroke="#cbd5e1" stroke-width="2"/>
+          <circle cx="300" cy="210" r="210" fill="none" stroke="#cbd5e1" stroke-width="2"/>
+          <line x1="300" y1="20" x2="300" y2="300" stroke="#dbe3ee" stroke-width="2"/>
+          <line x1="40" y1="210" x2="600" y2="210" stroke="#dbe3ee" stroke-width="2"/>
+          <circle cx="300.6" cy="178.7" r="4" fill="#0f172a" opacity=".78"/><circle cx="300.8" cy="177.2" r="4" fill="#2563eb" opacity=".78"/><circle cx="297.7" cy="188.5" r="4" fill="#16a34a" opacity=".78"/><circle cx="280.1" cy="181.9" r="4" fill="#f59e0b" opacity=".78"/><circle cx="298.3" cy="189.6" r="4" fill="#dc2626" opacity=".78"/><circle cx="297.1" cy="190.5" r="4" fill="#0f172a" opacity=".78"/><circle cx="299.1" cy="191.1" r="4" fill="#2563eb" opacity=".78"/><circle cx="300.3" cy="191.9" r="4" fill="#16a34a" opacity=".78"/><circle cx="292.5" cy="168.3" r="4" fill="#f59e0b" opacity=".78"/><circle cx="301.3" cy="192.6" r="4" fill="#dc2626" opacity=".78"/><circle cx="320.7" cy="188.2" r="4" fill="#0f172a" opacity=".78"/><circle cx="302.8" cy="195.1" r="4" fill="#2563eb" opacity=".78"/><circle cx="332.9" cy="180.2" r="4" fill="#16a34a" opacity=".78"/><circle cx="264.2" cy="180.1" r="4" fill="#f59e0b" opacity=".78"/><circle cx="277.1" cy="193.6" r="4" fill="#dc2626" opacity=".78"/><circle cx="340.0" cy="178.9" r="4" fill="#0f172a" opacity=".78"/><circle cx="336.8" cy="171.3" r="4" fill="#2563eb" opacity=".78"/><circle cx="314.8" cy="198.8" r="4" fill="#16a34a" opacity=".78"/><circle cx="285.7" cy="160.2" r="4" fill="#f59e0b" opacity=".78"/><circle cx="253.8" cy="184.5" r="4" fill="#dc2626" opacity=".78"/><circle cx="252.8" cy="189.6" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="262.7" cy="197.3" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="251.6" cy="193.5" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="320.4" cy="204.8" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="358.1" cy="184.6" r="2.6" fill="#dc2626" opacity=".78"/><circle cx="244.6" cy="191.2" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="246.0" cy="194.8" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="239.1" cy="171.7" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="244.8" cy="195.9" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="326.7" cy="209.2" r="2.6" fill="#dc2626" opacity=".78"/><circle cx="277.7" cy="210.4" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="299.9" cy="212.3" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="327.1" cy="209.7" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="298.6" cy="212.5" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="293.8" cy="212.5" r="2.6" fill="#dc2626" opacity=".78"/><circle cx="305.1" cy="212.8" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="326.0" cy="210.5" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="275.4" cy="210.8" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="293.9" cy="213.0" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="237.7" cy="196.6" r="2.6" fill="#dc2626" opacity=".78"/><circle cx="295.1" cy="213.8" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="316.2" cy="146.8" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="316.0" cy="146.7" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="365.3" cy="164.7" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="347.1" cy="206.3" r="2.6" fill="#dc2626" opacity=".78"/><circle cx="369.2" cy="162.9" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="227.9" cy="165.6" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="268.9" cy="145.9" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="232.4" cy="199.0" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="293.9" cy="217.5" r="2.6" fill="#dc2626" opacity=".78"/><circle cx="370.4" cy="162.3" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="232.0" cy="200.1" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="365.8" cy="158.0" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="233.3" cy="201.8" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="230.7" cy="200.2" r="2.6" fill="#dc2626" opacity=".78"/><circle cx="305.8" cy="218.5" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="229.6" cy="199.7" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="228.3" cy="199.0" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="342.6" cy="146.5" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="226.7" cy="199.2" r="2.6" fill="#dc2626" opacity=".78"/><circle cx="226.3" cy="160.3" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="230.0" cy="202.5" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="382.6" cy="169.5" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="312.1" cy="220.1" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="223.9" cy="199.8" r="2.6" fill="#dc2626" opacity=".78"/><circle cx="227.2" cy="203.0" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="300.1" cy="221.7" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="355.6" cy="213.4" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="221.2" cy="201.6" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="215.1" cy="197.7" r="2.6" fill="#dc2626" opacity=".78"/><circle cx="220.3" cy="203.8" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="355.3" cy="216.7" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="216.4" cy="202.7" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="334.5" cy="223.2" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="334.0" cy="223.8" r="2.6" fill="#dc2626" opacity=".78"/><circle cx="217.8" cy="153.9" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="317.3" cy="227.8" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="209.3" cy="203.2" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="204.4" cy="198.7" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="209.6" cy="203.8" r="2.6" fill="#dc2626" opacity=".78"/><circle cx="345.0" cy="224.3" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="207.2" cy="203.8" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="328.2" cy="228.2" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="292.0" cy="230.2" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="293.1" cy="230.4" r="2.6" fill="#dc2626" opacity=".78"/><circle cx="379.9" cy="145.4" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="213.2" cy="149.1" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="292.5" cy="231.7" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="294.7" cy="232.0" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="206.2" cy="207.5" r="2.6" fill="#dc2626" opacity=".78"/><circle cx="302.6" cy="232.7" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="323.9" cy="231.6" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="293.6" cy="232.8" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="350.1" cy="227.4" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="343.3" cy="229.5" r="2.6" fill="#dc2626" opacity=".78"/><circle cx="315.3" cy="233.3" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="347.1" cy="229.2" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="317.4" cy="233.6" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="345.6" cy="231.0" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="313.1" cy="235.1" r="2.6" fill="#dc2626" opacity=".78"/><circle cx="305.2" cy="235.4" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="327.4" cy="235.5" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="179.0" cy="178.2" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="249.0" cy="232.2" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="194.6" cy="209.5" r="2.6" fill="#dc2626" opacity=".78"/><circle cx="176.7" cy="178.8" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="301.2" cy="239.1" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="423.4" cy="169.7" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="300.4" cy="239.6" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="330.8" cy="238.4" r="2.6" fill="#dc2626" opacity=".78"/><circle cx="410.4" cy="210.9" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="408.2" cy="146.4" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="202.9" cy="139.3" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="355.1" cy="235.8" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="187.3" cy="211.7" r="2.6" fill="#dc2626" opacity=".78"/><circle cx="359.3" cy="124.5" r="2.6" fill="#0f172a" opacity=".78"/><circle cx="171.8" cy="164.1" r="2.6" fill="#2563eb" opacity=".78"/><circle cx="195.1" cy="140.4" r="2.6" fill="#16a34a" opacity=".78"/><circle cx="389.2" cy="227.6" r="2.6" fill="#f59e0b" opacity=".78"/><circle cx="167.9" cy="194.6" r="2.6" fill="#dc2626" opacity=".78"/>
+          <circle cx="300" cy="210" r="10" fill="#dc2626"/>
+          <text x="300" y="198" font-size="13" fill="#0f172a" text-anchor="middle" font-weight="900">الموقع</text>
+          <text x="300" y="300" font-size="12" fill="#64748b" text-anchor="middle">مخطط تمثيلي وليس صورة جوية حقيقية</text>
+        </svg>
+            </div>
+            <h3 class="section-title" style="margin-top:18px">مشهد جوي تحليلي 3D</h3>
+            <div class="diagram" style="margin-top:10px">
+              <svg width="100%" height="250" viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="aerialSky" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0%" stop-color="#e0f2fe"/>
+          <stop offset="52%" stop-color="#f8fafc"/>
+          <stop offset="100%" stop-color="#dcfce7"/>
+        </linearGradient>
+      </defs>
+      <rect width="640" height="250" fill="url(#aerialSky)"/>
+      <polygon points="24,198 300,52 620,178 338,240" fill="#ecfccb" opacity=".72"/>
+      <polygon points="74,182 305,72 560,176 330,224" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2"/>
+      
+      <path d="M36 84 L550 170" stroke="#cbd5e1" stroke-width="10" stroke-linecap="round" opacity=".82"/>
+      <path d="M42 84 L556 170" stroke="#f8fafc" stroke-width="2" stroke-dasharray="10 12" opacity=".9"/>
+    
+      <path d="M70 116 L566 202" stroke="#cbd5e1" stroke-width="10" stroke-linecap="round" opacity=".82"/>
+      <path d="M76 116 L572 202" stroke="#f8fafc" stroke-width="2" stroke-dasharray="10 12" opacity=".9"/>
+    
+      <path d="M104 148 L582 234" stroke="#cbd5e1" stroke-width="10" stroke-linecap="round" opacity=".82"/>
+      <path d="M110 148 L588 234" stroke="#f8fafc" stroke-width="2" stroke-dasharray="10 12" opacity=".9"/>
+    
+      <path d="M138 180 L598 266" stroke="#cbd5e1" stroke-width="10" stroke-linecap="round" opacity=".82"/>
+      <path d="M144 180 L604 266" stroke="#f8fafc" stroke-width="2" stroke-dasharray="10 12" opacity=".9"/>
+    
+      <path d="M172 212 L614 298" stroke="#cbd5e1" stroke-width="10" stroke-linecap="round" opacity=".82"/>
+      <path d="M178 212 L620 298" stroke="#f8fafc" stroke-width="2" stroke-dasharray="10 12" opacity=".9"/>
+    
+      
+        <g opacity=".92">
+          <polygon points="76,72 100,60 124,72 100,86" fill="#dbeafe"/>
+          <polygon points="76,-35 100,-47 124,-35 100,-21" fill="#2563eb"/>
+          <polygon points="76,72 76,-35 100,-21 100,86" fill="#2563eb" opacity=".78"/>
+          <polygon points="124,72 124,-35 100,-21 100,86" fill="#2563eb" opacity=".55"/>
+          <text x="100" y="103" font-size="8" fill="#334155" text-anchor="middle">25م</text>
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="130,80 154,68 178,80 154,94" fill="#dbeafe"/>
+          <polygon points="130,-26 154,-38 178,-26 154,-12" fill="#16a34a"/>
+          <polygon points="130,80 130,-26 154,-12 154,94" fill="#16a34a" opacity=".78"/>
+          <polygon points="178,80 178,-26 154,-12 154,94" fill="#16a34a" opacity=".55"/>
+          <text x="154" y="111" font-size="8" fill="#334155" text-anchor="middle">55م</text>
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="184,88 208,76 232,88 208,102" fill="#dbeafe"/>
+          <polygon points="184,-15 208,-27 232,-15 208,-1" fill="#f59e0b"/>
+          <polygon points="184,88 184,-15 208,-1 208,102" fill="#f59e0b" opacity=".78"/>
+          <polygon points="232,88 232,-15 208,-1 208,102" fill="#f59e0b" opacity=".55"/>
+          <text x="208" y="119" font-size="8" fill="#334155" text-anchor="middle">165م</text>
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="238,96 262,84 286,96 262,110" fill="#dbeafe"/>
+          <polygon points="238,-7 262,-19 286,-7 262,7" fill="#dc2626"/>
+          <polygon points="238,96 238,-7 262,7 262,110" fill="#dc2626" opacity=".78"/>
+          <polygon points="286,96 286,-7 262,7 262,110" fill="#dc2626" opacity=".55"/>
+          <text x="262" y="127" font-size="8" fill="#334155" text-anchor="middle">185م</text>
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="292,104 316,92 340,104 316,118" fill="#dbeafe"/>
+          <polygon points="292,1 316,-11 340,1 316,15" fill="#7c3aed"/>
+          <polygon points="292,104 292,1 316,15 316,118" fill="#7c3aed" opacity=".78"/>
+          <polygon points="340,104 340,1 316,15 316,118" fill="#7c3aed" opacity=".55"/>
+          <text x="316" y="135" font-size="8" fill="#334155" text-anchor="middle">186م</text>
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="346,112 370,100 394,112 370,126" fill="#dbeafe"/>
+          <polygon points="346,10 370,-2 394,10 370,24" fill="#0f766e"/>
+          <polygon points="346,112 346,10 370,24 370,126" fill="#0f766e" opacity=".78"/>
+          <polygon points="394,112 394,10 370,24 370,126" fill="#0f766e" opacity=".55"/>
+          <text x="370" y="143" font-size="8" fill="#334155" text-anchor="middle">204م</text>
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="400,120 424,108 448,120 424,134" fill="#dbeafe"/>
+          <polygon points="400,18 424,6 448,18 424,32" fill="#2563eb"/>
+          <polygon points="400,120 400,18 424,32 424,134" fill="#2563eb" opacity=".78"/>
+          <polygon points="448,120 448,18 424,32 424,134" fill="#2563eb" opacity=".55"/>
+          <text x="424" y="151" font-size="8" fill="#334155" text-anchor="middle">215م</text>
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="454,128 478,116 502,128 478,142" fill="#dbeafe"/>
+          <polygon points="454,27 478,15 502,27 478,41" fill="#16a34a"/>
+          <polygon points="454,128 454,27 478,41 478,142" fill="#16a34a" opacity=".78"/>
+          <polygon points="502,128 502,27 478,41 478,142" fill="#16a34a" opacity=".55"/>
+          <text x="478" y="159" font-size="8" fill="#334155" text-anchor="middle">229م</text>
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="508,136 532,124 556,136 532,150" fill="#dbeafe"/>
+          <polygon points="508,53 532,41 556,53 532,67" fill="#f59e0b"/>
+          <polygon points="508,136 508,53 532,67 532,150" fill="#f59e0b" opacity=".78"/>
+          <polygon points="556,136 556,53 532,67 532,150" fill="#f59e0b" opacity=".55"/>
+          <text x="532" y="167" font-size="8" fill="#334155" text-anchor="middle">236م</text>
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="94,110 118,98 142,110 118,124" fill="#dbeafe"/>
+          <polygon points="94,27 118,15 142,27 118,41" fill="#dc2626"/>
+          <polygon points="94,110 94,27 118,41 118,124" fill="#dc2626" opacity=".78"/>
+          <polygon points="142,110 142,27 118,41 118,124" fill="#dc2626" opacity=".55"/>
+          <text x="118" y="141" font-size="8" fill="#334155" text-anchor="middle">243م</text>
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="148,118 172,106 196,118 172,132" fill="#dbeafe"/>
+          <polygon points="148,35 172,23 196,35 172,49" fill="#7c3aed"/>
+          <polygon points="148,118 148,35 172,49 172,132" fill="#7c3aed" opacity=".78"/>
+          <polygon points="196,118 196,35 172,49 172,132" fill="#7c3aed" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="202,126 226,114 250,126 226,140" fill="#dbeafe"/>
+          <polygon points="202,44 226,32 250,44 226,58" fill="#0f766e"/>
+          <polygon points="202,126 202,44 226,58 226,140" fill="#0f766e" opacity=".78"/>
+          <polygon points="250,126 250,44 226,58 226,140" fill="#0f766e" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="256,134 280,122 304,134 280,148" fill="#dbeafe"/>
+          <polygon points="256,53 280,41 304,53 280,67" fill="#2563eb"/>
+          <polygon points="256,134 256,53 280,67 280,148" fill="#2563eb" opacity=".78"/>
+          <polygon points="304,134 304,53 280,67 280,148" fill="#2563eb" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="310,142 334,130 358,142 334,156" fill="#dbeafe"/>
+          <polygon points="310,61 334,49 358,61 334,75" fill="#16a34a"/>
+          <polygon points="310,142 310,61 334,75 334,156" fill="#16a34a" opacity=".78"/>
+          <polygon points="358,142 358,61 334,75 334,156" fill="#16a34a" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="364,150 388,138 412,150 388,164" fill="#dbeafe"/>
+          <polygon points="364,70 388,58 412,70 388,84" fill="#f59e0b"/>
+          <polygon points="364,150 364,70 388,84 388,164" fill="#f59e0b" opacity=".78"/>
+          <polygon points="412,150 412,70 388,84 388,164" fill="#f59e0b" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="418,158 442,146 466,158 442,172" fill="#dbeafe"/>
+          <polygon points="418,79 442,67 466,79 442,93" fill="#dc2626"/>
+          <polygon points="418,158 418,79 442,93 442,172" fill="#dc2626" opacity=".78"/>
+          <polygon points="466,158 466,79 442,93 442,172" fill="#dc2626" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="472,166 496,154 520,166 496,180" fill="#dbeafe"/>
+          <polygon points="472,87 496,75 520,87 496,101" fill="#7c3aed"/>
+          <polygon points="472,166 472,87 496,101 496,180" fill="#7c3aed" opacity=".78"/>
+          <polygon points="520,166 520,87 496,101 496,180" fill="#7c3aed" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="526,174 550,162 574,174 550,188" fill="#dbeafe"/>
+          <polygon points="526,95 550,83 574,95 550,109" fill="#0f766e"/>
+          <polygon points="526,174 526,95 550,109 550,188" fill="#0f766e" opacity=".78"/>
+          <polygon points="574,174 574,95 550,109 550,188" fill="#0f766e" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="112,148 136,136 160,148 136,162" fill="#dbeafe"/>
+          <polygon points="112,70 136,58 160,70 136,84" fill="#2563eb"/>
+          <polygon points="112,148 112,70 136,84 136,162" fill="#2563eb" opacity=".78"/>
+          <polygon points="160,148 160,70 136,84 136,162" fill="#2563eb" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="166,156 190,144 214,156 190,170" fill="#dbeafe"/>
+          <polygon points="166,78 190,66 214,78 190,92" fill="#16a34a"/>
+          <polygon points="166,156 166,78 190,92 190,170" fill="#16a34a" opacity=".78"/>
+          <polygon points="214,156 214,78 190,92 190,170" fill="#16a34a" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="220,164 244,152 268,164 244,178" fill="#dbeafe"/>
+          <polygon points="220,87 244,75 268,87 244,101" fill="#f59e0b"/>
+          <polygon points="220,164 220,87 244,101 244,178" fill="#f59e0b" opacity=".78"/>
+          <polygon points="268,164 268,87 244,101 244,178" fill="#f59e0b" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="274,172 298,160 322,172 298,186" fill="#dbeafe"/>
+          <polygon points="274,96 298,84 322,96 298,110" fill="#dc2626"/>
+          <polygon points="274,172 274,96 298,110 298,186" fill="#dc2626" opacity=".78"/>
+          <polygon points="322,172 322,96 298,110 298,186" fill="#dc2626" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="328,180 352,168 376,180 352,194" fill="#dbeafe"/>
+          <polygon points="328,105 352,93 376,105 352,119" fill="#7c3aed"/>
+          <polygon points="328,180 328,105 352,119 352,194" fill="#7c3aed" opacity=".78"/>
+          <polygon points="376,180 376,105 352,119 352,194" fill="#7c3aed" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="382,188 406,176 430,188 406,202" fill="#dbeafe"/>
+          <polygon points="382,113 406,101 430,113 406,127" fill="#0f766e"/>
+          <polygon points="382,188 382,113 406,127 406,202" fill="#0f766e" opacity=".78"/>
+          <polygon points="430,188 430,113 406,127 406,202" fill="#0f766e" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="436,196 460,184 484,196 460,210" fill="#dbeafe"/>
+          <polygon points="436,121 460,109 484,121 460,135" fill="#2563eb"/>
+          <polygon points="436,196 436,121 460,135 460,210" fill="#2563eb" opacity=".78"/>
+          <polygon points="484,196 484,121 460,135 460,210" fill="#2563eb" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="490,204 514,192 538,204 514,218" fill="#dbeafe"/>
+          <polygon points="490,130 514,118 538,130 514,144" fill="#16a34a"/>
+          <polygon points="490,204 490,130 514,144 514,218" fill="#16a34a" opacity=".78"/>
+          <polygon points="538,204 538,130 514,144 514,218" fill="#16a34a" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="544,212 568,200 592,212 568,226" fill="#dbeafe"/>
+          <polygon points="544,138 568,126 592,138 568,152" fill="#f59e0b"/>
+          <polygon points="544,212 544,138 568,152 568,226" fill="#f59e0b" opacity=".78"/>
+          <polygon points="592,212 592,138 568,152 568,226" fill="#f59e0b" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="130,186 154,174 178,186 154,200" fill="#dbeafe"/>
+          <polygon points="130,113 154,101 178,113 154,127" fill="#dc2626"/>
+          <polygon points="130,186 130,113 154,127 154,200" fill="#dc2626" opacity=".78"/>
+          <polygon points="178,186 178,113 154,127 154,200" fill="#dc2626" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="184,194 208,182 232,194 208,208" fill="#dbeafe"/>
+          <polygon points="184,121 208,109 232,121 208,135" fill="#7c3aed"/>
+          <polygon points="184,194 184,121 208,135 208,208" fill="#7c3aed" opacity=".78"/>
+          <polygon points="232,194 232,121 208,135 208,208" fill="#7c3aed" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="238,202 262,190 286,202 262,216" fill="#dbeafe"/>
+          <polygon points="238,130 262,118 286,130 262,144" fill="#0f766e"/>
+          <polygon points="238,202 238,130 262,144 262,216" fill="#0f766e" opacity=".78"/>
+          <polygon points="286,202 286,130 262,144 262,216" fill="#0f766e" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="292,210 316,198 340,210 316,224" fill="#dbeafe"/>
+          <polygon points="292,138 316,126 340,138 316,152" fill="#2563eb"/>
+          <polygon points="292,210 292,138 316,152 316,224" fill="#2563eb" opacity=".78"/>
+          <polygon points="340,210 340,138 316,152 316,224" fill="#2563eb" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="346,218 370,206 394,218 370,232" fill="#dbeafe"/>
+          <polygon points="346,146 370,134 394,146 370,160" fill="#16a34a"/>
+          <polygon points="346,218 346,146 370,160 370,232" fill="#16a34a" opacity=".78"/>
+          <polygon points="394,218 394,146 370,160 370,232" fill="#16a34a" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="400,226 424,214 448,226 424,240" fill="#dbeafe"/>
+          <polygon points="400,154 424,142 448,154 424,168" fill="#f59e0b"/>
+          <polygon points="400,226 400,154 424,168 424,240" fill="#f59e0b" opacity=".78"/>
+          <polygon points="448,226 448,154 424,168 424,240" fill="#f59e0b" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="454,234 478,222 502,234 478,248" fill="#dbeafe"/>
+          <polygon points="454,162 478,150 502,162 478,176" fill="#dc2626"/>
+          <polygon points="454,234 454,162 478,176 478,248" fill="#dc2626" opacity=".78"/>
+          <polygon points="502,234 502,162 478,176 478,248" fill="#dc2626" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="508,242 532,230 556,242 532,256" fill="#dbeafe"/>
+          <polygon points="508,170 532,158 556,170 532,184" fill="#7c3aed"/>
+          <polygon points="508,242 508,170 532,184 532,256" fill="#7c3aed" opacity=".78"/>
+          <polygon points="556,242 556,170 532,184 532,256" fill="#7c3aed" opacity=".55"/>
+          
+        </g>
+      
+        <g opacity=".92">
+          <polygon points="562,250 586,238 610,250 586,264" fill="#dbeafe"/>
+          <polygon points="562,178 586,166 610,178 586,192" fill="#0f766e"/>
+          <polygon points="562,250 562,178 586,192 586,264" fill="#0f766e" opacity=".78"/>
+          <polygon points="610,250 610,178 586,192 586,264" fill="#0f766e" opacity=".55"/>
+          
+        </g>
+      
+      <g>
+        <circle cx="312" cy="150" r="18" fill="#ef4444" opacity=".2"/>
+        <circle cx="312" cy="150" r="8" fill="#dc2626"/>
+        <text x="312" y="135" font-size="12" fill="#0f172a" text-anchor="middle" font-weight="900">المركز</text>
+      </g>
+      <text x="600" y="32" font-size="13" fill="#0f172a" text-anchor="end" font-weight="900">مشهد جوي 3D مولد محلياً</text>
+      <text x="600" y="52" font-size="10" fill="#64748b" text-anchor="end">ارتفاع المباني يعكس قرب وكثافة الخدمات المرصودة</text>
+    </svg>
+            </div>
+            <p class="muted" style="margin-top:10px">
+              هذا المشهد مولد محلياً من نتائج المسح نفسها، ولا يعتمد على أي خدمة خارجية. الهدف منه تمثيل كثافة الخدمات وقربها حول المركز بصرياً لمساعدة القرار، وليس صورة جوية حقيقية.
+            </p>
+            <div class="bottom"><span>صورة تحليلية</span><span>07</span></div>
+          </section>
+
+          <section class="page">
+            <div class="header"><div><h2>نموذج ثلاثي الأبعاد</h2><p>تصوير بحثي لكثافة الخدمات حسب التصنيف</p></div><div class="page-no">08</div></div>
+            <div class="diagram">
+              <svg width="100%" height="430" viewBox="0 0 640 430" xmlns="http://www.w3.org/2000/svg">
+                <rect width="640" height="430" fill="#f8fafc"/>
+                <text x="320" y="36" font-size="18" fill="#0f172a" text-anchor="middle" font-weight="900">نموذج 3D لكثافة الخدمات حسب التصنيف</text>
+                <text x="320" y="62" font-size="12" fill="#64748b" text-anchor="middle">ارتفاع كل عمود يمثل قوة حضور التصنيف داخل نطاق المسح</text>
+                
+        <polygon points="70,270 116,248 162,270 116,294" fill="#cbd5e1"/>
+        <polygon points="70,120 116,98 162,120 116,144" fill="#0f172a"/>
+        <polygon points="70,270 70,120 116,144 116,294" fill="#0f172a" opacity=".78"/>
+        <polygon points="162,270 162,120 116,144 116,294" fill="#0f172a" opacity=".55"/>
+        <text x="116" y="318" font-size="10" fill="#334155" text-anchor="middle">parking_space</text>
+        <text x="116" y="90" font-size="13" fill="#0f172a" text-anchor="middle" font-weight="900">111</text>
+      
+        <polygon points="195,270 241,248 287,270 241,294" fill="#cbd5e1"/>
+        <polygon points="195,175 241,153 287,175 241,199" fill="#1d4ed8"/>
+        <polygon points="195,270 195,175 241,199 241,294" fill="#1d4ed8" opacity=".78"/>
+        <polygon points="287,270 287,175 241,199 241,294" fill="#1d4ed8" opacity=".55"/>
+        <text x="241" y="318" font-size="10" fill="#334155" text-anchor="middle">restaurant</text>
+        <text x="241" y="145" font-size="13" fill="#0f172a" text-anchor="middle" font-weight="900">70</text>
+      
+        <polygon points="320,270 366,248 412,270 366,294" fill="#cbd5e1"/>
+        <polygon points="320,190 366,168 412,190 366,214" fill="#047857"/>
+        <polygon points="320,270 320,190 366,214 366,294" fill="#047857" opacity=".78"/>
+        <polygon points="412,270 412,190 366,214 366,294" fill="#047857" opacity=".55"/>
+        <text x="366" y="318" font-size="10" fill="#334155" text-anchor="middle">place_of_worship</text>
+        <text x="366" y="160" font-size="13" fill="#0f172a" text-anchor="middle" font-weight="900">59</text>
+      
+        <polygon points="445,270 491,248 537,270 491,294" fill="#cbd5e1"/>
+        <polygon points="445,224 491,202 537,224 491,248" fill="#b45309"/>
+        <polygon points="445,270 445,224 491,248 491,294" fill="#b45309" opacity=".78"/>
+        <polygon points="537,270 537,224 491,248 491,294" fill="#b45309" opacity=".55"/>
+        <text x="491" y="318" font-size="10" fill="#334155" text-anchor="middle">parking</text>
+        <text x="491" y="194" font-size="13" fill="#0f172a" text-anchor="middle" font-weight="900">34</text>
+      
+        <polygon points="70,380 116,358 162,380 116,404" fill="#cbd5e1"/>
+        <polygon points="70,339 116,317 162,339 116,363" fill="#be123c"/>
+        <polygon points="70,380 70,339 116,363 116,404" fill="#be123c" opacity=".78"/>
+        <polygon points="162,380 162,339 116,363 116,404" fill="#be123c" opacity=".55"/>
+        <text x="116" y="428" font-size="10" fill="#334155" text-anchor="middle">cafe</text>
+        <text x="116" y="309" font-size="13" fill="#0f172a" text-anchor="middle" font-weight="900">30</text>
+      
+        <polygon points="195,380 241,358 287,380 241,404" fill="#cbd5e1"/>
+        <polygon points="195,344 241,322 287,344 241,368" fill="#6d28d9"/>
+        <polygon points="195,380 195,344 241,368 241,404" fill="#6d28d9" opacity=".78"/>
+        <polygon points="287,380 287,344 241,368 241,404" fill="#6d28d9" opacity=".55"/>
+        <text x="241" y="428" font-size="10" fill="#334155" text-anchor="middle">fast_food</text>
+        <text x="241" y="314" font-size="13" fill="#0f172a" text-anchor="middle" font-weight="900">27</text>
+      
+        <polygon points="320,380 366,358 412,380 366,404" fill="#cbd5e1"/>
+        <polygon points="320,352 366,330 412,352 366,376" fill="#0f766e"/>
+        <polygon points="320,380 320,352 366,376 366,404" fill="#0f766e" opacity=".78"/>
+        <polygon points="412,380 412,352 366,376 366,404" fill="#0f766e" opacity=".55"/>
+        <text x="366" y="428" font-size="10" fill="#334155" text-anchor="middle">bank</text>
+        <text x="366" y="322" font-size="13" fill="#0f172a" text-anchor="middle" font-weight="900">17</text>
+      
+        <polygon points="445,380 491,358 537,380 491,404" fill="#cbd5e1"/>
+        <polygon points="445,352 491,330 537,352 491,376" fill="#334155"/>
+        <polygon points="445,380 445,352 491,376 491,404" fill="#334155" opacity=".78"/>
+        <polygon points="537,380 537,352 491,376 491,404" fill="#334155" opacity=".55"/>
+        <text x="491" y="428" font-size="10" fill="#334155" text-anchor="middle">hospital</text>
+        <text x="491" y="322" font-size="13" fill="#0f172a" text-anchor="middle" font-weight="900">16</text>
+      
+              </svg>
+            </div>
+            <div class="bottom"><span>نموذج 3D</span><span>08</span></div>
+          </section>
+
+          <section class="page">
+            <div class="header"><div><h2>تحليل المسافات والوصول</h2><p>توزيع النتائج حسب القرب من المركز</p></div><div class="page-no">09</div></div>
+            <div class="diagram">
+              <svg width="100%" height="300" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+                <rect width="640" height="300" fill="#f8fafc"/>
+                
+        <text x="560" y="62" font-size="14" fill="#334155" text-anchor="end">0-500م</text>
+        <rect x="100" y="44" width="420" height="22" rx="11" fill="#e2e8f0"/>
+        <rect x="497" y="44" width="23" height="22" rx="11" fill="#16a34a"/>
+        <text x="72" y="61" font-size="13" fill="#0f172a" font-weight="800">22</text>
+      
+        <text x="560" y="116" font-size="14" fill="#334155" text-anchor="end">0-1000م</text>
+        <rect x="100" y="98" width="420" height="22" rx="11" fill="#e2e8f0"/>
+        <rect x="430" y="98" width="90" height="22" rx="11" fill="#2563eb"/>
+        <text x="72" y="115" font-size="13" fill="#0f172a" font-weight="800">88</text>
+      
+        <text x="560" y="170" font-size="14" fill="#334155" text-anchor="end">0-2000م</text>
+        <rect x="100" y="152" width="420" height="22" rx="11" fill="#e2e8f0"/>
+        <rect x="231" y="152" width="289" height="22" rx="11" fill="#f59e0b"/>
+        <text x="72" y="169" font-size="13" fill="#0f172a" font-weight="800">281</text>
+      
+        <text x="560" y="224" font-size="14" fill="#334155" text-anchor="end">كامل النطاق</text>
+        <rect x="100" y="206" width="420" height="22" rx="11" fill="#e2e8f0"/>
+        <rect x="100" y="206" width="420" height="22" rx="11" fill="#0f172a"/>
+        <text x="72" y="223" font-size="13" fill="#0f172a" font-weight="800">409</text>
+      
+              </svg>
+            </div>
+            <h3 class="section-title" style="margin-top:22px">أقرب المواقع</h3>
+            <table>
+              <thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>المسافة</th><th>الإحداثيات</th></tr></thead>
+              <tbody>
+      <tr>
+        <td>1</td>
+        <td>atm</td>
+        <td>atm</td>
+        <td>25 م</td>
+        <td>24.71382, 46.67535</td>
+      </tr>
+    
+      <tr>
+        <td>2</td>
+        <td>البنك السعودي الفرنسي</td>
+        <td>bank</td>
+        <td>55 م</td>
+        <td>24.71409, 46.67537</td>
+      </tr>
+    
+      <tr>
+        <td>3</td>
+        <td>Shanghai Express</td>
+        <td>restaurant</td>
+        <td>165 م</td>
+        <td>24.71213, 46.67509</td>
+      </tr>
+    
+      <tr>
+        <td>4</td>
+        <td>ماكدونالدز</td>
+        <td>fast_food</td>
+        <td>185 م</td>
+        <td>24.71327, 46.67350</td>
+      </tr>
+    
+      <tr>
+        <td>5</td>
+        <td>Donut House</td>
+        <td>cafe</td>
+        <td>186 م</td>
+        <td>24.71193, 46.67515</td>
+      </tr>
+    
+      <tr>
+        <td>6</td>
+        <td>Aladdin</td>
+        <td>restaurant</td>
+        <td>204 م</td>
+        <td>24.71178, 46.67504</td>
+      </tr>
+    
+      <tr>
+        <td>7</td>
+        <td>Planet Hollywood</td>
+        <td>restaurant</td>
+        <td>215 م</td>
+        <td>24.71167, 46.67522</td>
+      </tr>
+    
+      <tr>
+        <td>8</td>
+        <td>Herfy</td>
+        <td>fast_food</td>
+        <td>229 م</td>
+        <td>24.71154, 46.67532</td>
+      </tr>
+    
+      <tr>
+        <td>9</td>
+        <td>بنك الجزيرة</td>
+        <td>bank</td>
+        <td>236 م</td>
+        <td>24.71563, 46.67462</td>
+      </tr>
+    
+      <tr>
+        <td>10</td>
+        <td>Kudu</td>
+        <td>restaurant</td>
+        <td>243 م</td>
+        <td>24.71142, 46.67541</td>
+      </tr>
+    
+      <tr>
+        <td>11</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>246 م</td>
+        <td>24.71218, 46.67716</td>
+      </tr>
+    
+      <tr>
+        <td>12</td>
+        <td>cinema</td>
+        <td>cinema</td>
+        <td>292 م</td>
+        <td>24.71098, 46.67555</td>
+      </tr>
+    
+      <tr>
+        <td>13</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>300 م</td>
+        <td>24.71356, 46.67827</td>
+      </tr>
+    
+      <tr>
+        <td>14</td>
+        <td>Al Masaa Cafe</td>
+        <td>cafe</td>
+        <td>326 م</td>
+        <td>24.71358, 46.67207</td>
+      </tr>
+    
+      <tr>
+        <td>15</td>
+        <td>Quattro</td>
+        <td>restaurant</td>
+        <td>335 م</td>
+        <td>24.71124, 46.67324</td>
+      </tr>
+    
+      <tr>
+        <td>16</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>365 م</td>
+        <td>24.71380, 46.67891</td>
+      </tr>
+    
+      <tr>
+        <td>17</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>375 م</td>
+        <td>24.71511, 46.67862</td>
+      </tr>
+    
+      <tr>
+        <td>18</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>386 م</td>
+        <td>24.71035, 46.67664</td>
+      </tr>
+    
+      <tr>
+        <td>19</td>
+        <td>عيادات الدكتور بشار سالم للأسنان</td>
+        <td>dentist</td>
+        <td>403 م</td>
+        <td>24.71703, 46.67401</td>
+      </tr>
+    
+      <tr>
+        <td>20</td>
+        <td>Shikara Restaurant</td>
+        <td>restaurant</td>
+        <td>429 م</td>
+        <td>24.71282, 46.67114</td>
+      </tr>
+    
+      <tr>
+        <td>21</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>467 م</td>
+        <td>24.71194, 46.67105</td>
+      </tr>
+    
+      <tr>
+        <td>22</td>
+        <td>مطعم اكليل لبنان</td>
+        <td>restaurant</td>
+        <td>475 م</td>
+        <td>24.71061, 46.67194</td>
+      </tr>
+    
+      <tr>
+        <td>23</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>511 م</td>
+        <td>24.71127, 46.67094</td>
+      </tr>
+    
+      <tr>
+        <td>24</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>512 م</td>
+        <td>24.70931, 46.67714</td>
+      </tr>
+    
+      <tr>
+        <td>25</td>
+        <td>جامع و مسجد الامام محمد ابن عبدالوهاب</td>
+        <td>place_of_worship</td>
+        <td>536 م</td>
+        <td>24.71280, 46.68053</td>
+      </tr>
+    
+      <tr>
+        <td>26</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>549 م</td>
+        <td>24.71165, 46.67031</td>
+      </tr>
+    
+      <tr>
+        <td>27</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>568 م</td>
+        <td>24.71104, 46.67043</td>
+      </tr>
+    
+      <tr>
+        <td>28</td>
+        <td>restaurant</td>
+        <td>restaurant</td>
+        <td>577 م</td>
+        <td>24.71503, 46.66981</td>
+      </tr>
+    
+      <tr>
+        <td>29</td>
+        <td>مجمع الدكتور يوسف المقبل لطب العيون</td>
+        <td>hospital</td>
+        <td>588 م</td>
+        <td>24.71085, 46.67033</td>
+      </tr>
+    
+      <tr>
+        <td>30</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>614 م</td>
+        <td>24.70853, 46.67770</td>
+      </tr>
+    </tbody>
+            </table>
+            <div class="bottom"><span>تحليل المسافات</span><span>09</span></div>
+          </section>
+
+          <section class="page">
+            <div class="header"><div><h2>لوحة أرقام البحث</h2><p>أرقام تشغيلية مختصرة قبل قراءة القرار</p></div><div class="page-no">10</div></div>
+            <div class="metric-grid">
+              <div class="metric"><span>أقرب موقع</span><strong>25م</strong><p>atm</p></div>
+              <div class="metric"><span>أبعد موقع داخل النطاق</span><strong>2505م</strong><p>يعكس مدى انتشار النتائج داخل نصف القطر.</p></div>
+              <div class="metric"><span>وسيط المسافة</span><strong>1535م</strong><p>نصف المواقع أقرب من هذا الرقم تقريباً.</p></div>
+              <div class="metric"><span>نسبة داخل 500م</span><strong>5%</strong><p>22 موقع في نطاق مشي قريب.</p></div>
+              <div class="metric"><span>نسبة داخل 1000م</span><strong>22%</strong><p>88 موقع ضمن نطاق وصول سريع.</p></div>
+              <div class="metric"><span>خارج 2000م</span><strong>128</strong><p>مواقع أبعد نسبياً وتؤثر أقل على سهولة الوصول.</p></div>
+            </div>
+            <div class="bottom"><span>لوحة أرقام البحث</span><span>10</span></div>
+          </section>
+
+          <section class="page">
+            <div class="header"><div><h2>لوحة قرار الاستثمار</h2><p>مؤشر مركب يساعد على المقارنة بين المواقع</p></div><div class="page-no">11</div></div>
+            <div class="decision-hero">
+              <div class="decision-score"><span>Decision Score</span><strong>78</strong><p>جيد مع تحقق ميداني</p></div>
+              <div class="score-note">
+                تم بناء الدرجة من قوة الخدمات، تنوع التصنيفات، القرب، قوة عينة البيانات، وتوازن السوق المحيط.
+                هذه الدرجة لا تعني شراء أو عدم شراء مباشرة، لكنها تجعل المقارنة بين المواقع أسرع وأكثر انضباطاً.
+              </div>
+            </div>
+            <table>
+              <thead><tr><th>العامل</th><th>الوزن</th><th>القيمة</th><th>قراءة القرار</th></tr></thead>
+              <tbody>
+      <tr><td>قوة الخدمات المحيطة</td><td>30%</td><td>87%</td><td>داعمة بقوة</td></tr>
+    
+      <tr><td>تنوع التصنيفات</td><td>20%</td><td>100%</td><td>تنوع واسع</td></tr>
+    
+      <tr><td>القرب وسهولة الوصول</td><td>20%</td><td>11%</td><td>يحتاج فحص الطرق</td></tr>
+    
+      <tr><td>قوة عينة البيانات</td><td>15%</td><td>100%</td><td>عينة جيدة</td></tr>
+    
+      <tr><td>توازن السوق المحيط</td><td>15%</td><td>96%</td><td>توازن مقبول</td></tr>
+    </tbody>
+            </table>
+            <h3 class="section-title" style="margin-top:22px">تحليل الخدمات الأساسية</h3>
+            <table>
+              <thead><tr><th>#</th><th>المجموعة</th><th>العدد</th><th>الأقرب</th><th>الدرجة</th><th>أثرها على القرار</th></tr></thead>
+              <tbody>
+      <tr>
+        <td>1</td>
+        <td>تعليم</td>
+        <td>5</td>
+        <td>753 م</td>
+        <td>100%</td>
+        <td>يرفع ملاءمة السكن العائلي وطول مدة الإشغال.</td>
+      </tr>
+    
+      <tr>
+        <td>2</td>
+        <td>صحة</td>
+        <td>24</td>
+        <td>588 م</td>
+        <td>100%</td>
+        <td>مهم للطلب السكني اليومي وتقليل مخاطر الموقع.</td>
+      </tr>
+    
+      <tr>
+        <td>3</td>
+        <td>تجزئة وخدمات يومية</td>
+        <td>3</td>
+        <td>1371 م</td>
+        <td>43%</td>
+        <td>يدعم الحركة اليومية وقابلية التأجير التجاري.</td>
+      </tr>
+    
+      <tr>
+        <td>4</td>
+        <td>مطاعم وضيافة</td>
+        <td>127</td>
+        <td>165 م</td>
+        <td>100%</td>
+        <td>يرفع حيوية الموقع ومؤشر الزيارات المتكررة.</td>
+      </tr>
+    
+      <tr>
+        <td>5</td>
+        <td>نقل ووصول</td>
+        <td>150</td>
+        <td>246 م</td>
+        <td>100%</td>
+        <td>يؤثر مباشرة على سهولة الوصول وقيمة الاستخدام.</td>
+      </tr>
+    
+      <tr>
+        <td>6</td>
+        <td>بنوك وخدمات مالية</td>
+        <td>24</td>
+        <td>25 م</td>
+        <td>100%</td>
+        <td>مفيد للمكاتب والتجارة والخدمات المهنية.</td>
+      </tr>
+    
+      <tr>
+        <td>7</td>
+        <td>ترفيه ومساحات عامة</td>
+        <td>146</td>
+        <td>246 م</td>
+        <td>100%</td>
+        <td>يدعم جودة الحياة وجاذبية الإقامة.</td>
+      </tr>
+    
+      <tr>
+        <td>8</td>
+        <td>ديني ومجتمعي</td>
+        <td>35</td>
+        <td>536 م</td>
+        <td>100%</td>
+        <td>يعزز قابلية السكن والاندماج المجتمعي.</td>
+      </tr>
+    </tbody>
+            </table>
+            <div class="bottom"><span>لوحة قرار الاستثمار</span><span>11</span></div>
+          </section>
+
+          <section class="page">
+            <div class="header"><div><h2>فجوات الخدمات والفرص</h2><p>قراءة الفجوات التي قد تتحول إلى مخاطر أو فرص</p></div><div class="page-no">12</div></div>
+            <div class="notice">
+              الفجوة لا تعني دائماً ضعف الموقع. أحياناً تعني وجود فرصة تشغيلية إذا كان الطلب مثبتاً ولا توجد منافسة قوية.
+              لذلك يجب قراءة هذه الصفحة مع الزيارة الميدانية وسعر الأرض أو العقار ونمو المنطقة.
+            </div>
+            <table>
+              <thead><tr><th>المجموعة الناقصة</th><th>العدد المرصود</th><th>درجة التغطية</th><th>قراءة الفرصة</th></tr></thead>
+              <tbody>
+        <tr>
+          <td>تجزئة وخدمات يومية</td>
+          <td>3</td>
+          <td>43%</td>
+          <td>فجوة متوسطة تحتاج مقارنة مع المناطق البديلة.</td>
+        </tr>
+      </tbody>
+            </table>
+            <div class="two-col" style="margin-top:22px">
+              <div class="panel"><h3 class="section-title">أفضل استخدامات حسب البيانات</h3><table><thead><tr><th>الاستخدام</th><th>الدرجة</th><th>الحكم</th><th>السبب</th></tr></thead><tbody>
+      <tr><td>مكاتب وخدمات مهنية</td><td>99%</td><td>ملائم جداً</td><td>يقيس البنوك والضيافة والنقل وتوازن السوق.</td></tr>
+    
+      <tr><td>سكني عائلي</td><td>86%</td><td>ملائم جداً</td><td>يقيس التعليم والصحة والخدمات اليومية وتنوع البيئة.</td></tr>
+    
+      <tr><td>مختلط الاستخدام</td><td>84%</td><td>ملائم جداً</td><td>يجمع بين السكني والتجاري والخدمي.</td></tr>
+    
+      <tr><td>تجاري يومي</td><td>64%</td><td>ملائم بشروط</td><td>يقيس التجزئة والمطاعم والنقل والقرب من الحركة.</td></tr>
+    </tbody></table></div>
+              <div class="panel"><h3 class="section-title">أسئلة القرار قبل الاعتماد</h3><ul class="small-list"><li>هل السعر يعكس قوة الموقع أو يبالغ فيها؟</li><li>هل الخدمات الأقرب تعمل فعلياً وبجودة مقبولة؟</li><li>هل توجد مشاريع مستقبلية تغير الطلب؟</li><li>هل الوصول الفعلي أسهل من المسافة المباشرة؟</li></ul></div>
+            </div>
+            <div class="bottom"><span>فجوات الخدمات والفرص</span><span>12</span></div>
+          </section>
+
+          <section class="page">
+            <div class="header"><div><h2>مصفوفة المخاطر</h2><p>تحويل نتائج المسح إلى عناصر تحقق واضحة</p></div><div class="page-no">13</div></div>
+            <table>
+              <thead><tr><th>الخطر</th><th>الإشارة من البيانات</th><th>المستوى</th><th>إجراء التخفيف</th></tr></thead>
+              <tbody>
+      <tr>
+        <td>مخاطر نقص البيانات</td>
+        <td>409 موقع مرصود</td>
+        <td><span class="risk-pill risk-low">منخفض</span></td>
+        <td>توسيع نصف القطر أو إعادة المسح قبل اعتماد قرار نهائي.</td>
+      </tr>
+    
+      <tr>
+        <td>مخاطر الاعتماد على تصنيف واحد</td>
+        <td>أكبر تصنيف يمثل 27%</td>
+        <td><span class="risk-pill risk-low">منخفض</span></td>
+        <td>مراجعة الطلب الحقيقي على التصنيف المسيطر ومقارنته بالمنافسين.</td>
+      </tr>
+    
+      <tr>
+        <td>مخاطر ضعف الوصول القريب</td>
+        <td>22 موقع داخل 500م</td>
+        <td><span class="risk-pill risk-high">مرتفع</span></td>
+        <td>التحقق من المشي، المداخل، المواقف، والطرق الفعلية.</td>
+      </tr>
+    
+      <tr>
+        <td>مخاطر نقص الخدمات الأساسية</td>
+        <td>7 مجموعات قوية من 8</td>
+        <td><span class="risk-pill risk-low">منخفض</span></td>
+        <td>تحديد فجوات الصحة والتعليم والتجزئة قبل اختيار الاستخدام.</td>
+      </tr>
+    </tbody>
+            </table>
+            <div class="two-col" style="margin-top:26px">
+              <div class="panel dark"><h3>قراءة القرار المختصرة</h3><p style="line-height:2;color:#cbd5e1">الدرجة الحالية: <strong style="color:#fff;font-size:24px">78%</strong><br/>الحكم: جيد مع تحقق ميداني<br/>أكبر تصنيف: parking_space (27%).</p></div>
+              <div class="panel"><h3 class="section-title">ما الذي يجعل القرار أقوى؟</h3><ul class="small-list"><li>مقارنة موقعين أو ثلاثة بنفس التقرير.</li><li>رفع النطاق عند انخفاض عدد النتائج.</li><li>إضافة صور ميدانية وملاحظات المرور.</li><li>مراجعة السعر والعائد المتوقع خارج هذا التقرير.</li></ul></div>
+            </div>
+            <div class="bottom"><span>مصفوفة المخاطر</span><span>13</span></div>
+          </section>
+
+          <section class="page">
+            <div class="header"><div><h2>التوصية النهائية</h2><p>قراءة تنفيذية مبنية على نتائج المسح</p></div><div class="page-no">14</div></div>
+            <div class="rec">الموقع يظهر قوة خدمية مرتفعة وتنوعاً جيداً ضمن نطاق المسح، مما يدعم الاستخدامات السكنية/التجارية ذات الاعتماد على الوصول السريع للخدمات.</div>
+            <div class="two-col" style="margin-top:24px">
+              <div class="panel"><h3 class="section-title">نقاط القوة</h3><ul class="small-list"><li>عدد مواقع مرصود: 409</li><li>تصنيفات مختلفة: 27</li><li>مواقع ضمن 500م: 22</li><li>مواقع ضمن 1000م: 88</li></ul></div>
+              <div class="panel"><h3 class="section-title">ما يجب التحقق منه</h3><ul class="small-list"><li>جودة الخدمات الأقرب وساعات عملها</li><li>سهولة الوصول الفعلية بالسيارة والمشي</li><li>حركة المرور ومداخل الموقع</li><li>مطابقة البيانات مع زيارة ميدانية</li></ul></div>
+            </div>
+            <div class="bottom"><span>التوصية النهائية</span><span>14</span></div>
+          </section>
+
+          <section class="page">
+            <div class="header"><div><h2>ملحق البيانات</h2><p>عينة موسعة من نتائج المسح، والملف الكامل متوفر في Excel</p></div><div class="page-no">15</div></div>
+            <table>
+              <thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>المسافة بالمتر</th><th>المدينة</th></tr></thead>
+              <tbody>
+      <tr>
+        <td>1</td>
+        <td>atm</td>
+        <td>atm</td>
+        <td>25</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>2</td>
+        <td>البنك السعودي الفرنسي</td>
+        <td>bank</td>
+        <td>55</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>3</td>
+        <td>Shanghai Express</td>
+        <td>restaurant</td>
+        <td>165</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>4</td>
+        <td>ماكدونالدز</td>
+        <td>fast_food</td>
+        <td>185</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>5</td>
+        <td>Donut House</td>
+        <td>cafe</td>
+        <td>186</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>6</td>
+        <td>Aladdin</td>
+        <td>restaurant</td>
+        <td>204</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>7</td>
+        <td>Planet Hollywood</td>
+        <td>restaurant</td>
+        <td>215</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>8</td>
+        <td>Herfy</td>
+        <td>fast_food</td>
+        <td>229</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>9</td>
+        <td>بنك الجزيرة</td>
+        <td>bank</td>
+        <td>236</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>10</td>
+        <td>Kudu</td>
+        <td>restaurant</td>
+        <td>243</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>11</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>246</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>12</td>
+        <td>cinema</td>
+        <td>cinema</td>
+        <td>292</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>13</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>300</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>14</td>
+        <td>Al Masaa Cafe</td>
+        <td>cafe</td>
+        <td>326</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>15</td>
+        <td>Quattro</td>
+        <td>restaurant</td>
+        <td>335</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>16</td>
+        <td>place_of_worship</td>
+        <td>place_of_worship</td>
+        <td>365</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>17</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>375</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>18</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>386</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>19</td>
+        <td>عيادات الدكتور بشار سالم للأسنان</td>
+        <td>dentist</td>
+        <td>403</td>
+        <td>Riyadh</td>
+      </tr>
+    
+      <tr>
+        <td>20</td>
+        <td>Shikara Restaurant</td>
+        <td>restaurant</td>
+        <td>429</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>21</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>467</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>22</td>
+        <td>مطعم اكليل لبنان</td>
+        <td>restaurant</td>
+        <td>475</td>
+        <td>الرياض</td>
+      </tr>
+    
+      <tr>
+        <td>23</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>511</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>24</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>512</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>25</td>
+        <td>جامع و مسجد الامام محمد ابن عبدالوهاب</td>
+        <td>place_of_worship</td>
+        <td>536</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>26</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>549</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>27</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>568</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>28</td>
+        <td>restaurant</td>
+        <td>restaurant</td>
+        <td>577</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>29</td>
+        <td>مجمع الدكتور يوسف المقبل لطب العيون</td>
+        <td>hospital</td>
+        <td>588</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>30</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>614</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>31</td>
+        <td>بنك باكستان الوطني</td>
+        <td>bank</td>
+        <td>619</td>
+        <td>الرياض</td>
+      </tr>
+    
+      <tr>
+        <td>32</td>
+        <td>Fairouz Garden</td>
+        <td>restaurant</td>
+        <td>622</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>33</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>623</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>34</td>
+        <td>The Pancake House</td>
+        <td>restaurant</td>
+        <td>626</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>35</td>
+        <td>cafe</td>
+        <td>cafe</td>
+        <td>628</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>36</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>633</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>37</td>
+        <td>parking</td>
+        <td>parking</td>
+        <td>633</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>38</td>
+        <td>بنشر</td>
+        <td>compressed_air</td>
+        <td>634</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>39</td>
+        <td>cafe</td>
+        <td>cafe</td>
+        <td>638</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>40</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>651</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>41</td>
+        <td>cafe</td>
+        <td>cafe</td>
+        <td>653</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>42</td>
+        <td>جامع علي بن أبي طالب</td>
+        <td>place_of_worship</td>
+        <td>656</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>43</td>
+        <td>Mosque</td>
+        <td>place_of_worship</td>
+        <td>658</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>44</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>663</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>45</td>
+        <td>مطعم فول وعدس</td>
+        <td>restaurant</td>
+        <td>664</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>46</td>
+        <td>Alshablan Medical Center</td>
+        <td>clinic</td>
+        <td>711</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>47</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>713</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>48</td>
+        <td>bank</td>
+        <td>bank</td>
+        <td>714</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>49</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>716</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>50</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>724</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>51</td>
+        <td>صيدلية الشبلان</td>
+        <td>pharmacy</td>
+        <td>726</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>52</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>730</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>53</td>
+        <td>Inmaa Bank</td>
+        <td>atm</td>
+        <td>734</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>54</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>738</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>55</td>
+        <td>atm</td>
+        <td>atm</td>
+        <td>741</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>56</td>
+        <td>مصرف الانماء الادارة العام</td>
+        <td>bank</td>
+        <td>743</td>
+        <td>الرياض</td>
+      </tr>
+    
+      <tr>
+        <td>57</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>744</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>58</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>749</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>59</td>
+        <td>school</td>
+        <td>school</td>
+        <td>753</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>60</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>763</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>61</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>771</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>62</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>771</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>63</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>778</td>
+        <td>الرياض</td>
+      </tr>
+    
+      <tr>
+        <td>64</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>781</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>65</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>790</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>66</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>797</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>67</td>
+        <td>cafe</td>
+        <td>cafe</td>
+        <td>803</td>
+        <td></td>
+      </tr>
+    
+      <tr>
+        <td>68</td>
+        <td>جامع العقاريه</td>
+        <td>place_of_worship</td>
+        <td>819</td>
+        <td>الرياض</td>
+      </tr>
+    
+      <tr>
+        <td>69</td>
+        <td>events_venue</td>
+        <td>events_venue</td>
+        <td>830</td>
+        <td>الرياض</td>
+      </tr>
+    
+      <tr>
+        <td>70</td>
+        <td>parking_space</td>
+        <td>parking_space</td>
+        <td>845</td>
+        <td></td>
+      </tr>
+    </tbody>
+            </table>
+            <div class="bottom"><span>DigitalBrokerage • MS-96702970</span><span>15</span></div>
+          </section>
+        </body>
+      </html>

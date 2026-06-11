@@ -852,9 +852,10 @@ export class FinancialService {
       '/usr/bin/google-chrome-stable',
       '/usr/bin/chromium-browser',
       '/usr/bin/chromium',
+      '/snap/bin/chromium',
     ].filter(Boolean) as string[];
 
-    let lastError: any = null;
+    const failures: string[] = [];
 
     for (const browser of candidates) {
       try {
@@ -866,17 +867,16 @@ export class FinancialService {
           `--print-to-pdf=${pdfPath}`,
           htmlPath,
         ]);
+        if (!existsSync(pdfPath)) {
+          throw new Error(`Chrome command completed but PDF was not created at ${pdfPath}`);
+        }
         return;
       } catch (error: any) {
-        lastError = error;
-        if (error?.code !== 'ENOENT') {
-          throw error;
-        }
+        failures.push(`${browser}: ${error?.code || 'ERROR'} ${error?.message || ''}`.trim());
       }
     }
 
-    const attempted = candidates.join(', ');
-    throw new Error(`No Chrome/Chromium executable found for PDF rendering. Attempted: ${attempted}. Last error: ${lastError?.message || 'unknown error'}`);
+    throw new Error(`Unable to render scan report PDF. Attempts: ${failures.join(' | ')}`);
   }
 
   private async listUserScanReportFiles(userId: string): Promise<ScanReportFile[]> {

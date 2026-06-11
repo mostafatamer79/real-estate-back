@@ -107,7 +107,10 @@ export class FinancialService {
   }
 
   private getPublicUploadUrl(...parts: string[]) {
-    return `/uploads/${parts.map((part) => encodeURIComponent(part)).join('/')}`;
+    const path = `/uploads/${parts.map((part) => encodeURIComponent(part)).join('/')}`;
+    const publicBase = process.env.PUBLIC_UPLOADS_URL || process.env.PUBLIC_BASE_URL || process.env.API_PUBLIC_URL;
+    if (!publicBase) return path;
+    return `${publicBase.replace(/\/+$/, '').replace(/\/api$/, '')}${path}`;
   }
 
   private sanitizeFilePart(value: string) {

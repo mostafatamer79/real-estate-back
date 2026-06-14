@@ -1,5 +1,5 @@
 import { IsEnum, IsString, IsOptional, IsBoolean } from 'class-validator';
-import { MarketingCategory, MarketingFrequency } from '../entities/email-marketing.entity';
+import { MarketingCategory, MarketingFrequency, MarketingScheduleMode } from '../entities/email-marketing.entity';
 import { Role } from '../../user/user-entity';
 
 export class CreateEmailMarketingDto {
@@ -20,6 +20,21 @@ export class CreateEmailMarketingDto {
 
   @IsString()
   content: string;
+
+  @IsOptional()
+  sortOrder?: number;
+
+  @IsOptional()
+  @IsEnum(MarketingScheduleMode)
+  scheduleMode?: MarketingScheduleMode;
+
+  @IsOptional()
+  @IsString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsString()
+  endDate?: string;
 
   @IsEnum(MarketingFrequency)
   frequency: MarketingFrequency;
@@ -49,6 +64,21 @@ export class UpdateEmailMarketingDto {
   @IsOptional()
   @IsString()
   content?: string;
+
+  @IsOptional()
+  sortOrder?: number;
+
+  @IsOptional()
+  @IsEnum(MarketingScheduleMode)
+  scheduleMode?: MarketingScheduleMode;
+
+  @IsOptional()
+  @IsString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsString()
+  endDate?: string;
 
   @IsOptional()
   @IsEnum(MarketingFrequency)

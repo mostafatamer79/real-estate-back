@@ -51,6 +51,12 @@ export class Subscription {
   @Column({ nullable: true })
   departmentSlug?: string;
 
+  @Column({ type: 'json', default: [] })
+  selectedDepartments: string[];
+
+  @Column({ default: 0 })
+  employeeSeats: number;
+
   @Column({
     type: 'enum',
     enum: SubscriptionType,

@@ -379,6 +379,7 @@ export class PropertyService {
         
         if (effectiveOwnerId) {
             const ownerIds = await this.getOwnerIds(effectiveOwnerId);
+            if (!ownerIds.length) return [];
             query.where('property.ownerId IN (:...ownerIds)', { ownerIds });
         }
         
@@ -393,7 +394,8 @@ export class PropertyService {
         
         const counts: Record<string, number> = {};
         for (const p of properties) {
-            counts[p.type] = (counts[p.type] || 0) + 1;
+            const type = String(p.type || 'other').toLowerCase();
+            counts[type] = (counts[type] || 0) + 1;
         }
 
         return Object.entries(counts).map(([name, value]) => ({

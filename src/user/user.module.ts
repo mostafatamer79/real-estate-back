@@ -18,6 +18,7 @@ import { Order } from '../order/entities/order.entity';
 import { Invoice } from '../financial/entities/invoice.entity';
 import { Commission } from '../commission/commission.entity';
 import { Document } from '../document/document.entity';
+import { Subscription } from '../subscription/subscription.entity';
 
 @Module({
     imports: [
@@ -34,6 +35,7 @@ import { Document } from '../document/document.entity';
           Invoice,
           Commission,
           Document,
+          Subscription,
         ]),
         DocumentModule,
         forwardRef(() => AuthModule),

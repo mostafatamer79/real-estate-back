@@ -12,6 +12,8 @@ import { JwtAuthGuard } from '../common/guards/jwt.guard';
 import { Departments } from '../common/decorators/departments.decorators';
 import { DepartmentsGuard } from '../common/guards/departments.guard';
 import { getUserFromRequest } from '../common/utils/request-user.util';
+import { SkipDepartmentsGuard } from '../common/decorators/skip-departments.decorator';
+import { OfferReportStatus } from './entities/offer-report.entity';
 
 @Controller('offers')
 @UseGuards(JwtAuthGuard, DepartmentsGuard)
@@ -49,10 +51,29 @@ export class OffersController {
     return this.offersService.findByUser(user.userId);
   }
 
+  @Get('reports')
+  findReports(@Request() req, @Query('status') status?: OfferReportStatus | 'all') {
+    const user = getUserFromRequest(req);
+    return this.offersService.findReports(user, status);
+  }
+
+  @Patch('reports/:reportId')
+  updateReport(@Param('reportId', ParseUUIDPipe) reportId: string, @Body() body: any, @Request() req) {
+    const user = getUserFromRequest(req);
+    return this.offersService.updateReport(reportId, body, user);
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
     const user = getUserFromRequest(req);
     return this.offersService.findOne(id, user);
+  }
+
+  @Post(':id/reports')
+  @SkipDepartmentsGuard()
+  reportOffer(@Param('id', ParseUUIDPipe) id: string, @Body() body: any, @Request() req) {
+    const user = getUserFromRequest(req);
+    return this.offersService.reportOffer(id, body, user);
   }
 
   @Post(':id/view')

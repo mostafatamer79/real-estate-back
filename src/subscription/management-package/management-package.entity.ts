@@ -32,6 +32,15 @@ export class ManagementPackage {
   @Column({ type: 'json', default: [] })
   administrations: string[]; // List of administrations (e.g., "Real Estate", "Marketing")
 
+  @Column({ type: 'json', default: {} })
+  departmentPrices: Record<string, { monthly: number; yearly: number }>;
+
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  employeeSeatMonthlyPrice: number;
+
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  employeeSeatYearlyPrice: number;
+
   @Column({ type: 'json', default: [] })
   services: string[]; // List of services (e.g., "Maintenance", "Security")
 

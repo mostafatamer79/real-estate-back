@@ -13,6 +13,7 @@ import { ChatRoom, Message } from '../chat/message.entity';
 import { Invoice } from '../financial/entities/invoice.entity';
 import { Commission } from '../commission/commission.entity';
 import { Document } from '../document/document.entity';
+import { Subscription, SubscriptionStatus } from '../subscription/subscription.entity';
 
 @Injectable()
 export class UserService {
@@ -39,11 +40,15 @@ export class UserService {
         private readonly commissionRepository: Repository<Commission>,
         @InjectRepository(Document)
         private readonly documentRepository: Repository<Document>,
+        @InjectRepository(Subscription)
+        private readonly subscriptionRepository: Repository<Subscription>,
         private readonly passwordService : PasswordService
     ){}
 
     private readonly targetDepartmentMap: Partial<Record<Department, TargetDepartment>> = {
         [Department.PROPERTIES]: TargetDepartment.REAL_ESTATE,
+        [Department.OFFERS]: TargetDepartment.REAL_ESTATE,
+        [Department.ORDERS]: TargetDepartment.REAL_ESTATE,
         [Department.MARKETING]: TargetDepartment.MARKETING,
         [Department.LEGAL]: TargetDepartment.LEGAL,
         [Department.FINANCE]: TargetDepartment.FINANCE,
@@ -52,6 +57,33 @@ export class UserService {
 
     private normalizeEmail(email?: string | null): string | undefined {
         return email?.trim().toLowerCase();
+    }
+
+    private subscriptionIncludesEmployees(subscription: Subscription): boolean {
+        const selectedDepartments = Array.isArray(subscription.selectedDepartments) ? subscription.selectedDepartments : [];
+        const packageAdministrations = Array.isArray(subscription.managementPackage?.administrations)
+            ? subscription.managementPackage.administrations
+            : [];
+        return [...selectedDepartments, ...packageAdministrations].some((department) => (
+            department === 'admin.dept.hr' || department === Department.EMPLOYEES
+        ));
+    }
+
+    private async getActiveEmployeeSeatInfo(userId: string): Promise<{ activeSubscriptions: number; seatLimit: number }> {
+        const now = new Date();
+        const subscriptions = await this.subscriptionRepository.find({
+            where: { userId, status: SubscriptionStatus.ACTIVE },
+            relations: ['managementPackage'],
+        });
+
+        const activeSubscriptions = subscriptions.filter((subscription) => (
+            subscription.noExpiry || new Date(subscription.endDate) >= now
+        ));
+        const seatLimit = activeSubscriptions
+            .filter((subscription) => this.subscriptionIncludesEmployees(subscription))
+            .reduce((total, subscription) => total + Number(subscription.employeeSeats || 0), 0);
+
+        return { activeSubscriptions: activeSubscriptions.length, seatLimit };
     }
 
     public async findAll(): Promise<any[]> {
@@ -146,6 +178,18 @@ export class UserService {
             const parent = await this.userRepository.findOne({ where: { id: createUserDto.parentId } as any });
             if (!parent) {
                 throw new BadRequestException('Manager not found');
+            }
+            const { activeSubscriptions, seatLimit } = await this.getActiveEmployeeSeatInfo(parent.id);
+            if (activeSubscriptions > 0 && seatLimit <= 0) {
+                throw new BadRequestException('Employee department subscription is required before creating employees');
+            }
+            if (seatLimit > 0) {
+                const currentEmployees = await this.userRepository.count({
+                    where: { parentId: parent.id, role: Role.EMPLOYEE } as any,
+                });
+                if (currentEmployees >= seatLimit) {
+                    throw new BadRequestException(`Employee limit reached (${currentEmployees}/${seatLimit})`);
+                }
             }
             const parentDepts = new Set((Array.isArray(parent.departments) ? parent.departments : []) as any[]);
             const parentPerms = parent.departmentPermissions || {};
@@ -411,6 +455,9 @@ export class UserService {
         }
 
         Object.assign(user, updateUserDto);
+        if (typeof updateUserDto.isActive === 'boolean') {
+            user.isActive = updateUserDto.isActive;
+        }
         if (!user.phone && !user.email) {
             throw new BadRequestException('User must have phone or email');
         }

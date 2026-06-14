@@ -5,6 +5,7 @@ export enum MarketingCategory {
   ORDERS = 'orders', // الطلبات
   OFFERS = 'offers', // العروض
   PROPERTY_MANAGEMENT = 'property_management', // إدارة الأملاك
+  CUSTOM = 'custom', // مخصص
 }
 
 export enum MarketingFrequency {
@@ -12,6 +13,11 @@ export enum MarketingFrequency {
   EVERY_2_DAYS = 'every_2_days',
   WEEKLY = 'weekly',
   BIWEEKLY = 'biweekly',
+}
+
+export enum MarketingScheduleMode {
+  MANUAL = 'manual',
+  DATE_RANGE = 'date_range',
 }
 
 @Entity('email_marketing')
@@ -43,6 +49,22 @@ export class EmailMarketing {
 
   @Column('text')
   content: string;
+
+  @Column({ type: 'int', default: 0 })
+  sortOrder: number;
+
+  @Column({
+    type: 'enum',
+    enum: MarketingScheduleMode,
+    default: MarketingScheduleMode.MANUAL,
+  })
+  scheduleMode: MarketingScheduleMode;
+
+  @Column({ type: 'timestamp', nullable: true })
+  startDate: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  endDate: Date;
 
   @Column({
     type: 'enum',

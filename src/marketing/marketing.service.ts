@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { MarketingRequest, MarketingRequestType, MarketingRequestStatus } from './entities/marketing-request.entity';
 import { PhotographerProfile, PhotographerType } from './entities/photographer-profile.entity';
 import { MarketingCampaign } from './entities/marketing-campaign.entity';
-import { EmailMarketing, MarketingFrequency } from './entities/email-marketing.entity';
+import { EmailMarketing, MarketingFrequency, MarketingScheduleMode } from './entities/email-marketing.entity';
 import { CreateMarketingRequestDto, UpdateMarketingRequestDto } from './dto/marketing-request.dto';
 import { CreateEmailMarketingDto, UpdateEmailMarketingDto } from './dto/email-marketing.dto';
 
@@ -39,7 +39,7 @@ export class MarketingService {
     });
 
     // Auto-assignment for photography requests
-    if (request.type === MarketingRequestType.PHOTOGRAPHY_PROFESSIONAL || 
+    if (request.type === MarketingRequestType.PHOTOGRAPHY_PROFESSIONAL ||
         request.type === MarketingRequestType.PHOTOGRAPHY_FIELD) {
       const assignedPhotographer = await this.autoAssignPhotographer(request.type);
       if (assignedPhotographer) {
@@ -49,13 +49,13 @@ export class MarketingService {
     }
 
     const savedRequest = await this.marketingRequestRepository.save(request);
-    
+
     // Notifications (Email)
-    await this.mailService.sendMarketingRequestNotification(
-      'admin@example.com', 
-      savedRequest.type, 
-      savedRequest.id
-    );
+    // await this.mailService.sendMarketingRequestNotification(
+    //   'admin@example.com',
+    //   savedRequest.type,
+    //   savedRequest.id
+    // );
 
     // Notifications (In-app)
     await this.notificationService.create(
@@ -75,16 +75,16 @@ export class MarketingService {
         { requestId: savedRequest.id }
       );
     }
-    
+
     return savedRequest;
   }
 
   private async autoAssignPhotographer(type: MarketingRequestType): Promise<PhotographerProfile | null> {
-    const profileType = type === MarketingRequestType.PHOTOGRAPHY_PROFESSIONAL 
-      ? PhotographerType.COMPANY 
+    const profileType = type === MarketingRequestType.PHOTOGRAPHY_PROFESSIONAL
+      ? PhotographerType.COMPANY
       : PhotographerType.INDIVIDUAL;
 
-    // Simple priority-based auto-assignment: 
+    // Simple priority-based auto-assignment:
     // Find verified photographers of the correct type, ordered by least completed jobs (to load balance)
     const photographers = await this.photographerRepository.find({
       where: { type: profileType, isVerified: true },
@@ -124,11 +124,11 @@ export class MarketingService {
 
   // Campaign Analytics
   async getCampaignAnalytics(campaignId: string) {
-    const campaign = await this.campaignRepository.findOne({ 
+    const campaign = await this.campaignRepository.findOne({
       where: { id: campaignId },
       relations: ['request']
     });
-    
+
     if (!campaign) throw new NotFoundException('Campaign not found');
 
     // In a real scenario, this would fetch from a social media API
@@ -151,13 +151,13 @@ export class MarketingService {
   async updateCampaignStats(campaignId: string, stats: Partial<MarketingCampaign>): Promise<MarketingCampaign> {
     const campaign = await this.campaignRepository.findOne({ where: { id: campaignId } });
     if (!campaign) throw new NotFoundException('Campaign not found');
-    
+
     Object.assign(campaign, stats);
     return this.campaignRepository.save(campaign);
   }
 
   async getCampaignsByRequest(requestId: string): Promise<MarketingCampaign[]> {
-    return this.campaignRepository.find({ 
+    return this.campaignRepository.find({
       where: { request: { id: requestId } },
       order: { createdAt: 'DESC' }
     });
@@ -170,7 +170,7 @@ export class MarketingService {
   }
 
   async getPhotographerProfile(userId: string): Promise<PhotographerProfile | null> {
-    return this.photographerRepository.findOne({ 
+    return this.photographerRepository.findOne({
       where: { user: { id: userId } },
       relations: ['user']
     });
@@ -184,38 +184,72 @@ export class MarketingService {
       category: createDto.category?.toLowerCase() as any,
       frequency: createDto.frequency?.toLowerCase() as any,
       targetRole: createDto.targetRole ? createDto.targetRole.toLowerCase() as any : null,
+      sortOrder: Number((createDto as any).sortOrder ?? 0) || 0,
+      scheduleMode: (createDto as any).scheduleMode || MarketingScheduleMode.MANUAL,
+      startDate: (createDto as any).startDate ? new Date((createDto as any).startDate) : undefined,
+      endDate: (createDto as any).endDate ? new Date((createDto as any).endDate) : undefined,
       ownerId,
     };
-    const campaign = this.emailMarketingRepository.create(normalized);
-    return this.emailMarketingRepository.save(campaign);
+    const campaign = this.emailMarketingRepository.create(normalized as any) as unknown as EmailMarketing;
+    return await this.emailMarketingRepository.save(campaign);
   }
 
-  async updateEmailMarketing(id: string, ownerId: string, updateDto: UpdateEmailMarketingDto): Promise<EmailMarketing> {
-    const campaign = await this.emailMarketingRepository.findOne({ where: { id, ownerId } });
+  async updateEmailMarketing(id: string, ownerId: string, updateDto: UpdateEmailMarketingDto, userRole?: string): Promise<EmailMarketing> {
+    const query = this.emailMarketingRepository.createQueryBuilder('campaign')
+      .where('campaign.id = :id', { id });
+    if (userRole !== 'admin') {
+      query.andWhere('campaign.ownerId = :ownerId', { ownerId });
+    }
+    const campaign = await query.getOne();
     if (!campaign) throw new NotFoundException('Marketing campaign not found');
     const normalized: any = {
       ...updateDto,
       ...(updateDto.category && { category: updateDto.category.toLowerCase() }),
       ...(updateDto.frequency && { frequency: updateDto.frequency.toLowerCase() }),
       ...(updateDto.targetRole !== undefined && { targetRole: updateDto.targetRole ? updateDto.targetRole.toLowerCase() : null }),
+      ...(updateDto.sortOrder !== undefined && { sortOrder: Number(updateDto.sortOrder) || 0 }),
+      ...(updateDto.scheduleMode && { scheduleMode: updateDto.scheduleMode }),
+      ...(updateDto.startDate !== undefined && { startDate: updateDto.startDate ? new Date(updateDto.startDate) : null }),
+      ...(updateDto.endDate !== undefined && { endDate: updateDto.endDate ? new Date(updateDto.endDate) : null }),
     };
     Object.assign(campaign, normalized);
     return this.emailMarketingRepository.save(campaign);
   }
 
-  async findEmailMarketingByOwner(ownerId: string): Promise<EmailMarketing[]> {
-    return this.emailMarketingRepository.find({ where: { ownerId }, order: { createdAt: 'DESC' } });
+  async findEmailMarketingByOwner(ownerId: string, userRole?: string): Promise<EmailMarketing[]> {
+    if (userRole === 'admin') {
+      return this.emailMarketingRepository.find({ order: { sortOrder: 'ASC', createdAt: 'DESC' } });
+    }
+    return this.emailMarketingRepository.find({ where: { ownerId }, order: { sortOrder: 'ASC', createdAt: 'DESC' } });
   }
 
-  async getEmailMarketingById(id: string, ownerId: string): Promise<EmailMarketing> {
-    const campaign = await this.emailMarketingRepository.findOne({ where: { id, ownerId } });
+  async findPublicEmailMarketing(): Promise<EmailMarketing[]> {
+    const now = new Date();
+    return this.emailMarketingRepository
+      .createQueryBuilder('campaign')
+      .where('campaign.isActive = :isActive', { isActive: true })
+      .andWhere(
+        '(campaign.scheduleMode = :manual OR (campaign.scheduleMode = :range AND (campaign.startDate IS NULL OR campaign.startDate <= :now) AND (campaign.endDate IS NULL OR campaign.endDate >= :now)))',
+        { manual: MarketingScheduleMode.MANUAL, range: MarketingScheduleMode.DATE_RANGE, now },
+      )
+      .orderBy('campaign.sortOrder', 'ASC')
+      .addOrderBy('campaign.createdAt', 'DESC')
+      .getMany();
+  }
+
+  async getEmailMarketingById(id: string, ownerId: string, userRole?: string): Promise<EmailMarketing> {
+    const query = this.emailMarketingRepository.createQueryBuilder('campaign')
+      .where('campaign.id = :id', { id });
+    if (userRole !== 'admin') {
+      query.andWhere('campaign.ownerId = :ownerId', { ownerId });
+    }
+    const campaign = await query.getOne();
     if (!campaign) throw new NotFoundException('Marketing campaign not found');
     return campaign;
   }
 
-  async removeEmailMarketing(id: string, ownerId: string): Promise<void> {
-    const campaign = await this.emailMarketingRepository.findOne({ where: { id, ownerId } });
-    if (!campaign) throw new NotFoundException('Marketing campaign not found');
+  async removeEmailMarketing(id: string, ownerId: string, userRole?: string): Promise<void> {
+    const campaign = await this.getEmailMarketingById(id, ownerId, userRole);
     await this.emailMarketingRepository.remove(campaign);
   }
 
@@ -264,6 +298,11 @@ export class MarketingService {
     const now = new Date();
 
     for (const campaign of campaigns) {
+      if (campaign.scheduleMode === MarketingScheduleMode.DATE_RANGE) {
+        const startOk = !campaign.startDate || new Date(campaign.startDate) <= now;
+        const endOk = !campaign.endDate || new Date(campaign.endDate) >= now;
+        if (!startOk || !endOk) continue;
+      }
       const frequencyDaysMap: Record<string, number> = {
         [MarketingFrequency.DAILY]: 1,
         [MarketingFrequency.EVERY_2_DAYS]: 2,
@@ -272,9 +311,9 @@ export class MarketingService {
       };
       const waitDays = frequencyDaysMap[campaign.frequency] ?? 7;
       const lastSent = campaign.lastSentAt ? new Date(campaign.lastSentAt) : new Date(0);
-      const diffDays = Math.floor((now.getTime() - lastSent.getTime()) / (1000 * 60 * 60 * 24));
+      const waitMs = waitDays * 24 * 60 * 60 * 1000 - 2 * 60 * 60 * 1000; // 2 hours grace period
 
-      if (diffDays >= waitDays) {
+      if (now.getTime() - lastSent.getTime() >= waitMs) {
         // Find targeted users
         const query = this.userRepository.createQueryBuilder('user');
         if (campaign.targetRole) {
@@ -282,16 +321,16 @@ export class MarketingService {
         }
         const users = await query.getMany();
 
-        for (const user of users) {
-          if (user.email) {
-            await this.mailService.sendMarketingEmail(
-              user.email, 
-              campaign.subject || `إشعار من الوساطة الرقمية: ${campaign.category}`, 
-              campaign.content,
-              campaign.category
-            );
-          }
-        }
+        // for (const user of users) {
+        //   if (user.email) {
+        //     await this.mailService.sendMarketingEmail(
+        //       user.email,
+        //       campaign.subject || `إشعار من الوساطة الرقمية: ${campaign.category}`,
+        //       campaign.content,
+        //       campaign.category
+        //     );
+        //   }
+        // }
 
         campaign.lastSentAt = now;
         campaign.totalSent = Number(campaign.totalSent || 0) + users.length;

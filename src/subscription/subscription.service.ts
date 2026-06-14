@@ -18,15 +18,48 @@ import {
 } from './dto/create-subscription.dto';
 import { ManagementPackageService } from './management-package/management-package.service';
 import { PaymentMethod } from './subscription.entity';
+import { SettingsService } from '../settings/settings.service';
+
+export interface SubscriptionDepartmentPricing {
+  departmentPrices: Record<string, { monthly: number; yearly: number }>;
+  employeeSeatMonthlyPrice: number;
+  employeeSeatYearlyPrice: number;
+}
 
 @Injectable()
 export class SubscriptionService {
   private readonly administrationToDepartment: Record<string, Department> = {
     'admin.dept.real_estate': Department.PROPERTIES,
+    properties: Department.PROPERTIES,
+    'admin.dept.offers': Department.OFFERS,
+    offers: Department.OFFERS,
+    'admin.dept.orders': Department.ORDERS,
+    orders: Department.ORDERS,
     'admin.dept.marketing': Department.MARKETING,
+    marketing: Department.MARKETING,
     'admin.dept.legal': Department.LEGAL,
+    legal: Department.LEGAL,
     'admin.dept.finance': Department.FINANCE,
+    finance: Department.FINANCE,
+    financial: Department.FINANCE,
     'admin.dept.hr': Department.EMPLOYEES,
+    employees: Department.EMPLOYEES,
+  };
+
+  private readonly employeeDepartmentKeys = new Set(['admin.dept.hr', 'employees']);
+  private readonly departmentPricingSettingKey = 'subscription_department_pricing';
+  private readonly defaultDepartmentPricing: SubscriptionDepartmentPricing = {
+    departmentPrices: {
+      'admin.dept.real_estate': { monthly: 0, yearly: 0 },
+      'admin.dept.offers': { monthly: 0, yearly: 0 },
+      'admin.dept.orders': { monthly: 0, yearly: 0 },
+      'admin.dept.marketing': { monthly: 0, yearly: 0 },
+      'admin.dept.legal': { monthly: 0, yearly: 0 },
+      'admin.dept.finance': { monthly: 0, yearly: 0 },
+      'admin.dept.hr': { monthly: 0, yearly: 0 },
+    },
+    employeeSeatMonthlyPrice: 0,
+    employeeSeatYearlyPrice: 0,
   };
 
   constructor(
@@ -39,7 +72,46 @@ export class SubscriptionService {
     @InjectRepository(Unit)
     private unitRepository: Repository<Unit>,
     private managementPackageService: ManagementPackageService,
+    private settingsService: SettingsService,
   ) {}
+
+  async getDepartmentPricing(): Promise<SubscriptionDepartmentPricing> {
+    const setting = await this.settingsService.findOne(this.departmentPricingSettingKey);
+    if (!setting?.value) return this.defaultDepartmentPricing;
+
+    try {
+      const parsed = JSON.parse(setting.value);
+      return {
+        departmentPrices: {
+          ...this.defaultDepartmentPricing.departmentPrices,
+          ...(parsed.departmentPrices || {}),
+        },
+        employeeSeatMonthlyPrice: Number(parsed.employeeSeatMonthlyPrice || 0),
+        employeeSeatYearlyPrice: Number(parsed.employeeSeatYearlyPrice || 0),
+      };
+    } catch {
+      return this.defaultDepartmentPricing;
+    }
+  }
+
+  async updateDepartmentPricing(pricing: Partial<SubscriptionDepartmentPricing>): Promise<SubscriptionDepartmentPricing> {
+    const current = await this.getDepartmentPricing();
+    const next: SubscriptionDepartmentPricing = {
+      departmentPrices: {
+        ...current.departmentPrices,
+        ...(pricing.departmentPrices || {}),
+      },
+      employeeSeatMonthlyPrice: Number(pricing.employeeSeatMonthlyPrice ?? current.employeeSeatMonthlyPrice ?? 0),
+      employeeSeatYearlyPrice: Number(pricing.employeeSeatYearlyPrice ?? current.employeeSeatYearlyPrice ?? 0),
+    };
+
+    await this.settingsService.setSetting(
+      this.departmentPricingSettingKey,
+      JSON.stringify(next),
+      'Global subscription department and employee pricing',
+    );
+    return next;
+  }
 
   async create(
     userId: string,
@@ -64,22 +136,52 @@ export class SubscriptionService {
       }
     }
 
-    if (createSubscriptionDto.packageId) {
-       const pkg = await this.managementPackageService.findOne(createSubscriptionDto.packageId);
-       
-       let basePrice = 0;
-       if (createSubscriptionDto.subscriptionType === SubscriptionType.YEARLY) {
-         basePrice = Number(pkg.yearlyPrice);
-       } else if (createSubscriptionDto.subscriptionType === SubscriptionType.MONTHLY) {
-         basePrice = Number(pkg.monthlyPrice);
-       }
+    let selectedDepartments = Array.isArray(createSubscriptionDto.selectedDepartments)
+      ? createSubscriptionDto.selectedDepartments.filter(Boolean)
+      : [];
+    let employeeSeats = Number(createSubscriptionDto.employeeSeats || 0);
 
-       if (basePrice > 0) {
-          const discountAmount = basePrice * (Number(pkg.discount) / 100);
-          createSubscriptionDto.amount = basePrice - discountAmount;
-       } else {
-          createSubscriptionDto.amount = 0;
-       }
+    if (createSubscriptionDto.packageId) {
+      const pkg = await this.managementPackageService.findOne(createSubscriptionDto.packageId);
+      selectedDepartments = [];
+      employeeSeats = 0;
+
+      let basePrice = 0;
+      if (createSubscriptionDto.subscriptionType === SubscriptionType.YEARLY) {
+        basePrice = Number(pkg.yearlyPrice);
+      } else if (createSubscriptionDto.subscriptionType === SubscriptionType.MONTHLY) {
+        basePrice = Number(pkg.monthlyPrice);
+      }
+
+      if (basePrice > 0) {
+        const discountAmount = basePrice * (Number(pkg.discount) / 100);
+        createSubscriptionDto.amount = basePrice - discountAmount;
+      } else {
+        createSubscriptionDto.amount = 0;
+      }
+    } else {
+      if (selectedDepartments.length === 0 && createSubscriptionDto.departmentSlug) {
+        selectedDepartments = [createSubscriptionDto.departmentSlug];
+      }
+      const hasEmployeeDepartment = selectedDepartments.some((department) => this.employeeDepartmentKeys.has(department));
+      if (!hasEmployeeDepartment) {
+        employeeSeats = 0;
+      } else if (employeeSeats < 1) {
+        throw new BadRequestException('Employee seats are required for the employee department');
+      }
+
+      const pricing = await this.getDepartmentPricing();
+      const periodKey = createSubscriptionDto.subscriptionType === SubscriptionType.YEARLY ? 'yearly' : 'monthly';
+      let basePrice = selectedDepartments.reduce((total, department) => {
+        return total + Number(pricing.departmentPrices?.[department]?.[periodKey] || 0);
+      }, 0);
+      if (hasEmployeeDepartment) {
+        const seatPrice = periodKey === 'yearly'
+          ? Number(pricing.employeeSeatYearlyPrice || 0)
+          : Number(pricing.employeeSeatMonthlyPrice || 0);
+        basePrice += employeeSeats * seatPrice;
+      }
+      createSubscriptionDto.amount = basePrice;
     }
 
     // Calculate end date based on subscription type
@@ -108,6 +210,8 @@ export class SubscriptionService {
       propertyId: createSubscriptionDto.propertyId,
       unitId: createSubscriptionDto.unitId,
       departmentSlug: createSubscriptionDto.departmentSlug,
+      selectedDepartments,
+      employeeSeats,
       packageId: createSubscriptionDto.packageId,
       subscriptionType: createSubscriptionDto.subscriptionType,
       customPeriodMonths: createSubscriptionDto.customPeriodMonths,
@@ -241,16 +345,19 @@ export class SubscriptionService {
   }
 
   private async applyPackageDepartmentsToUser(subscription: Subscription): Promise<void> {
-    if (!subscription.userId || !subscription.managementPackage) return;
+    if (!subscription.userId) return;
 
     const user = await this.userRepository.findOne({ where: { id: subscription.userId } });
     if (!user) return;
 
-    const packageAdministrations = Array.isArray(subscription.managementPackage.administrations)
+    const packageAdministrations = Array.isArray(subscription.managementPackage?.administrations)
       ? subscription.managementPackage.administrations
       : [];
+    const selectedDepartments = Array.isArray(subscription.selectedDepartments) && subscription.selectedDepartments.length > 0
+      ? subscription.selectedDepartments
+      : packageAdministrations;
 
-    const mappedDepartments = packageAdministrations
+    const mappedDepartments = selectedDepartments
       .map((administrationKey) => this.administrationToDepartment[administrationKey])
       .filter(Boolean);
 
@@ -302,6 +409,16 @@ export class SubscriptionService {
       relations: ['user', 'property'],
       order: { createdAt: 'DESC' },
     });
+  }
+
+  async hardDelete(id: string, isAdmin: boolean = false): Promise<void> {
+    if (!isAdmin) {
+      throw new ForbiddenException('Only admins can permanently delete subscriptions');
+    }
+    const result = await this.subscriptionRepository.delete(id);
+    if (!result.affected) {
+      throw new NotFoundException('Subscription not found');
+    }
   }
 
   async getSubscriptionStatus(userId: string): Promise<{ active: boolean; daysLeft: number; noExpiry: boolean; subscription?: Subscription }> {

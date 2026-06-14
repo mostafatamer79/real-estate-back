@@ -117,9 +117,12 @@ export class CreateUserDto{
     @IsString()
     commercialRegistrationNumber?: string;
 
-    @IsOptional()
-    @IsString()
-    roleOtherDescription?: string;
+  @IsOptional()
+  @IsString()
+  roleOtherDescription?: string;
+
+  @IsOptional()
+  isActive?: boolean;
 
     @IsOptional()
     @IsString()

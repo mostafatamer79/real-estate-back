@@ -11,9 +11,11 @@ import {
 import { ManagementPackageService } from './management-package.service';
 import { CreateManagementPackageDto, UpdateManagementPackageDto } from './dto/create-management-package.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt.guard';
+import { SkipSubscriptionGuard } from '../../common/decorators/skip-subscription.decorator';
 // import { RolesGuard } from '../../auth/guards/roles.guard'; // Assuming roles guard exists
 // import { Roles } from '../../auth/decorators/roles.decorator';
 
+@SkipSubscriptionGuard()
 @Controller('management-packages')
 @UseGuards(JwtAuthGuard)
 export class ManagementPackageController {

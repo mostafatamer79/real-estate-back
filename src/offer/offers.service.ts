@@ -10,6 +10,7 @@ import { Invoice, InvoiceStatus } from '../financial/entities/invoice.entity';
 import { SettingsService } from '../settings/settings.service';
 
 import { OfferView } from './entities/offer-view.entity';
+import { OfferReport, OfferReportStatus } from './entities/offer-report.entity';
 
 @Injectable()
 export class OffersService {
@@ -24,6 +25,8 @@ export class OffersService {
     private readonly invoiceRepository: Repository<Invoice>,
     @InjectRepository(OfferView)
     private readonly offerViewRepository: Repository<OfferView>,
+    @InjectRepository(OfferReport)
+    private readonly offerReportRepository: Repository<OfferReport>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly settingsService: SettingsService,
@@ -185,6 +188,65 @@ export class OffersService {
   // ✅ Find offers by user
   async findByUser(userId: string): Promise<Offer[]> {
     return this.offersRepository.find({ where: { userId }, order: { createdAt: 'DESC' } });
+  }
+
+  async reportOffer(offerId: string, body: { reason?: string; message?: string }, user: any): Promise<OfferReport> {
+    const offer = await this.findOne(offerId, user);
+    const reason = String(body?.reason || '').trim();
+    if (!reason) {
+      throw new ForbiddenException('Report reason is required');
+    }
+
+    const report = this.offerReportRepository.create({
+      offerId: offer.id,
+      reporterId: user.userId || user.id || user.sub || null,
+      reason,
+      message: body?.message ? String(body.message).trim() : null,
+      status: OfferReportStatus.PENDING,
+    });
+
+    return this.offerReportRepository.save(report);
+  }
+
+  async findReports(user: any, status?: OfferReportStatus | 'all'): Promise<OfferReport[]> {
+    if (user?.role !== Role.ADMIN) {
+      throw new ForbiddenException('Only admins can view offer reports');
+    }
+
+    const where = status && status !== 'all' ? { status: status as OfferReportStatus } : {};
+    return this.offerReportRepository.find({
+      where,
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async updateReport(
+    reportId: string,
+    body: { status?: OfferReportStatus; adminNote?: string; stopOffer?: boolean },
+    user: any,
+  ): Promise<OfferReport> {
+    if (user?.role !== Role.ADMIN) {
+      throw new ForbiddenException('Only admins can update offer reports');
+    }
+
+    const report = await this.offerReportRepository.findOne({ where: { id: reportId } });
+    if (!report) throw new NotFoundException('Offer report not found');
+
+    if (body?.status) report.status = body.status;
+    if (body?.adminNote !== undefined) report.adminNote = body.adminNote || null;
+    report.handledById = user.userId || user.id || user.sub || null;
+
+    if (body?.stopOffer) {
+      const offer = await this.offersRepository.findOne({ where: { id: report.offerId } });
+      if (offer) {
+        offer.status = 'paused';
+        offer.isActive = false;
+        await this.offersRepository.save(offer);
+      }
+      report.status = OfferReportStatus.RESOLVED;
+    }
+
+    return this.offerReportRepository.save(report);
   }
 
   // ✅ Create Purchase Request

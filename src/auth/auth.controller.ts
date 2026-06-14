@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto, VerifyOtpDto } from '../user/create-user-dto';
 import { ResetOtpDto } from './login-dto';
@@ -27,6 +27,12 @@ export class AuthController {
   @Post('logout')
   logout(@Req() req: any) {
     return this.authService.logout(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('impersonate/:id')
+  impersonate(@Req() req: any, @Param('id') targetUserId: string) {
+    return this.authService.impersonate(req.user.id || req.user.userId || req.user.sub, targetUserId);
   }
 
   @Public()

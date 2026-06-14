@@ -7,6 +7,8 @@ import {
   IsDate,
   Min,
   IsBoolean,
+  IsArray,
+  IsInt,
 } from 'class-validator';
 import { PaymentMethod, SubscriptionType } from '../subscription.entity';
 import { Type } from 'class-transformer';
@@ -27,6 +29,16 @@ export class CreateSubscriptionDto {
   @IsOptional()
   @IsString()
   departmentSlug?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  selectedDepartments?: string[];
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  employeeSeats?: number;
 
   @IsEnum(SubscriptionType)
   @IsOptional()
@@ -77,6 +89,15 @@ export class CreateSubscriptionDto {
 
 export class UpdateSubscriptionDto {
   @IsOptional()
+  @IsEnum(SubscriptionType)
+  subscriptionType?: SubscriptionType;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  customPeriodMonths?: number;
+
+  @IsOptional()
   @IsEnum(PaymentMethod)
   paymentMethod?: PaymentMethod;
 
@@ -109,6 +130,16 @@ export class UpdateSubscriptionDto {
   @IsOptional()
   @IsBoolean()
   noExpiry?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  selectedDepartments?: string[];
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  employeeSeats?: number;
 }
 
 export class CancelSubscriptionDto {

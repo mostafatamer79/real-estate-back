@@ -5,6 +5,7 @@ import {
   IsArray,
   IsBoolean,
   Min,
+  IsObject,
 } from 'class-validator';
 
 export class CreateManagementPackageDto {
@@ -36,6 +37,20 @@ export class CreateManagementPackageDto {
   @IsArray()
   @IsString({ each: true })
   administrations: string[];
+
+  @IsOptional()
+  @IsObject()
+  departmentPrices?: Record<string, { monthly: number; yearly: number }>;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  employeeSeatMonthlyPrice?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  employeeSeatYearlyPrice?: number;
 
   @IsOptional()
   @IsArray()
@@ -80,6 +95,20 @@ export class UpdateManagementPackageDto {
     @IsArray()
     @IsString({ each: true })
     administrations?: string[];
+
+    @IsOptional()
+    @IsObject()
+    departmentPrices?: Record<string, { monthly: number; yearly: number }>;
+
+    @IsOptional()
+    @IsNumber()
+    @Min(0)
+    employeeSeatMonthlyPrice?: number;
+
+    @IsOptional()
+    @IsNumber()
+    @Min(0)
+    employeeSeatYearlyPrice?: number;
   
     @IsOptional()
     @IsArray()

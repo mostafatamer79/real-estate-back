@@ -14,7 +14,7 @@ export class ActivityController {
 
   @Get('me')
   async findMine(@Query('limit') limit?: number, @Req() req?: any) {
-    return await this.activityService.findByUser(req.user.id, limit || 10);
+    return await this.activityService.findByUser(req.user.userId || req.user.id, limit || 10);
   }
 
   @Get('recent')

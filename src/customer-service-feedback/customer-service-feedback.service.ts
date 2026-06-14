@@ -137,7 +137,7 @@ export class CustomerServiceFeedbackService {
     const ticketUser = user || await this.findTicketUser(item);
     const email = item.email || ticketUser?.email || null;
     if (email) {
-      await this.mailService.sendCustomerServiceReply(email, saved, reply);
+      // await this.mailService.sendCustomerServiceReply(email, saved, reply);
     }
     await this.notifyUser(
       ticketUser?.id,

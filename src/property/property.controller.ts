@@ -26,6 +26,15 @@ export class PropertyController {
         return this.propertyService.findAllProperties(req.user, ownerId);
     }
 
+    @Get('stats')
+    getStats(
+        @Request() req,
+        @Query('ownerId') ownerId?: string,
+        @Query('status') status?: string
+    ) {
+        return this.propertyService.getStats(req.user, ownerId, status);
+    }
+
     @Get(':id')
     findOneProperty(@Param('id') id: string, @Request() req) {
         return this.propertyService.findOneProperty(id, req.user);
@@ -141,12 +150,4 @@ export class PropertyController {
         return this.propertyService.removeMaintenance(id, req.user);
     }
 
-    @Get('stats')
-    getStats(
-        @Request() req,
-        @Query('ownerId') ownerId?: string,
-        @Query('status') status?: string
-    ) {
-        return this.propertyService.getStats(req.user, ownerId, status);
-    }
 }

@@ -143,6 +143,25 @@ export class FinancialService {
     return undefined;
   }
 
+  private async resolveSeederReportImage(fileName: string): Promise<string | undefined> {
+    const candidates = [
+      join(process.cwd(), 'src', 'seeders', fileName),
+      join(process.cwd(), 'dist', 'seeders', fileName),
+      join(__dirname, '..', 'seeders', fileName),
+      join(__dirname, '..', '..', 'src', 'seeders', fileName),
+    ];
+
+    for (const filePath of candidates) {
+      if (!existsSync(filePath)) continue;
+      const data = await readFile(filePath);
+      const lower = filePath.toLowerCase();
+      const ext = lower.endsWith('.png') ? 'png' : lower.endsWith('.webp') ? 'webp' : 'jpeg';
+      return `data:image/${ext};base64,${data.toString('base64')}`;
+    }
+
+    return undefined;
+  }
+
   private escapeHtml(value: unknown) {
     return String(value ?? '')
       .replace(/&/g, '&amp;')
@@ -240,6 +259,8 @@ export class FinancialService {
     generatedAt: Date;
     mapImage?: string;
     coverImage?: string;
+    startImage?: string;
+    endImage?: string;
     locationName: string;
   }) {
     const total = params.places.length;
@@ -555,12 +576,18 @@ export class FinancialService {
             @page { size: A4; margin: 0; }
             * { box-sizing: border-box; }
             body { margin: 0; font-family: Arial, Tahoma, sans-serif; color: #111827; background: #fff; direction: rtl; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .page { width: 210mm; min-height: 297mm; padding: 34px 42px; page-break-after: always; position: relative; overflow: hidden; }
+            .page { width: 210mm; min-height: 297mm; padding: 34px 42px; page-break-after: always; position: relative; overflow: hidden; background: #fff; }
+            .page::before { content: ""; position: absolute; inset: 0; background-image: var(--report-cover); background-size: cover; background-position: center; opacity: .11; pointer-events: none; }
+            .page > * { position: relative; z-index: 1; }
             .cover { background: linear-gradient(135deg, #08111f 0%, #0f172a 52%, #1e293b 100%); color: #fff; display: flex; flex-direction: column; justify-content: space-between; }
-            .cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .34; }
-            .cover-shade { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(8,17,31,.95), rgba(15,23,42,.82), rgba(30,41,59,.72)); }
+            .cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .92; }
+            .cover-shade { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(8,17,31,.86), rgba(15,23,42,.58), rgba(30,41,59,.36)); }
             .cover-content { position: relative; z-index: 2; }
             .cover:before { content: ""; position: absolute; inset: 42px; border: 1px solid rgba(255,255,255,.14); border-radius: 34px; pointer-events: none; }
+            .artwork-page { padding: 0; background: #fff; }
+            .artwork-page::before { display: none; }
+            .artwork-img { width: 210mm; height: 297mm; object-fit: cover; display: block; }
+            .artwork-stamp { position: absolute; left: 34px; right: 34px; bottom: 30px; z-index: 2; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 16px; border-radius: 18px; background: rgba(15,23,42,.72); color: #fff; font-size: 11px; font-weight: 900; backdrop-filter: blur(8px); }
             .brand { font-size: 18px; font-weight: 900; letter-spacing: 1px; }
             .eyebrow { color: #94a3b8; font-size: 13px; font-weight: 800; margin-top: 95px; }
             .title { font-size: 50px; line-height: 1.18; font-weight: 900; margin: 18px 0; letter-spacing: 0; }
@@ -610,26 +637,25 @@ export class FinancialService {
             .risk-low { color: #166534; background: #dcfce7; }
             .risk-mid { color: #92400e; background: #fef3c7; }
             .risk-high { color: #991b1b; background: #fee2e2; }
+            .visual-caption { display: grid; grid-template-columns: 1.2fr .8fr; gap: 14px; margin-top: 14px; }
+            .explain-card { border: 1px solid #e2e8f0; border-radius: 18px; background: #fff; padding: 14px 16px; }
+            .explain-card h4 { margin: 0 0 8px; color: #0f172a; font-size: 14px; font-weight: 900; }
+            .explain-card p { margin: 0; color: #64748b; font-size: 11px; line-height: 1.8; }
+            .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+            .legend-item { display: flex; align-items: center; gap: 8px; color: #334155; font-size: 10px; font-weight: 800; }
+            .legend-dot { width: 9px; height: 9px; border-radius: 999px; display: inline-block; }
           </style>
         </head>
-        <body>
-          <section class="page cover">
-            ${params.coverImage ? `<img class="cover-img" src="${params.coverImage}" alt="Report cover" /><div class="cover-shade"></div>` : ''}
-            <div class="cover-content">
-              <div class="brand">DIGITALBROKERAGE</div>
-              <div class="eyebrow">تقرير عقار كامل • Map Scan Research Report</div>
-              <h1 class="title">DigitalBrokerage</h1>
-              <p class="subtitle">دراسة مكانية تلقائية للمرافق والخدمات المحيطة بـ ${escapedLocationName}، مدعومة بمؤشرات كمية ورسوم بيانية وملف Excel تفصيلي.</p>
-              <div class="ai-badge">AI GENERATED • تم إنشاء وتحليل هذا التقرير بواسطة الذكاء الاصطناعي</div>
-              <div class="cover-grid">
-                <div class="cover-card"><span>رقم التقرير</span><strong>${reportCode}</strong></div>
-                <div class="cover-card"><span>تم إصدار التقرير في</span><strong>${generatedDate}</strong></div>
-                <div class="cover-card"><span>اسم المكان</span><strong>${escapedLocationName}</strong></div>
-                <div class="cover-card"><span>نطاق البحث</span><strong>${params.radius.toLocaleString()} م</strong></div>
-              </div>
+        <body style="${params.coverImage ? `--report-cover: url('${params.coverImage}')` : ''}">
+          ${params.startImage ? `
+          <section class="page artwork-page">
+            <img class="artwork-img" src="${params.startImage}" alt="Report opening page" />
+            <div class="artwork-stamp">
+              <span>${escapedLocationName}</span>
+              <span>${reportCode} • ${generatedDate}</span>
             </div>
-            <div class="footer"><span>DigitalBrokerage AI Research</span><span>01</span></div>
           </section>
+          ` : ''}
 
           <section class="page">
             <div class="header"><div><h2>تقرير مسح المنطقة</h2><p>${escapedLocationName} • ${params.latitude.toFixed(5)}, ${params.longitude.toFixed(5)} • ${generatedDate}</p></div><div class="page-no">02</div></div>
@@ -720,12 +746,27 @@ export class FinancialService {
             <div class="diagram">
               ${mapVisual}
             </div>
-            <h3 class="section-title" style="margin-top:18px">مشهد جوي تحليلي 3D</h3>
+            <div class="visual-caption">
+              <div class="explain-card">
+                <h4>كيف تقرأ المخطط؟</h4>
+                <p>النقطة الحمراء تمثل مركز الموقع. كل نقطة حولها تمثل خدمة أو مرفقاً مرصوداً داخل نطاق البحث. قرب النقاط من المركز يعني سهولة وصول أعلى، وكثرة الألوان تعني تنوعاً أكبر في البيئة المحيطة.</p>
+              </div>
+              <div class="explain-card">
+                <h4>دليل سريع</h4>
+                <div class="legend-grid">
+                  <div class="legend-item"><span class="legend-dot" style="background:#dc2626"></span>مركز الموقع</div>
+                  <div class="legend-item"><span class="legend-dot" style="background:#2563eb"></span>خدمات قريبة</div>
+                  <div class="legend-item"><span class="legend-dot" style="background:#16a34a"></span>خدمات داعمة</div>
+                  <div class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>فرص/تصنيفات</div>
+                </div>
+              </div>
+            </div>
+            <h3 class="section-title" style="margin-top:16px">مشهد تحليلي ثلاثي الأبعاد</h3>
             <div class="diagram" style="margin-top:10px">
               ${aerialVisual}
             </div>
             <p class="muted" style="margin-top:10px">
-              هذا المشهد مولد محلياً من نتائج المسح نفسها، ولا يعتمد على أي خدمة خارجية. الهدف منه تمثيل كثافة الخدمات وقربها حول المركز بصرياً لمساعدة القرار، وليس صورة جوية حقيقية.
+              ارتفاع الأعمدة يعبر عن قوة حضور الخدمات وقربها من المركز. الأعمدة الأطول تعني مواقع أقرب أو أكثر تأثيراً في قرار الموقع، بينما انخفاض الأعمدة يعني تأثيراً أقل أو بعداً نسبياً.
             </p>
             <div class="bottom"><span>صورة تحليلية</span><span>07</span></div>
           </section>
@@ -841,6 +882,16 @@ export class FinancialService {
             </table>
             <div class="bottom"><span>DigitalBrokerage • ${reportCode}</span><span>15</span></div>
           </section>
+
+          ${params.endImage ? `
+          <section class="page artwork-page">
+            <img class="artwork-img" src="${params.endImage}" alt="Report closing page" />
+            <div class="artwork-stamp">
+              <span>DigitalBrokerage AI Research</span>
+              <span>${reportCode}</span>
+            </div>
+          </section>
+          ` : ''}
         </body>
       </html>`;
   }
@@ -1000,7 +1051,10 @@ export class FinancialService {
       ? dto.mapImage
       : undefined;
     const coverSetting = await this.settingsService.findOne('theme_reportCoverUrl');
-    const coverImage = await this.resolveReportImageSource(coverSetting?.value);
+    const localCoverImage = await this.resolveSeederReportImage('cover.jpeg');
+    const startImage = await this.resolveSeederReportImage('start.jpeg');
+    const endImage = await this.resolveSeederReportImage('end.jpeg');
+    const coverImage = localCoverImage || await this.resolveReportImageSource(coverSetting?.value);
     const payload = {
       latitude,
       longitude,
@@ -1009,6 +1063,8 @@ export class FinancialService {
       generatedAt,
       mapImage,
       coverImage,
+      startImage,
+      endImage,
       locationName: inferredLocationName,
     };
     await writeFile(excelPath, `\ufeff${this.buildExcelReportHtml(payload)}`, 'utf8');

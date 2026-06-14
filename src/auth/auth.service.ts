@@ -12,7 +12,7 @@
     import { CreateUserDto } from '../user/create-user-dto';
     import { LoginDto } from './login-dto';
     import * as bcrypt from 'bcrypt';
-    import { User } from '../user/user-entity';
+    import { Role, User } from '../user/user-entity';
     import { ConfigService } from '@nestjs/config';
 import { ActivityService } from '../activity/activity.service';
 import { ActivityType } from '../common/entities/activity.entity';
@@ -223,6 +223,44 @@ import { MailService } from '../mail/mail.service';
           throw new UnauthorizedException('auth.invalid_refresh_token');
         }
       }
+
+      async impersonate(adminId: string, targetUserId: string) {
+        const admin = await this.userService.findOne(adminId);
+        if (!admin || admin.role !== Role.ADMIN) {
+          throw new UnauthorizedException('auth.unauthorized');
+        }
+
+        const targetUser = await this.userService.findOne(targetUserId);
+        if (!targetUser) {
+          throw new NotFoundException('auth.user_not_found');
+        }
+
+        const tokens = await this.generateTokens(targetUser);
+        return {
+          user: {
+            id: targetUser.id,
+            firstName: targetUser.firstName,
+            lastName: targetUser.lastName,
+            phone: targetUser.phone,
+            email: targetUser.email,
+            role: targetUser.role,
+            departments: targetUser.departments,
+            departmentPermissions: targetUser.departmentPermissions,
+            isVerified: targetUser.isVerified,
+            isActive: targetUser.isActive,
+          },
+          token: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          impersonatedBy: {
+            id: admin.id,
+            firstName: admin.firstName,
+            lastName: admin.lastName,
+            email: admin.email,
+            role: admin.role,
+          },
+        };
+      }
+
       public async generateOtp(length = 6): Promise<string> {
         let otp = '';
         const digits = '0123456789';

@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
   Query,
+  ForbiddenException,
 } from '@nestjs/common';
 import { SubscriptionService } from './subscription.service';
 import {
@@ -54,6 +55,19 @@ export class SubscriptionController {
     return await this.subscriptionService.getSubscriptionStatus(targetId);
   }
 
+  @Get('department-pricing')
+  async getDepartmentPricing() {
+    return await this.subscriptionService.getDepartmentPricing();
+  }
+
+  @Put('department-pricing')
+  async updateDepartmentPricing(@Request() req, @Body() body: any) {
+    if (req.user.role !== 'admin') {
+      throw new ForbiddenException('Forbidden');
+    }
+    return await this.subscriptionService.updateDepartmentPricing(body);
+  }
+
   @Get('property/:propertyId')
   async getByProperty(@Param('propertyId') propertyId: string) {
     return await this.subscriptionService.getSubscriptionsByProperty(propertyId);
@@ -69,6 +83,12 @@ export class SubscriptionController {
     // Admin can see all, users see only their own
     const userId = req.user.role === 'admin' ? undefined : req.user.userId;
     return await this.subscriptionService.findAll(userId);
+  }
+
+  @Delete(':id/hard')
+  async hardDelete(@Param('id') id: string, @Request() req) {
+    await this.subscriptionService.hardDelete(id, req.user.role === 'admin');
+    return { success: true };
   }
 
   @Get(':id')

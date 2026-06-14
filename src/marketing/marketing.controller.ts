@@ -4,6 +4,8 @@ import { CreateMarketingRequestDto, UpdateMarketingRequestDto } from './dto/mark
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
 import { Departments } from '../common/decorators/departments.decorators';
 import { DepartmentsGuard } from '../common/guards/departments.guard';
+import { SkipDepartmentsGuard } from '../common/decorators/skip-departments.decorator';
+import { Public } from '../common/decorators/public.decorator';
 
 @Controller('marketing')
 @UseGuards(JwtAuthGuard, DepartmentsGuard)
@@ -46,7 +48,7 @@ export class MarketingController {
 
   @Get('email')
   findAllEmailMarketing(@Request() req) {
-    return this.marketingService.findEmailMarketingByOwner(req.user.userId);
+    return this.marketingService.findEmailMarketingByOwner(req.user.userId, req.user.role);
   }
 
   @Get('email/stats')
@@ -61,17 +63,17 @@ export class MarketingController {
 
   @Get('email/:id')
   findOneEmailMarketing(@Param('id') id: string, @Request() req) {
-    return this.marketingService.getEmailMarketingById(id, req.user.userId);
+    return this.marketingService.getEmailMarketingById(id, req.user.userId, req.user.role);
   }
 
   @Patch('email/:id')
   updateEmailMarketing(@Param('id') id: string, @Body() updateDto: any, @Request() req) {
-    return this.marketingService.updateEmailMarketing(id, req.user.userId, updateDto);
+    return this.marketingService.updateEmailMarketing(id, req.user.userId, updateDto, req.user.role);
   }
 
   @Delete('email/:id')
   removeEmailMarketing(@Param('id') id: string, @Request() req) {
-    return this.marketingService.removeEmailMarketing(id, req.user.userId);
+    return this.marketingService.removeEmailMarketing(id, req.user.userId, req.user.role);
   }
 
   // Email Marketing — alias routes (/marketing/email-marketing) used by admin panel
@@ -82,7 +84,14 @@ export class MarketingController {
 
   @Get('email-marketing')
   findAllEmailMarketingAlias(@Request() req) {
-    return this.marketingService.findEmailMarketingByOwner(req.user.userId);
+    return this.marketingService.findEmailMarketingByOwner(req.user.userId, req.user.role);
+  }
+
+  @Get('email-marketing/public')
+  @Public()
+  @SkipDepartmentsGuard()
+  findPublicEmailMarketing() {
+    return this.marketingService.findPublicEmailMarketing();
   }
 
   @Get('email-marketing/stats')
@@ -97,17 +106,17 @@ export class MarketingController {
 
   @Get('email-marketing/:id')
   findOneEmailMarketingAlias(@Param('id') id: string, @Request() req) {
-    return this.marketingService.getEmailMarketingById(id, req.user.userId);
+    return this.marketingService.getEmailMarketingById(id, req.user.userId, req.user.role);
   }
 
   @Patch('email-marketing/:id')
   updateEmailMarketingAlias(@Param('id') id: string, @Body() updateDto: any, @Request() req) {
-    return this.marketingService.updateEmailMarketing(id, req.user.userId, updateDto);
+    return this.marketingService.updateEmailMarketing(id, req.user.userId, updateDto, req.user.role);
   }
 
   @Delete('email-marketing/:id')
   removeEmailMarketingAlias(@Param('id') id: string, @Request() req) {
-    return this.marketingService.removeEmailMarketing(id, req.user.userId);
+    return this.marketingService.removeEmailMarketing(id, req.user.userId, req.user.role);
   }
 
   @Get(':id')

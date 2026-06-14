@@ -27,12 +27,12 @@ export class ServiceRequestService {
   private async getOwnerIds(ownerId: string): Promise<string[]> {
     const user = await this.userRepository.findOne({ where: { id: ownerId } });
     if (!user) return [ownerId];
-    
+
     if (user.role === Role.MANGER) {
         const subUsers = await this.userRepository.find({ where: { parentId: ownerId } });
         return [ownerId, ...subUsers.map(u => u.id)];
     }
-    
+
     return [ownerId];
   }
 
@@ -42,7 +42,7 @@ export class ServiceRequestService {
     // Permission Check for Update
     const userDepts = user.departments || [];
     const targetDept = serviceRequest.targetDepartment;
-    
+
     // Map TargetDepartment to User Department Slug
     const targetToSlugMap: Record<string, string> = {
       [TargetDepartment.MARKETING]: 'marketing',
@@ -293,7 +293,7 @@ export class ServiceRequestService {
           if (request.category === 'legal') {
              await this.mailService.sendLegalRequestNotification(recipient.email, request);
           } else {
-             await this.mailService.sendNewServiceRequestNotification(recipient.email, request);
+            //  await this.mailService.sendNewServiceRequestNotification(recipient.email, request);
           }
         }
         await this.notificationService.create(
@@ -311,11 +311,11 @@ export class ServiceRequestService {
 
   private async notifyAdminsOfNewRequest(request: ServiceRequest) {
     const admins = await this.userRepository.find({ where: { role: Role.ADMIN } });
-    for (const admin of admins) {
-      if (admin.email) {
-        await this.mailService.sendNewServiceRequestNotification(admin.email, request);
-      }
-    }
+    // for (const admin of admins) {
+    //   if (admin.email) {
+    //     await this.mailService.sendNewServiceRequestNotification(admin.email, request);
+    //   }
+    // }
   }
 
 
@@ -372,7 +372,7 @@ export class ServiceRequestService {
       if (serviceRequest.category === 'legal') {
         await this.mailService.sendLegalInvoiceToClient(serviceRequest.user.email, saved);
       } else {
-        await this.mailService.sendNewServiceRequestNotification(serviceRequest.user.email, saved);
+        // await this.mailService.sendNewServiceRequestNotification(serviceRequest.user.email, saved);
       }
     }
 
@@ -446,7 +446,7 @@ export class ServiceRequestService {
     for (const recipient of recipients) {
       try {
         if (recipient.email) {
-          await this.mailService.sendLegalDecisionNotification(recipient.email, saved, decision);
+          // await this.mailService.sendLegalDecisionNotification(recipient.email, saved, decision);
         }
         await this.notificationService.create(
           recipient.id,
@@ -517,7 +517,7 @@ export class ServiceRequestService {
       };
 
       const targetDepts = userDepts.map(slug => slugToTargetMap[slug]).filter(Boolean);
-      
+
       // Filter by department
       if (targetDepts.length > 0) {
         queryBuilder.andWhere('service.targetDepartment IN (:...targetDepts)', { targetDepts });
@@ -608,7 +608,7 @@ export class ServiceRequestService {
   async markAsPaid(id: string, user: User): Promise<ServiceRequest> {
     const serviceRequest = await this.findOne(id, user);
     serviceRequest.paymentStatus = PaidStatus.PAID;
-    
+
     // Auto-approve Construction and Legal on payment
     if (['construction', 'legal'].includes(serviceRequest.category)) {
         serviceRequest.adminAccepted = true;
@@ -635,7 +635,7 @@ export class ServiceRequestService {
     // Try to fetch custom price from settings first
     const settingKey = `service_price_${category}_${serviceType}`.replace(/\s+/g, '_').toLowerCase();
     const customPrice = await this.settingsService.findOne(settingKey);
-    
+
     if (customPrice && customPrice.value) {
       const parsed = parseFloat(customPrice.value);
       if (!isNaN(parsed)) return parsed;
@@ -901,22 +901,22 @@ export class ServiceRequestService {
     });
 
     if (!serviceRequest) throw new NotFoundException('Service request not found or access denied');
-    
+
     const offers = serviceRequest.departmentPrices || {};
     const chosenOffer = offers[deptSlug];
 
     if (!chosenOffer) throw new BadRequestException(`No offer found for department: ${deptSlug}`);
 
     serviceRequest.price = chosenOffer.price;
-    serviceRequest.metadata = { 
-      ...(serviceRequest.metadata || {}), 
-      acceptedOffer: { dept: deptSlug, ...chosenOffer } 
+    serviceRequest.metadata = {
+      ...(serviceRequest.metadata || {}),
+      acceptedOffer: { dept: deptSlug, ...chosenOffer }
     };
     serviceRequest.clientDecision = ClientDecision.ACCEPTED;
-    
+
     // If it's a category that requires an invoice, update the invoice if it exists
-    const invoice = await this.invoiceRepository.findOne({ 
-      where: { referenceId: serviceRequest.id, referenceType: 'ServiceRequest' } 
+    const invoice = await this.invoiceRepository.findOne({
+      where: { referenceId: serviceRequest.id, referenceType: 'ServiceRequest' }
     });
     if (invoice) {
       invoice.amount = chosenOffer.price;
@@ -947,7 +947,7 @@ export class ServiceRequestService {
     // Check if the staff member actually contributed to this request
     const offers = serviceRequest.departmentPrices || {};
     const isContributor = Object.values(offers).some(e => e.addedBy === staffId);
-    
+
     if (!isContributor && user.role !== Role.ADMIN) {
       throw new ForbiddenException('This staff member is not a contributor to this request');
     }

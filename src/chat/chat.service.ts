@@ -160,6 +160,42 @@ async getOrCreateServiceRequestChat(serviceRequestId: string, userId: string, cl
     return room;
 }
 
+async getOrCreateDirectChat(userId1: string, userId2: string) {
+    const rooms = await this.chatRoomRepository.createQueryBuilder('room')
+        .leftJoinAndSelect('room.participants', 'participant')
+        .where('room.isGroup = :isGroup', { isGroup: false })
+        .andWhere('room.offerId IS NULL')
+        .andWhere('room.orderId IS NULL')
+        .andWhere('room.serviceRequestId IS NULL')
+        .andWhere('room.disputeId IS NULL')
+        .getMany();
+
+    let room = rooms.find(r => {
+        const pIds = r.participants.map(p => p.id);
+        return pIds.includes(userId1) && pIds.includes(userId2) && pIds.length === 2;
+    });
+
+    if (!room) {
+        const user1 = await this.userRepository.findOne({ where: { id: userId1 } });
+        const user2 = await this.userRepository.findOne({ where: { id: userId2 } });
+
+        if (!user1 || !user2) throw new Error('User not found');
+
+        room = this.chatRoomRepository.create({
+            name: `محادثة مباشرة`,
+            description: `Direct chat between ${user1.firstName} and ${user2.firstName}`,
+            participants: [user1, user2],
+            createdBy: userId1,
+            isGroup: false,
+        });
+
+        await this.chatRoomRepository.save(room);
+    }
+
+    return room;
+}
+
+
   // Send message
   async sendMessage(roomId: string, senderId: string, content: string) {
     const room = await this.chatRoomRepository.findOne({

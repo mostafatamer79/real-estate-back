@@ -79,6 +79,17 @@ export class ChatController {
     );
   }
 
+  @Post('rooms/direct')
+  async getOrCreateDirectRoom(
+    @Body() data: { targetUserId: string },
+    @Request() req,
+  ) {
+    return this.chatService.getOrCreateDirectChat(
+      req.user.userId,
+      data.targetUserId,
+    );
+  }
+
   // Get room messages
   @Get('rooms/:roomId/messages')
   async getRoomMessages(

@@ -60,10 +60,27 @@ export class CustomerServiceFeedbackService {
     return null;
   }
 
-  findAll(): Promise<CustomerServiceFeedback[]> {
-    return this.repo.find({
+  async findAll(): Promise<any[]> {
+    const items = await this.repo.find({
       order: { createdAt: 'DESC' },
     });
+    return Promise.all(
+      items.map(async (item) => {
+        const user = await this.findTicketUser(item);
+        return {
+          ...item,
+          resolvedUser: user
+            ? {
+                id: user.id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                phone: user.phone,
+              }
+            : null,
+        };
+      }),
+    );
   }
 
   async findMine(user: any): Promise<CustomerServiceFeedback[]> {

@@ -576,7 +576,7 @@ export class FinancialService {
             @page { size: A4; margin: 0; }
             * { box-sizing: border-box; }
             body { margin: 0; font-family: Arial, Tahoma, sans-serif; color: #111827; background: #fff; direction: rtl; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .page { width: 210mm; min-height: 297mm; padding: 34px 42px; page-break-after: always; position: relative; overflow: hidden; background: #fff; }
+            .page { width: 210mm; min-height: 297mm; padding: 34px 42px 80px; page-break-after: always; position: relative; overflow: hidden; background: #fff; }
             .page::before { content: ""; position: absolute; inset: 0; background-image: var(--report-cover); background-size: cover; background-position: center; opacity: .11; pointer-events: none; }
             .page > * { position: relative; z-index: 1; }
             .cover { background: linear-gradient(135deg, #08111f 0%, #0f172a 52%, #1e293b 100%); color: #fff; display: flex; flex-direction: column; justify-content: space-between; }
@@ -600,7 +600,7 @@ export class FinancialService {
             .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e5e7eb; padding-bottom: 16px; margin-bottom: 26px; }
             .header h2 { margin: 0; font-size: 23px; font-weight: 900; color: #0f172a; }
             .header p { margin: 6px 0 0; color: #64748b; font-size: 12px; }
-            .page-no { font-size: 18px; color: #94a3b8; font-weight: 900; }
+            .page-no { display: none !important; }
             .section-title { font-size: 22px; font-weight: 900; color: #0f172a; margin: 0 0 16px; }
             .notice { border: 1px solid #e2e8f0; background: #f8fafc; padding: 20px; border-radius: 18px; line-height: 2.05; color: #334155; font-size: 14px; }
             .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
@@ -620,7 +620,7 @@ export class FinancialService {
             .diagram { width: 100%; border: 1px solid #e2e8f0; border-radius: 20px; background: #f8fafc; overflow: hidden; margin-top: 16px; }
             .rec { font-size: 18px; line-height: 2; font-weight: 800; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 22px; padding: 24px; color: #0f172a; }
             .small-list { margin: 0; padding-right: 20px; color: #334155; line-height: 2; font-size: 13px; }
-            .bottom { position: absolute; bottom: 24px; left: 42px; right: 42px; color: #94a3b8; font-size: 11px; display: flex; justify-content: space-between; border-top: 1px solid #e5e7eb; padding-top: 10px; }
+            .bottom { position: absolute; bottom: 48px; left: 42px; right: 42px; color: #94a3b8; font-size: 11px; display: flex; justify-content: space-between; border-top: 1px solid #e5e7eb; padding-top: 10px; }
             .ai-badge { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(34,197,94,.14); color: #bbf7d0; border: 1px solid rgba(34,197,94,.35); padding: 9px 14px; font-size: 12px; font-weight: 900; margin-top: 18px; }
             .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
             .metric { border: 1px solid #e2e8f0; border-radius: 20px; padding: 18px; background: #fff; min-height: 118px; }
@@ -660,10 +660,15 @@ export class FinancialService {
           <section class="page">
             <div class="header"><div><h2>تقرير مسح المنطقة</h2><p>${escapedLocationName} • ${params.latitude.toFixed(5)}, ${params.longitude.toFixed(5)} • ${generatedDate}</p></div><div class="page-no">02</div></div>
             <h3 class="section-title">إخلاء مسؤولية</h3>
-            <div class="notice">
-              تم تقديم المعلومات والبيانات في هذا التقرير بهدف تقديم معلومات عامة وتحليل أولي للموقع فقط. تم إنشاء التحليل بواسطة الذكاء الاصطناعي اعتماداً على بيانات المسح المتاحة وقت إنشاء التقرير،
-              وقد تتغير البيانات أو تختلف عن الواقع بسبب تحديثات السوق أو تغيّر الخدمات أو جودة بيانات المصدر. لا يشكل هذا التقرير نصيحة مالية أو قانونية أو هندسية،
-              وينصح المستخدم بالتحقق بشكل مستقل من المعلومات قبل اتخاذ أي قرار استثماري أو تشغيلي.
+            <div class="notice" style="line-height: 1.8; font-size: 12.5px; padding: 18px;">
+              <ul style="margin: 0; padding-right: 18px; list-style-type: square;">
+                <li style="margin-bottom: 6px;">تم تقديم المعلومات والبيانات في هذا التقرير بهدف تقديم المعلومات العامة فقط، على الرغم من أننا نسعى للحفاظ على دقة وموثوقية البيانات المقدمة، إلا أننا لا نقدم أي تصريحات أو ضمانات صريحة أو ضمنية بشأن اكتمال أو ملاءمة أو دقة هذه المعلومات.</li>
+                <li style="margin-bottom: 6px;">لا تتحمل بسيطة أي مسؤولية أو التزام بأي خطأ أو نقص في محتوى التقرير، كما يُنصح المستخدمون بالتحقق بشكل مستقل من المعلومات المقدمة، وإذا لزم الأمر البحث عن استشارة مهنية قبل اتخاذ أي قرارات استناداً على البيانات المقدمة.</li>
+                <li style="margin-bottom: 6px;">قد يحتوي هذا التقرير على توقعات، تقديرات، أو بيانات توجيهية أخرى قابلة للتغيير بناءً على عوامل متنوعة، ولا تتحمل بسيطة أي التزام بتحديث أو إعلام المستخدمين بأي تغييرات من هذا القبيل.</li>
+                <li style="margin-bottom: 6px;">تخلي بسيطة نفسها من جميع المسؤوليات عن أي خسارة أو ضرر أو إزعاج ناتج عن استخدام أو الاعتماد على المعلومات المقدمة في هذا التقرير، ويقر المستخدمون ويقبلون أن البيانات قد تكون محدودة، ولا تتحمل بسيطة مسؤولية أي عواقب ناتجة عن استخدام هذه المعلومات.</li>
+                <li style="margin-bottom: 6px;">لا تشكل محتويات هذا التقرير نصائح مالية أو مهنية، كما يُنصح المستخدمون باستشارة الخبراء المؤهلين للحصول على نصائح شخصية مصممة وفقاً لظروفهم الفردية.</li>
+              </ul>
+              <p style="margin: 10px 0 0; font-weight: bold; line-height: 1.55;">من خلال الوصول إلى هذا التقرير واستخدامه، يقر المستخدمون ويوافقون على الالتزام بالشروط والأحكام المبينة هنا وفي سياسة حدود الاستخدام لمنصة بسيطة.</p>
             </div>
             <h3 class="section-title" style="margin-top:32px">الأجندة</h3>
             <table class="agenda">
@@ -962,6 +967,7 @@ export class FinancialService {
             '--no-sandbox',
             '--disable-dev-shm-usage',
             '--allow-file-access-from-files',
+            '--no-pdf-header-footer',
             `--user-data-dir=${join(tempDir, 'chrome-profile')}`,
             `--print-to-pdf=${tempPdfPath}`,
             htmlUrl,
@@ -1054,7 +1060,7 @@ export class FinancialService {
     const localCoverImage = await this.resolveSeederReportImage('cover.jpeg');
     const startImage = await this.resolveSeederReportImage('start.jpeg');
     const endImage = await this.resolveSeederReportImage('end.jpeg');
-    const coverImage = localCoverImage || await this.resolveReportImageSource(coverSetting?.value);
+    const coverImage = (coverSetting?.value ? await this.resolveReportImageSource(coverSetting.value) : undefined) || localCoverImage;
     const payload = {
       latitude,
       longitude,

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Param, Query } from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
 import { Permission } from '../common/decorators/permission.decorator';
@@ -13,8 +13,11 @@ export class SettingsController {
     @Get()
     @UseGuards(JwtAuthGuard, PermissionGuard)
     @Permission('settings')
-    async findAll() {
-        return this.settingsService.findAll();
+    async findAll(
+        @Query('category') category?: string,
+        @Query('subcategory') subcategory?: string,
+    ) {
+        return this.settingsService.findAll(category, subcategory);
     }
 
     @Public()
@@ -28,8 +31,11 @@ export class SettingsController {
     @Public()
     @SkipSubscriptionGuard()
     @Get('public')
-    async findAllPublic() {
-        return this.settingsService.findAllPublic();
+    async findAllPublic(
+        @Query('category') category?: string,
+        @Query('subcategory') subcategory?: string,
+    ) {
+        return this.settingsService.findAllPublic(category, subcategory);
     }
 
     @Post()

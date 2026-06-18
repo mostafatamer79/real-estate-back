@@ -15,6 +15,12 @@ export class Setting {
     @Column({ nullable: true })
     description: string;
 
+    @Column({ nullable: true })
+    category: string;
+
+    @Column({ nullable: true })
+    subcategory: string;
+
     @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;
 

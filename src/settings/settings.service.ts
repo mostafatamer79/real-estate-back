@@ -12,15 +12,49 @@ export class SettingsService {
         private readonly dataSource: DataSource,
     ) {}
 
-    async findAll(): Promise<Setting[]> {
-        return this.settingsRepository.find();
+    getCategoryAndSubcategory(key: string): { category: string; subcategory: string } {
+        if (key.startsWith('theme_')) {
+            return { category: 'appearance', subcategory: 'theme' };
+        }
+        if (key.startsWith('txt_')) {
+            const inner = key.replace('txt_', '');
+            const sub = inner.split('.')[0];
+            return { category: 'text', subcategory: sub || 'general' };
+        }
+        if (key.startsWith('section_')) {
+            return { category: 'site_control', subcategory: 'sections' };
+        }
+        if (key.startsWith('module_')) {
+            return { category: 'site_control', subcategory: 'modules' };
+        }
+        if (key.startsWith('login_')) {
+            return { category: 'site_control', subcategory: 'login' };
+        }
+        if (key.startsWith('ui_')) {
+            return { category: 'site_control', subcategory: 'ui' };
+        }
+        if (key.startsWith('details_part_')) {
+            return { category: 'site_control', subcategory: 'details' };
+        }
+        if (key.startsWith('service_price_')) {
+            return { category: 'pricing', subcategory: 'services' };
+        }
+        if (['appointment_price', 'purchase_service_fee_percentage', 'tax_percentage'].includes(key)) {
+            return { category: 'pricing', subcategory: 'pricing' };
+        }
+        return { category: 'other', subcategory: 'other' };
+    }
+
+    async findAll(category?: string, subcategory?: string): Promise<Setting[]> {
+        const where: any = {};
+        if (category) where.category = category;
+        if (subcategory) where.subcategory = subcategory;
+        return this.settingsRepository.find({ where });
     }
 
     async findOne(key: string): Promise<Setting | null> {
         const setting = await this.settingsRepository.findOne({ where: { key } });
         if (!setting) {
-             // Return a default if not found, or throw?
-             // For appointment_price, maybe return 0 if not set.
              return null;
         }
         return setting;
@@ -33,11 +67,14 @@ export class SettingsService {
 
     async setSetting(key: string, value: string, description?: string): Promise<Setting> {
         let setting = await this.settingsRepository.findOne({ where: { key } });
+        const { category, subcategory } = this.getCategoryAndSubcategory(key);
         if (setting) {
             setting.value = value;
             if (description) setting.description = description;
+            setting.category = category;
+            setting.subcategory = subcategory;
         } else {
-            setting = this.settingsRepository.create({ key, value, description });
+            setting = this.settingsRepository.create({ key, value, description, category, subcategory });
         }
         return this.settingsRepository.save(setting);
     }
@@ -57,19 +94,29 @@ export class SettingsService {
         return setting ? parseFloat(setting.value) : 15; // Default 15%
     }
 
-    async findAllPublic(): Promise<Setting[]> {
-        const settings = await this.settingsRepository.createQueryBuilder('setting')
-            .where('setting.key LIKE :theme', { theme: 'theme_%' })
-            .orWhere('setting.key LIKE :txt', { txt: 'txt_%' })
-            .orWhere('setting.key LIKE :section', { section: 'section_%' })
-            .orWhere('setting.key LIKE :sectionMsg', { sectionMsg: 'section_%_message' })
-            .orWhere('setting.key LIKE :module', { module: 'module_%' })
-            .orWhere('setting.key LIKE :detailsPart', { detailsPart: 'details_part_%' })
-            .orWhere('setting.key LIKE :login', { login: 'login_%' })
-            .orWhere('setting.key LIKE :ui', { ui: 'ui_%' })
-            .orWhere('setting.key IN (:...keys)', { keys: ['appointment_price', 'purchase_service_fee_percentage', 'tax_percentage'] })
-            .getMany();
+    async findAllPublic(category?: string, subcategory?: string): Promise<Setting[]> {
+        const query = this.settingsRepository.createQueryBuilder('setting');
 
+        if (category || subcategory) {
+            if (category) {
+                query.andWhere('setting.category = :category', { category });
+            }
+            if (subcategory) {
+                query.andWhere('setting.subcategory = :subcategory', { subcategory });
+            }
+        } else {
+            query.where('setting.key LIKE :theme', { theme: 'theme_%' })
+                .orWhere('setting.key LIKE :txt', { txt: 'txt_%' })
+                .orWhere('setting.key LIKE :section', { section: 'section_%' })
+                .orWhere('setting.key LIKE :sectionMsg', { sectionMsg: 'section_%_message' })
+                .orWhere('setting.key LIKE :module', { module: 'module_%' })
+                .orWhere('setting.key LIKE :detailsPart', { detailsPart: 'details_part_%' })
+                .orWhere('setting.key LIKE :login', { login: 'login_%' })
+                .orWhere('setting.key LIKE :ui', { ui: 'ui_%' })
+                .orWhere('setting.key IN (:...keys)', { keys: ['appointment_price', 'purchase_service_fee_percentage', 'tax_percentage'] });
+        }
+
+        const settings = await query.getMany();
         return settings.map((setting) => this.normalizeLegacyPublicSetting(setting));
     }
 
@@ -101,11 +148,14 @@ export class SettingsService {
 
             for (const { key, value, description } of entries) {
                 let setting = await repo.findOne({ where: { key } });
+                const { category, subcategory } = this.getCategoryAndSubcategory(key);
                 if (setting) {
                     setting.value = value;
                     if (description !== undefined) setting.description = description;
+                    setting.category = category;
+                    setting.subcategory = subcategory;
                 } else {
-                    setting = repo.create({ key, value, description });
+                    setting = repo.create({ key, value, description, category, subcategory });
                 }
                 saved.push(await repo.save(setting));
             }
@@ -224,14 +274,37 @@ export class SettingsService {
 
         for (const { key, value, description } of defaults) {
             const existing = await this.settingsRepository.findOne({ where: { key } });
+            const { category, subcategory } = this.getCategoryAndSubcategory(key);
             if (!existing) {
-                const setting = this.settingsRepository.create({ key, value, description });
+                const setting = this.settingsRepository.create({ key, value, description, category, subcategory });
                 await this.settingsRepository.save(setting);
-            } else if (key.includes('appName') || key.includes('project.name')) {
-                if (!existing.value || existing.value.trim() === '' || existing.value.includes('مفقود')) {
-                    existing.value = value;
+            } else {
+                let changed = false;
+                if (key.includes('appName') || key.includes('project.name')) {
+                    if (!existing.value || existing.value.trim() === '' || existing.value.includes('مفقود')) {
+                        existing.value = value;
+                        changed = true;
+                    }
+                }
+                if (!existing.category || !existing.subcategory) {
+                    existing.category = category;
+                    existing.subcategory = subcategory;
+                    changed = true;
+                }
+                if (changed) {
                     await this.settingsRepository.save(existing);
                 }
+            }
+        }
+
+        // Backfill any other existing settings that might not be in defaults
+        const allSettings = await this.settingsRepository.find();
+        for (const setting of allSettings) {
+            if (!setting.category || !setting.subcategory) {
+                const { category, subcategory } = this.getCategoryAndSubcategory(setting.key);
+                setting.category = category;
+                setting.subcategory = subcategory;
+                await this.settingsRepository.save(setting);
             }
         }
     }

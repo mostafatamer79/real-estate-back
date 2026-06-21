@@ -43,8 +43,8 @@ export class SubscriptionGuard implements CanActivate {
     // If no user (public route or JWT already rejected), let other guards handle.
     if (!user) return true;
 
-    // ── 2.5 Bypass for ADMIN ──────────────────────────────────────────────────
-    if (user.role === Role.ADMIN) return true;
+    // ── 2.5 Bypass for ADMIN and USER ──────────────────────────────────────────
+    if (user.role === Role.ADMIN || user.role === Role.USER) return true;
 
     // ── 3. Check subscription status ─────────────────────────────────────────
     try {

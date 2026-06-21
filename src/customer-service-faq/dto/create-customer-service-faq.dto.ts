@@ -29,4 +29,12 @@ export class CreateCustomerServiceFaqDto {
   @IsInt()
   @Min(0)
   sortOrder?: number;
+
+  @IsOptional()
+  @IsString()
+  color?: string;
+
+  @IsOptional()
+  @IsString()
+  fontSize?: string;
 }

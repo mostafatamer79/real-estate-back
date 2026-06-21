@@ -34,6 +34,12 @@ export class CustomerServiceFaq {
   @Column({ type: 'int', default: 0 })
   sortOrder: number;
 
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  color?: string | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  fontSize?: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

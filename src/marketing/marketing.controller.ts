@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, UseInterceptors, UploadedFiles } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { MarketingService } from './marketing.service';
 import { CreateMarketingRequestDto, UpdateMarketingRequestDto } from './dto/marketing-request.dto';
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
@@ -6,6 +7,7 @@ import { Departments } from '../common/decorators/departments.decorators';
 import { DepartmentsGuard } from '../common/guards/departments.guard';
 import { SkipDepartmentsGuard } from '../common/decorators/skip-departments.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { SkipSubscriptionGuard } from '../common/decorators/skip-subscription.decorator';
 
 @Controller('marketing')
 @UseGuards(JwtAuthGuard, DepartmentsGuard)
@@ -90,6 +92,7 @@ export class MarketingController {
   @Get('email-marketing/public')
   @Public()
   @SkipDepartmentsGuard()
+  @SkipSubscriptionGuard()
   findPublicEmailMarketing() {
     return this.marketingService.findPublicEmailMarketing();
   }
@@ -117,6 +120,17 @@ export class MarketingController {
   @Delete('email-marketing/:id')
   removeEmailMarketingAlias(@Param('id') id: string, @Request() req) {
     return this.marketingService.removeEmailMarketing(id, req.user.userId, req.user.role);
+  }
+
+  @Post('email-marketing/:id/upload/media')
+  @UseInterceptors(FilesInterceptor('files', 10))
+  async uploadMedia(
+    @Param('id') id: string,
+    @UploadedFiles() files: Express.Multer.File[],
+    @Request() req
+  ) {
+    const urls = files.map((f, index) => `https://placeholder.com/image-${index}.jpg`);
+    return this.marketingService.addMedia(id, urls, req.user.userId, req.user.role);
   }
 
   @Get(':id')

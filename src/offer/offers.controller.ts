@@ -14,6 +14,8 @@ import { DepartmentsGuard } from '../common/guards/departments.guard';
 import { getUserFromRequest } from '../common/utils/request-user.util';
 import { SkipDepartmentsGuard } from '../common/decorators/skip-departments.decorator';
 import { OfferReportStatus } from './entities/offer-report.entity';
+import { Public } from '../common/decorators/public.decorator';
+import { SkipSubscriptionGuard } from '../common/decorators/skip-subscription.decorator';
 
 @Controller('offers')
 @UseGuards(JwtAuthGuard, DepartmentsGuard)
@@ -28,8 +30,11 @@ export class OffersController {
   }
 
   @Get()
+  @Public()
+  @SkipDepartmentsGuard()
+  @SkipSubscriptionGuard()
   findAll(@Request() req, @Query() query) {
-    const user = getUserFromRequest(req);
+    const user = req.user;
     return this.offersService.findAll(user, {
       ...query,
       minPrice: query.minPrice ? Number(query.minPrice) : undefined,
@@ -39,8 +44,11 @@ export class OffersController {
   }
 
   @Get('search')
+  @Public()
+  @SkipDepartmentsGuard()
+  @SkipSubscriptionGuard()
   search(@Request() req, @Query('q') q: string) {
-    const user = getUserFromRequest(req);
+    const user = req.user;
     return this.offersService.search(q, user);
   }
 
@@ -64,8 +72,11 @@ export class OffersController {
   }
 
   @Get(':id')
+  @Public()
+  @SkipDepartmentsGuard()
+  @SkipSubscriptionGuard()
   findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
-    const user = getUserFromRequest(req);
+    const user = req.user;
     return this.offersService.findOne(id, user);
   }
 
@@ -77,6 +88,9 @@ export class OffersController {
   }
 
   @Post(':id/view')
+  @Public()
+  @SkipDepartmentsGuard()
+  @SkipSubscriptionGuard()
   async incrementView(@Param('id', ParseUUIDPipe) id: string, @Ip() ip: string) {
     return this.offersService.incrementViewCount(id, ip);
   }

@@ -188,6 +188,8 @@ export class MarketingService {
       scheduleMode: (createDto as any).scheduleMode || MarketingScheduleMode.MANUAL,
       startDate: (createDto as any).startDate ? new Date((createDto as any).startDate) : undefined,
       endDate: (createDto as any).endDate ? new Date((createDto as any).endDate) : undefined,
+      price: createDto.price !== undefined ? (Number(createDto.price) || 0) : undefined,
+      area: createDto.area !== undefined ? (Number(createDto.area) || 0) : undefined,
       ownerId,
     };
     const campaign = this.emailMarketingRepository.create(normalized as any) as unknown as EmailMarketing;
@@ -211,6 +213,8 @@ export class MarketingService {
       ...(updateDto.scheduleMode && { scheduleMode: updateDto.scheduleMode }),
       ...(updateDto.startDate !== undefined && { startDate: updateDto.startDate ? new Date(updateDto.startDate) : null }),
       ...(updateDto.endDate !== undefined && { endDate: updateDto.endDate ? new Date(updateDto.endDate) : null }),
+      ...(updateDto.price !== undefined && { price: Number(updateDto.price) || 0 }),
+      ...(updateDto.area !== undefined && { area: Number(updateDto.area) || 0 }),
     };
     Object.assign(campaign, normalized);
     return this.emailMarketingRepository.save(campaign);
@@ -246,6 +250,12 @@ export class MarketingService {
     const campaign = await query.getOne();
     if (!campaign) throw new NotFoundException('Marketing campaign not found');
     return campaign;
+  }
+
+  async addMedia(id: string, files: string[], ownerId: string, userRole?: string): Promise<EmailMarketing> {
+    const campaign = await this.getEmailMarketingById(id, ownerId, userRole);
+    campaign.mediaFiles = [...(campaign.mediaFiles || []), ...files];
+    return this.emailMarketingRepository.save(campaign);
   }
 
   async removeEmailMarketing(id: string, ownerId: string, userRole?: string): Promise<void> {

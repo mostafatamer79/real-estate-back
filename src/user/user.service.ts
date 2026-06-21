@@ -171,10 +171,7 @@ export class UserService {
 
         // If creating an employee under a manager, the employee's departments/permissions
         // must be a subset of the manager's allowed departments.
-        if (createUserDto.role === Role.EMPLOYEE) {
-            if (!createUserDto.parentId) {
-                throw new BadRequestException('Employee must have a manager');
-            }
+        if (createUserDto.role === Role.EMPLOYEE && createUserDto.parentId) {
             const parent = await this.userRepository.findOne({ where: { id: createUserDto.parentId } as any });
             if (!parent) {
                 throw new BadRequestException('Manager not found');

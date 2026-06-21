@@ -427,6 +427,10 @@ export class SubscriptionService {
       throw new NotFoundException('User not found');
     }
 
+    if (user.role === 'admin' || user.role === 'user') {
+      return { active: true, daysLeft: 9999, noExpiry: true };
+    }
+
     // Find the root admin/manager if this is an employee
     let targetUserId = userId;
     if (user.role === 'employee' && user.parentId) {

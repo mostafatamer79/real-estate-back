@@ -83,6 +83,30 @@ export class EmailMarketing {
   @Column({ default: true })
   isActive: boolean;
 
+  @Column({ nullable: true })
+  propertyType: string;
+
+  @Column({ nullable: true })
+  mainCategory: string;
+
+  @Column({ nullable: true })
+  dealType: string;
+
+  @Column('decimal', { nullable: true })
+  price: number;
+
+  @Column('decimal', { nullable: true })
+  area: number;
+
+  @Column({ nullable: true })
+  city: string;
+
+  @Column({ nullable: true })
+  neighborhood: string;
+
+  @Column('simple-array', { nullable: true })
+  mediaFiles: string[];
+
   @Column({ type: 'timestamp', nullable: true })
   lastSentAt: Date;
 

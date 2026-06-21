@@ -1,4 +1,4 @@
-import { IsEnum, IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsEnum, IsString, IsOptional, IsBoolean, IsNumber, IsArray } from 'class-validator';
 import { MarketingCategory, MarketingFrequency, MarketingScheduleMode } from '../entities/email-marketing.entity';
 import { Role } from '../../user/user-entity';
 
@@ -42,6 +42,36 @@ export class CreateEmailMarketingDto {
   @IsOptional()
   @IsEnum(Role)
   targetRole?: Role;
+
+  @IsOptional()
+  @IsString()
+  propertyType?: string;
+
+  @IsOptional()
+  @IsString()
+  mainCategory?: string;
+
+  @IsOptional()
+  @IsString()
+  dealType?: string;
+
+  @IsOptional()
+  price?: number;
+
+  @IsOptional()
+  area?: number;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  neighborhood?: string;
+
+  @IsOptional()
+  @IsArray()
+  mediaFiles?: string[];
 }
 
 export class UpdateEmailMarketingDto {
@@ -91,4 +121,34 @@ export class UpdateEmailMarketingDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsString()
+  propertyType?: string;
+
+  @IsOptional()
+  @IsString()
+  mainCategory?: string;
+
+  @IsOptional()
+  @IsString()
+  dealType?: string;
+
+  @IsOptional()
+  price?: number;
+
+  @IsOptional()
+  area?: number;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  neighborhood?: string;
+
+  @IsOptional()
+  @IsArray()
+  mediaFiles?: string[];
 }

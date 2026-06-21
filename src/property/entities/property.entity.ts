@@ -38,6 +38,124 @@ export class Property {
     @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
     purchasePrice: number; // For ROI calculation
 
+    // Offer-aligned fields
+    @Column({ nullable: true })
+    propertyType: string;
+
+    @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+    length: number;
+
+    @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+    width: number;
+
+    @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+    area: number;
+
+    @Column({ nullable: true })
+    propertyAge: string;
+
+    @Column({ nullable: true })
+    direction: string;
+
+    @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
+    price: number;
+
+    @Column({ nullable: true })
+    city: string;
+
+    @Column({ nullable: true })
+    neighborhood: string;
+
+    @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+    streetWidth: number;
+
+    @Column({ nullable: true })
+    deedType: string;
+
+    @Column({ nullable: true })
+    propertyCondition: string;
+
+    @Column({ type: 'int', nullable: true })
+    rooms: number;
+
+    @Column({ type: 'int', nullable: true })
+    bathrooms: number;
+
+    @Column({ type: 'int', nullable: true })
+    livingRooms: number;
+
+    @Column({ type: 'int', nullable: true })
+    kitchens: number;
+
+    @Column({ type: 'int', nullable: true })
+    floors: number;
+
+    @Column({ type: 'int', nullable: true })
+    apartments: number;
+
+    @Column({ nullable: true })
+    hasMaidRoom: boolean;
+
+    @Column({ nullable: true })
+    hasRoof: boolean;
+
+    @Column({ nullable: true })
+    hasExternalAnnex: boolean;
+
+    @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
+    buildingArea: number;
+
+    @Column({ nullable: true })
+    hasGarage: boolean;
+
+    @Column({ nullable: true })
+    hasPool: boolean;
+
+    @Column({ nullable: true })
+    hasElevator: boolean;
+
+    @Column({ nullable: true })
+    furnitureStatus: string;
+
+    @Column({ type: 'text', nullable: true })
+    additionalNotes: string;
+
+    @Column({ type: 'simple-array', nullable: true })
+    propertyDocuments: string[];
+
+    @Column({ nullable: true })
+    checkImage: string;
+
+    @Column({ type: 'simple-array', nullable: true })
+    mediaFiles: string[];
+
+    @Column({ type: 'simple-array', nullable: true })
+    threeDVideos: string[];
+
+    @Column({ type: 'text', nullable: true })
+    video3d: string;
+
+    @Column({ nullable: true })
+    dealType: string;
+
+    @Column({ nullable: true })
+    mainCategory: string;
+
+    @Column({ default: 'draft' })
+    status: string;
+
+    @Column({ type: 'int', default: 0 })
+    views: number;
+
+    @Column({ default: true })
+    isActive: boolean;
+
+    @Column({ nullable: true })
+    clientName: string;
+
+    @Column({ nullable: true })
+    clientPhone: string;
+
     @OneToMany(() => Unit, unit => unit.property, { cascade: true })
     units: Unit[];
     

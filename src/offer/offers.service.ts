@@ -180,7 +180,7 @@ export class OffersService {
       .where('offer.city ILIKE :searchTerm OR offer.neighborhood ILIKE :searchTerm OR offer.propertyType ILIKE :searchTerm', { searchTerm: `%${searchTerm}%` })
       .andWhere('offer.isActive = :isActive', { isActive: true });
 
-    if (user.role !== Role.ADMIN) query.andWhere('offer.userId = :userId', { userId: user.id });
+    if (user && user.role !== Role.ADMIN) query.andWhere('offer.userId = :userId', { userId: user.id });
 
     return query.orderBy('offer.createdAt', 'DESC').getMany();
   }

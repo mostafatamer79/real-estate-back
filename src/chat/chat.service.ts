@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 import { Message, ChatRoom } from './message.entity';
-import { User } from '../user/user-entity';
+import { User, Role } from '../user/user-entity';
 import { NotificationService } from '../notification/notification.service';
 import { NotificationGateway } from '../notification/notification.gateway';
 import { NotificationType } from '../notification/notification.entity';
@@ -90,7 +90,20 @@ async getOrCreateOrderChat(orderId: string, userId: string, otherId: string, tit
 
     if (!room) {
         const user = await this.userRepository.findOne({ where: { id: userId } });
-        const other = await this.userRepository.findOne({ where: { id: otherId } });
+        let other: User | null = null;
+
+        if (otherId && otherId !== 'admin' && otherId !== 'null' && otherId !== 'undefined') {
+            other = await this.userRepository.findOne({ where: { id: otherId } });
+        }
+
+        if (!other) {
+            other = await this.userRepository.findOne({
+                where: [
+                    { role: Role.ADMIN },
+                    { role: Role.MANGER }
+                ]
+            });
+        }
 
         if (!user || !other) throw new Error('User not found');
 

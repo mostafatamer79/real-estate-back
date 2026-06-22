@@ -726,6 +726,19 @@ export class FinancialService {
             </div>
           </section>
 
+          ${params.startImage ? `
+          <section class="page cover" style="padding: 0; min-height: 297mm; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <img class="cover-img" src="${params.startImage}" alt="Start Background" />
+            <div class="cover-shade" style="background: rgba(15, 23, 42, 0.75);"></div>
+            <div class="cover-content" style="padding: 60px; text-align: center; z-index: 5; width: 100%;">
+              <h2 style="color: #fff; font-size: 56px; font-weight: 900; margin: 0 0 24px; text-shadow: 0 4px 20px rgba(0,0,0,0.5);">الوساطة الرقمية</h2>
+              <p style="color: #e2e8f0; font-size: 18px; line-height: 2.2; max-width: 700px; font-weight: 500; margin: 0 auto; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
+                يقدم هذا التقرير تحليلاً مكانياً دقيقاً وشاملاً لمحيط الموقع المختار. نهدف من خلال هذا المسح الاستكشافي إلى تحويل البيانات الجغرافية الخام إلى مؤشرات واضحة ورؤى استثمارية ذكية، تسهم في دعم متخذي القرار العقاري وتوضيح مدى الملاءمة والجاذبية للفرص المتاحة في السوق.
+              </p>
+            </div>
+          </section>
+          ` : ''}
+
           <section class="page">
             <div class="header">
               <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">

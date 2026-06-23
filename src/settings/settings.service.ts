@@ -1,16 +1,32 @@
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Setting } from './settings.entity';
 
 @Injectable()
-export class SettingsService {
+export class SettingsService implements OnModuleInit {
     constructor(
         @InjectRepository(Setting)
         private readonly settingsRepository: Repository<Setting>,
         private readonly dataSource: DataSource,
     ) {}
+
+    async onModuleInit() {
+        try {
+            // Ensure category and subcategory columns exist in settings table
+            await this.dataSource.query(`
+                ALTER TABLE "settings" 
+                ADD COLUMN IF NOT EXISTS "category" character varying,
+                ADD COLUMN IF NOT EXISTS "subcategory" character varying
+            `);
+            
+            // Run default settings seeding and backfilling
+            await this.seedDefaultSettings();
+        } catch (error) {
+            console.error('Failed to run settings schema migration / seeding:', error);
+        }
+    }
 
     getCategoryAndSubcategory(key: string): { category: string; subcategory: string } {
         if (key.startsWith('theme_')) {

@@ -611,9 +611,9 @@ export class FinancialService {
             .page { width: 210mm; min-height: 297mm; padding: 42px 48px 80px; page-break-after: always; position: relative; overflow: hidden; background: #fff; }
             .page::before { content: ""; position: absolute; inset: 0; background-image: var(--report-cover); background-size: cover; background-position: center; opacity: .20; pointer-events: none; }
             .page > * { position: relative; z-index: 1; }
-            .cover { background: linear-gradient(135deg, #0b1528 0%, #0f172a 40%, #1e293b 100%); color: #fff; display: flex; flex-direction: column; justify-content: space-between; }
-            .cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .92; }
-            .cover-shade { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(8,17,31,.88), rgba(15,23,42,.62), rgba(30,41,59,.4)); }
+            .cover { background: transparent; color: #fff; display: flex; flex-direction: column; justify-content: space-between; }
+            .cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 1; }
+            .cover-shade { display: none; }
             .cover-content { position: relative; z-index: 2; }
             .cover:before { content: ""; position: absolute; inset: 42px; border: 1px solid rgba(255,255,255,.14); border-radius: 34px; pointer-events: none; }
             .artwork-page { padding: 0; background: #fff; }

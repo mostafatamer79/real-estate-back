@@ -117,8 +117,8 @@ export class CustomerServiceFaqService implements OnModuleInit {
   }
 
   async resetToDefaults() {
-    await this.repo.clear();
-    await this.categoriesRepo.clear();
+    await this.repo.delete({});
+    await this.categoriesRepo.delete({});
     await this.seedDefaults();
     return this.findAll();
   }

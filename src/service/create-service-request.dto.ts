@@ -97,6 +97,9 @@ export class UpdateServiceRequestDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @IsOptional()
+  metadata?: any;
 }
 
 export class AddDepartmentPriceDto {

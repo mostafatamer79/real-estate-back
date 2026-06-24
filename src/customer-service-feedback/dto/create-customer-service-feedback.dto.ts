@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
-import { CustomerServiceContactMethod } from '../entities/customer-service-feedback.entity';
+import { CustomerServiceContactMethod, CustomerServiceFeedbackType } from '../entities/customer-service-feedback.entity';
 
 export class CreateCustomerServiceFeedbackDto {
   @IsString()
@@ -20,6 +20,10 @@ export class CreateCustomerServiceFeedbackDto {
 
   @IsString()
   question: string;
+
+  @IsOptional()
+  @IsEnum(CustomerServiceFeedbackType)
+  type?: CustomerServiceFeedbackType;
 
   @IsOptional()
   @IsString()

@@ -18,6 +18,10 @@ export class CreateEmailMarketingDto {
   @IsString()
   linkedResourceId?: string;
 
+  @IsOptional()
+  @IsString()
+  assignedTo?: string;
+
   @IsString()
   content: string;
 
@@ -72,6 +76,9 @@ export class CreateEmailMarketingDto {
   @IsOptional()
   @IsArray()
   mediaFiles?: string[];
+
+  @IsOptional()
+  details?: any;
 }
 
 export class UpdateEmailMarketingDto {
@@ -90,6 +97,10 @@ export class UpdateEmailMarketingDto {
   @IsOptional()
   @IsString()
   linkedResourceId?: string;
+
+  @IsOptional()
+  @IsString()
+  assignedTo?: string;
 
   @IsOptional()
   @IsString()
@@ -151,4 +162,7 @@ export class UpdateEmailMarketingDto {
   @IsOptional()
   @IsArray()
   mediaFiles?: string[];
+
+  @IsOptional()
+  details?: any;
 }

@@ -47,6 +47,13 @@ export class EmailMarketing {
   @Column({ nullable: true })
   linkedResourceId: string;
 
+  @Column({ nullable: true })
+  assignedTo: string;
+
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'assignedTo' })
+  assignee: User;
+
   @Column('text')
   content: string;
 
@@ -106,6 +113,9 @@ export class EmailMarketing {
 
   @Column('simple-array', { nullable: true })
   mediaFiles: string[];
+
+  @Column('jsonb', { nullable: true })
+  details: any;
 
   @Column({ type: 'timestamp', nullable: true })
   lastSentAt: Date;

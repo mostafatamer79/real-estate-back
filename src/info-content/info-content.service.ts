@@ -116,8 +116,8 @@ export class InfoContentService implements OnModuleInit {
   }
 
   async resetDefaults() {
-    await this.blocksRepo.clear();
-    await this.tabsRepo.clear();
+    await this.blocksRepo.createQueryBuilder().delete().execute();
+    await this.tabsRepo.createQueryBuilder().delete().execute();
     await this.seedDefaults();
     return this.getAll();
   }

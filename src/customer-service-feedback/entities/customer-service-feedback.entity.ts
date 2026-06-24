@@ -12,6 +12,12 @@ export enum CustomerServiceFeedbackStatus {
   RESOLVED = 'resolved',
 }
 
+export enum CustomerServiceFeedbackType {
+  COMPLAINT = 'complaint',
+  INQUIRY = 'inquiry',
+  SUGGESTION = 'suggestion',
+}
+
 @Entity('customer_service_feedback')
 export class CustomerServiceFeedback {
   @PrimaryGeneratedColumn('uuid')
@@ -31,6 +37,9 @@ export class CustomerServiceFeedback {
 
   @Column({ type: 'text' })
   question: string;
+
+  @Column({ type: 'enum', enum: CustomerServiceFeedbackType, default: CustomerServiceFeedbackType.INQUIRY })
+  type: CustomerServiceFeedbackType;
 
   @Column({ type: 'uuid', nullable: true })
   userId?: string | null;

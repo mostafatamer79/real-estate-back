@@ -314,7 +314,6 @@ export class FinancialService {
     const diversityScore = Math.min(100, Math.round((Object.keys(typeCounts).length / 18) * 100));
     const accessibilityScore = Math.min(100, Math.round((within1000 / Math.max(total, 1)) * 100 + Math.min(total, 50)));
     const serviceScore = Math.min(100, Math.round((diversityScore * 0.35) + (accessibilityScore * 0.45) + Math.min(density * 4, 20)));
-    const generatedDate = this.escapeHtml(this.formatReportDate(params.generatedAt));
     const reportCode = `MS-${params.generatedAt.getTime().toString().slice(-8)}`;
     const escapedLocationName = this.escapeHtml(params.locationName);
 
@@ -690,42 +689,6 @@ export class FinancialService {
           </style>
         </head>
         <body style="${params.coverImage ? `--report-cover: url('${params.coverImage}')` : ''}">
-          <section class="page cover" style="padding: 0; min-height: 297mm; display: flex; flex-direction: column; justify-content: space-between;">
-            ${params.coverImage ? `<img class="cover-img" src="${params.coverImage}" alt="Cover Background" />` : ''}
-            <div class="cover-shade"></div>
-            <div class="cover-content" style="height: 297mm; display: flex; flex-direction: column; justify-content: space-between; padding: 60px 60px 80px 60px; box-sizing: border-box; position: relative;">
-              <div class="brand-section" style="display: flex; justify-content: space-between; align-items: center; z-index: 5;">
-                ${params.logoWhiteImage ? `<img src="${params.logoWhiteImage}" style="height: 55px; object-fit: contain;" />` : `<span class="brand" style="color: #fff; font-size: 24px; font-weight: 900;">الوساطة الرقمية</span>`}
-                <span class="ai-badge" style="margin-top: 0; background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.25); border-radius: 12px; padding: 6px 14px; font-size: 12px; font-weight: bold; backdrop-filter: blur(4px);">تقرير مسح استكشافي</span>
-              </div>
-              
-              <div class="title-section" style="margin-top: 60px; text-align: right; z-index: 5;">
-                <div class="eyebrow" style="margin-top: 0; color: #38bdf8; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">منصة الوساطة العقارية الذكية</div>
-                <h1 class="title" style="color: #fff; font-size: 42px; font-weight: 900; margin: 15px 0 25px; line-height: 1.3;">تقرير مسح خريطة الموقع<br/><span style="color: #38bdf8;">${escapedLocationName}</span></h1>
-                <p class="subtitle" style="color: #94a3b8; font-size: 14.5px; line-height: 1.8; max-width: 550px;">دراسة إحصائية وتحليلية شاملة للخدمات العامة، الأنشطة التجارية، وكثافة المرافق والملاءمة الاستثمارية المحيطة بالموقع الجغرافي المحدد.</p>
-              </div>
-
-              <div class="cover-grid" style="margin-top: 50px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; z-index: 5;">
-                <div class="cover-card" style="background: rgba(15,23,42,0.65); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px;">
-                  <span style="color: #94a3b8; font-size: 11.5px; font-weight: bold; display: block; margin-bottom: 6px;">الإحداثيات الجغرافية</span>
-                  <strong style="color: #fff; font-size: 14px; font-weight: 800;">${params.latitude.toFixed(6)} , ${params.longitude.toFixed(6)}</strong>
-                </div>
-                <div class="cover-card" style="background: rgba(15,23,42,0.65); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px;">
-                  <span style="color: #94a3b8; font-size: 11.5px; font-weight: bold; display: block; margin-bottom: 6px;">نطاق البحث الجغرافي</span>
-                  <strong style="color: #fff; font-size: 14px; font-weight: 800;">${params.radius.toLocaleString()} متر</strong>
-                </div>
-                <div class="cover-card" style="background: rgba(15,23,42,0.65); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px;">
-                  <span style="color: #94a3b8; font-size: 11.5px; font-weight: bold; display: block; margin-bottom: 6px;">تاريخ إصدار التقرير</span>
-                  <strong style="color: #fff; font-size: 14px; font-weight: 800;">${generatedDate}</strong>
-                </div>
-                <div class="cover-card" style="background: rgba(15,23,42,0.65); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px;">
-                  <span style="color: #94a3b8; font-size: 11.5px; font-weight: bold; display: block; margin-bottom: 6px;">رمز التقرير المعتمد</span>
-                  <strong style="color: #fff; font-size: 14px; font-weight: 800;">${reportCode}</strong>
-                </div>
-              </div>
-            </div>
-          </section>
-
           ${params.startImage ? `
           <section class="page cover" style="padding: 0; min-height: 297mm; display: flex; flex-direction: column; justify-content: center; align-items: center;">
             <img class="cover-img" src="${params.startImage}" alt="Start Background" />

@@ -79,6 +79,10 @@ export class CreateEmailMarketingDto {
 
   @IsOptional()
   details?: any;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
 
 export class UpdateEmailMarketingDto {

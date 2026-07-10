@@ -181,6 +181,7 @@ export class MarketingService {
     // Normalize enum values to lowercase to guard against cached clients sending uppercase
     const normalized = {
       ...createDto,
+      isActive: createDto.isActive ?? false,
       category: createDto.category?.toLowerCase() as any,
       frequency: createDto.frequency?.toLowerCase() as any,
       targetRole: createDto.targetRole ? createDto.targetRole.toLowerCase() as any : null,

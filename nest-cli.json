@@ -4,7 +4,10 @@
   "sourceRoot": "src",
   "compilerOptions": {
     "deleteOutDir": true,
-    "assets": ["mail/templates/**/*", "seeders/**/*"],
+    "assets": [
+      { "include": "mail/templates/**/*", "outDir": "dist/src" },
+      { "include": "seeders/**/*", "outDir": "dist/src" }
+    ],
     "watchAssets": true
   }
 }

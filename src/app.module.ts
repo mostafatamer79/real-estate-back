@@ -36,6 +36,7 @@ import { CustomerServiceFaqModule } from './customer-service-faq/customer-servic
 import { CustomerServiceFeedbackModule } from './customer-service-feedback/customer-service-feedback.module';
 import { InfoContentModule } from './info-content/info-content.module';
 import { OpinionModule } from './opinion/opinion.module';
+import { WipeModule } from './wipe/wipe.module';
 import { Activity } from './common/entities/activity.entity';
 import { SeederService } from './seeders/seeder.service';
 import { User, Permission } from './user/user-entity';
@@ -66,6 +67,7 @@ import { DebugInterceptor } from './common/interceptors/debug.interceptor';
     CustomerServiceFeedbackModule,
     InfoContentModule,
     OpinionModule,
+    WipeModule,
   ],
 
   controllers: [AppController],

@@ -21,7 +21,6 @@ import { DepartmentsGuard } from '../common/guards/departments.guard';
   
   @Controller('commissions')
   @UseGuards(JwtAuthGuard, DepartmentsGuard)
-  @Departments('finance')
   export class CommissionController {
     constructor(private readonly commissionService: CommissionService) {}
   
@@ -51,6 +50,7 @@ import { DepartmentsGuard } from '../common/guards/departments.guard';
     }
   
     @Get('stats')
+    @Departments('finance')
     async getStatistics(@Request() req) {
       return this.commissionService.getStatistics(req.user);
     }
@@ -61,6 +61,7 @@ import { DepartmentsGuard } from '../common/guards/departments.guard';
     }
   
     @Put(':id')
+    @Departments('finance')
     async update(
       @Param('id', ParseUUIDPipe) id: string,
       @Body() updateDto: UpdateCommissionDto,
@@ -75,6 +76,7 @@ import { DepartmentsGuard } from '../common/guards/departments.guard';
     }
   
     @Delete(':id')
+    @Departments('finance')
     async delete(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
       return this.commissionService.delete(id, req.user);
     }

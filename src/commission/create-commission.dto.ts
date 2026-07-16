@@ -113,7 +113,6 @@ export class CreateCommissionDto {
 
   @IsNumber()
   @Min(0)
-  @Max(100)
   commissionPercentage: number;
 
   @ValidateNested()

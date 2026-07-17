@@ -44,6 +44,9 @@ export class CreateUserDto{
     @IsOptional()
     @IsString()
     parentId?: string
+
+    @IsOptional()
+    hasFreeTrial?: boolean
  }
 
  export class VerifyOtpDto {
@@ -167,4 +170,7 @@ export class CreateUserDto{
     @IsOptional()
     @IsString()
     parentId?: string;
+
+    @IsOptional()
+    hasFreeTrial?: boolean;
   }

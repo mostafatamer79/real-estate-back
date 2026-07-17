@@ -38,6 +38,22 @@ export class DepartmentsGuard implements CanActivate {
     // Admin has access to all departments.
     if (user.role === Role.ADMIN) return true;
 
+    // Check if agents have global access
+    if (user.role === Role.AGENT) {
+      const agentsAllAccessFlag = await this.settingsService.findOne('ui_show_agents_all_departments_access');
+      if (agentsAllAccessFlag?.value === 'true') {
+        const allowedDeptsSetting = await this.settingsService.findOne('txt_agents_accessible_departments');
+        if (allowedDeptsSetting?.value) {
+          const allowedDepts = allowedDeptsSetting.value.split(',').map((d: string) => d.trim()).filter(Boolean);
+          if (requiredDepartments.some((d) => allowedDepts.includes(d))) {
+            return true;
+          }
+        } else {
+          return true;
+        }
+      }
+    }
+
     // Module availability enforcement (backend-side).
     // If a module is disabled, treat it as not found. If it's "soon", forbid access.
     for (const department of requiredDepartments) {

@@ -116,6 +116,9 @@ expireOtp: Date | null;
   @Column({ nullable: true })
   roleOtherDescription?: string; // For Role.OTHER
 
+  @Column({ type: 'boolean', default: false })
+  hasFreeTrial: boolean;
+
   @Column({ default: false })
   isVerified: boolean; // General verification status
 

@@ -421,7 +421,7 @@ export class SubscriptionService {
     }
   }
 
-  async getSubscriptionStatus(userId: string): Promise<{ active: boolean; daysLeft: number; noExpiry: boolean; subscription?: Subscription }> {
+  async getSubscriptionStatus(userId: string): Promise<{ active: boolean; daysLeft: number; noExpiry: boolean; subscription?: Subscription; hasFreeTrial?: boolean }> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -429,6 +429,10 @@ export class SubscriptionService {
 
     if (user.role === 'admin' || user.role === 'user') {
       return { active: true, daysLeft: 9999, noExpiry: true };
+    }
+
+    if (user.hasFreeTrial) {
+      return { active: true, daysLeft: 0, noExpiry: false, hasFreeTrial: true };
     }
 
     // Find the root admin/manager if this is an employee

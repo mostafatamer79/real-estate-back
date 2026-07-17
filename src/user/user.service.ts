@@ -512,7 +512,7 @@ export class UserService {
             // Select all relevant fields including new ones
             select: [
                 'id', 'firstName', 'lastName', 'email', 'phone', 'role', 'roleOtherDescription',
-                'isVerified', 'isActive', 
+                'isVerified', 'isActive', 'hasFreeTrial',
                 'falLicenseNumber', 'falLicenseExpiry', 'lawLicenseNumber', 'commercialRegistrationNumber',
                 'agentLicenseNumber', 'agentVerificationStatus', 
                 'address', 'city', 'country',

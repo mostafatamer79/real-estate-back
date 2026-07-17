@@ -8,6 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { SubscriptionService } from '../../subscription/subscription.service';
 import { SKIP_SUBSCRIPTION_GUARD_KEY } from '../decorators/skip-subscription.decorator';
 import { Role } from '../../user/user-entity';
+import { SettingsService } from '../../settings/settings.service';
 
 /**
  * SubscriptionGuard — Globally enforces that the requesting user (or their
@@ -26,6 +27,7 @@ export class SubscriptionGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly subscriptionService: SubscriptionService,
+    private readonly settingsService: SettingsService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -45,6 +47,20 @@ export class SubscriptionGuard implements CanActivate {
 
     // ── 2.5 Bypass for ADMIN and USER ──────────────────────────────────────────
     if (user.role === Role.ADMIN || user.role === Role.USER) return true;
+
+    // Check global free trial flag
+    const globalFreeTrialFlag = await this.settingsService.findOne('ui_enable_global_free_trial');
+    if (globalFreeTrialFlag?.value === 'true') {
+      return true;
+    }
+
+    // Check if agents have global access
+    if (user.role === Role.AGENT) {
+      const agentsAllAccessFlag = await this.settingsService.findOne('ui_show_agents_all_departments_access');
+      if (agentsAllAccessFlag?.value === 'true') {
+        return true;
+      }
+    }
 
     // ── 3. Check subscription status ─────────────────────────────────────────
     try {

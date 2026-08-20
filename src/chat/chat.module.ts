@@ -55,7 +55,6 @@ import { NotificationModule } from '../notification/notification.module';
     // Guards & Strategies
     WsJwtStrategy,
     WsAuthGuard,
-    JwtAuthGuard,
   ],
   controllers: [ChatController],
   exports: [

@@ -15,7 +15,7 @@ export class OfferView {
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @ManyToOne(() => Offer)
+  @ManyToOne(() => Offer, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'offerId' })
   offer: Offer;
 }

@@ -331,6 +331,7 @@ export class FinancialService {
         <td>${this.escapeHtml(place.name || 'غير محدد')}</td>
         <td>${this.escapeHtml(place.type || 'غير محدد')}</td>
         <td>${Math.round(place.distance || 0)} م</td>
+        <td>${this.escapeHtml(place.city || '-')}</td>
         <td>${Number(place.latitude).toFixed(5)}, ${Number(place.longitude).toFixed(5)}</td>
       </tr>
     `).join('');
@@ -379,12 +380,12 @@ export class FinancialService {
     const mapVisual = params.mapImage
       ? `<img src="${params.mapImage}" alt="Map Snapshot" style="width:100%; height:315px; object-fit:cover; display:block;" />`
       : `<svg width="100%" height="315" viewBox="0 0 640 315" xmlns="http://www.w3.org/2000/svg">
-          <rect width="640" height="315" fill="#eef2f7"/>
-          <circle cx="300" cy="210" r="70" fill="none" stroke="#cbd5e1" stroke-width="2"/>
-          <circle cx="300" cy="210" r="140" fill="none" stroke="#cbd5e1" stroke-width="2"/>
-          <circle cx="300" cy="210" r="210" fill="none" stroke="#cbd5e1" stroke-width="2"/>
-          <line x1="300" y1="20" x2="300" y2="300" stroke="#dbe3ee" stroke-width="2"/>
-          <line x1="40" y1="210" x2="600" y2="210" stroke="#dbe3ee" stroke-width="2"/>
+          <rect width="640" height="315" fill="#f8fafc"/>
+          <circle cx="300" cy="210" r="70" fill="none" stroke="#e2e8f0" stroke-width="2"/>
+          <circle cx="300" cy="210" r="140" fill="none" stroke="#e2e8f0" stroke-width="2"/>
+          <circle cx="300" cy="210" r="210" fill="none" stroke="#e2e8f0" stroke-width="2"/>
+          <line x1="300" y1="20" x2="300" y2="300" stroke="#e2e8f0" stroke-width="2"/>
+          <line x1="40" y1="210" x2="600" y2="210" stroke="#e2e8f0" stroke-width="2"/>
           ${mapDots}
           <circle cx="300" cy="210" r="10" fill="#dc2626"/>
           <text x="300" y="198" font-size="13" fill="#0f172a" text-anchor="middle" font-weight="900">الموقع</text>
@@ -401,7 +402,7 @@ export class FinancialService {
       const color = palette[index % palette.length];
       return `
         <g opacity=".92">
-          <polygon points="${baseX},${baseY} ${baseX + 24},${baseY - 12} ${baseX + 48},${baseY} ${baseX + 24},${baseY + 14}" fill="#dbeafe"/>
+          <polygon points="${baseX},${baseY} ${baseX + 24},${baseY - 12} ${baseX + 48},${baseY} ${baseX + 24},${baseY + 14}" fill="#e2e8f0"/>
           <polygon points="${baseX},${baseY - height} ${baseX + 24},${baseY - height - 12} ${baseX + 48},${baseY - height} ${baseX + 24},${baseY - height + 14}" fill="${color}"/>
           <polygon points="${baseX},${baseY} ${baseX},${baseY - height} ${baseX + 24},${baseY - height + 14} ${baseX + 24},${baseY + 14}" fill="${color}" opacity=".78"/>
           <polygon points="${baseX + 48},${baseY} ${baseX + 48},${baseY - height} ${baseX + 24},${baseY - height + 14} ${baseX + 24},${baseY + 14}" fill="${color}" opacity=".55"/>
@@ -410,24 +411,24 @@ export class FinancialService {
       `;
     }).join('');
     const localAerialRoads = [0, 1, 2, 3, 4].map((row) => `
-      <path d="M${36 + row * 34} ${84 + row * 32} L${550 + row * 16} ${170 + row * 32}" stroke="#cbd5e1" stroke-width="10" stroke-linecap="round" opacity=".82"/>
+      <path d="M${36 + row * 34} ${84 + row * 32} L${550 + row * 16} ${170 + row * 32}" stroke="#e2e8f0" stroke-width="10" stroke-linecap="round" opacity=".82"/>
       <path d="M${42 + row * 34} ${84 + row * 32} L${556 + row * 16} ${170 + row * 32}" stroke="#f8fafc" stroke-width="2" stroke-dasharray="10 12" opacity=".9"/>
     `).join('');
     const aerialVisual = `<svg width="100%" height="250" viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="aerialSky" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0%" stop-color="#e0f2fe"/>
-          <stop offset="52%" stop-color="#f8fafc"/>
-          <stop offset="100%" stop-color="#dcfce7"/>
+          <stop offset="0%" stop-color="#f8fafc"/>
+          <stop offset="52%" stop-color="#e2e8f0"/>
+          <stop offset="100%" stop-color="#f8fafc"/>
         </linearGradient>
       </defs>
       <rect width="640" height="250" fill="url(#aerialSky)"/>
-      <polygon points="24,198 300,52 620,178 338,240" fill="#ecfccb" opacity=".72"/>
-      <polygon points="74,182 305,72 560,176 330,224" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2"/>
+      <polygon points="24,198 300,52 620,178 338,240" fill="#e2e8f0" opacity=".72"/>
+      <polygon points="74,182 305,72 560,176 330,224" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
       ${localAerialRoads}
       ${localAerialBlocks}
       <g>
-        <circle cx="312" cy="150" r="18" fill="#ef4444" opacity=".2"/>
+        <circle cx="312" cy="150" r="18" fill="#dc2626" opacity=".2"/>
         <circle cx="312" cy="150" r="8" fill="#dc2626"/>
         <text x="312" y="135" font-size="12" fill="#0f172a" text-anchor="middle" font-weight="900">المركز</text>
       </g>
@@ -453,9 +454,9 @@ export class FinancialService {
       const x = 70 + (index % 4) * 125;
       const y = 270 + Math.floor(index / 4) * 110;
       const h = Math.max(28, Math.min(150, Math.round((count / Math.max(topTypes[0]?.[1] || 1, 1)) * 150)));
-      const color = ['#0f172a', '#1d4ed8', '#047857', '#b45309', '#be123c', '#6d28d9', '#0f766e', '#334155'][index % 8];
+      const color = ['#0f172a', '#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed', '#0f766e', '#334155'][index % 8];
       return `
-        <polygon points="${x},${y} ${x + 46},${y - 22} ${x + 92},${y} ${x + 46},${y + 24}" fill="#cbd5e1"/>
+        <polygon points="${x},${y} ${x + 46},${y - 22} ${x + 92},${y} ${x + 46},${y + 24}" fill="#e2e8f0"/>
         <polygon points="${x},${y - h} ${x + 46},${y - h - 22} ${x + 92},${y - h} ${x + 46},${y - h + 24}" fill="${color}"/>
         <polygon points="${x},${y} ${x},${y - h} ${x + 46},${y - h + 24} ${x + 46},${y + 24}" fill="${color}" opacity=".78"/>
         <polygon points="${x + 92},${y} ${x + 92},${y - h} ${x + 46},${y - h + 24} ${x + 46},${y + 24}" fill="${color}" opacity=".55"/>
@@ -598,6 +599,28 @@ export class FinancialService {
         ? 'الموقع متوسط الجاذبية الخدمية ويحتاج إلى تقييم نوعية الخدمات الأقرب قبل اتخاذ قرار نهائي.'
         : 'الموقع منخفض نسبياً في كثافة أو تنوع الخدمات ضمن النطاق الحالي، وينصح بتوسيع نطاق المقارنة أو مراجعة بدائل قريبة.';
 
+    const pageHeader = (title: string, subtitle: string, page: string) => `
+      <div class="header">
+        <div class="header-main">
+          <h2>${title}</h2>
+          <p>${subtitle}</p>
+        </div>
+        <div class="header-page">${page}</div>
+        ${params.logoBlackImage ? `<img src="${params.logoBlackImage}" alt="logo" />` : ''}
+      </div>
+    `;
+    const pageFooter = (label: string, page: string) => `
+      <div class="footer">
+        <span class="footer-section">${label}</span>
+        <span class="footer-page">${page}</span>
+        <span class="footer-brand">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" alt="logo" />` : 'DigitalBrokerage'}</span>
+      </div>
+    `;
+
+    const coverLogo = (params.logoWhiteImage || params.logoBlackImage)
+      ? `<img class="cover-logo" src="${params.logoWhiteImage || params.logoBlackImage}" alt="logo" style="${params.logoWhiteImage ? '' : 'filter:brightness(0) invert(1);'}" />`
+      : '<div class="cover-brand">DigitalBrokerage</div>';
+
     return `<!doctype html>
       <html dir="rtl" lang="ar">
         <head>
@@ -608,164 +631,203 @@ export class FinancialService {
             * { box-sizing: border-box; }
             body { margin: 0; font-family: 'Cairo', Arial, Tahoma, sans-serif; color: #0f172a; background: #fff; direction: rtl; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .page { width: 210mm; min-height: 297mm; padding: 42px 48px 80px; page-break-after: always; position: relative; overflow: hidden; background: #fff; }
-            .page::before { content: ""; position: absolute; inset: 0; background-image: var(--report-cover); background-size: cover; background-position: center; opacity: .20; pointer-events: none; }
             .page > * { position: relative; z-index: 1; }
-            .cover { background: transparent; color: #fff; display: flex; flex-direction: column; justify-content: space-between; }
-            .cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 1; }
-            .cover-shade { display: none; }
-            .cover-content { position: relative; z-index: 2; }
-            .cover:before { content: ""; position: absolute; inset: 42px; border: 1px solid rgba(255,255,255,.14); border-radius: 34px; pointer-events: none; }
-            .artwork-page { padding: 0; background: #fff; }
-            .artwork-page::before { display: none; }
+
+            .artwork-page { padding: 0; background: #0f172a; }
             .artwork-img { width: 210mm; height: 297mm; object-fit: cover; display: block; }
-            .artwork-stamp { position: absolute; left: 34px; right: 34px; bottom: 30px; z-index: 2; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 16px; border-radius: 18px; background: rgba(15,23,42,.72); color: #fff; font-size: 11px; font-weight: 900; backdrop-filter: blur(8px); }
-            .brand { font-size: 18px; font-weight: 900; letter-spacing: 1px; }
-            .eyebrow { color: #38bdf8; font-size: 13px; font-weight: 800; margin-top: 95px; }
-            .title { font-size: 48px; line-height: 1.25; font-weight: 900; margin: 18px 0; letter-spacing: 0; }
-            .subtitle { color: #cbd5e1; font-size: 16px; line-height: 1.9; max-width: 650px; }
-            .cover-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 44px; }
-            .cover-card { border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 18px; background: rgba(255,255,255,.06); backdrop-filter: blur(12px); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15); }
-            .cover-card span { display: block; color: #94a3b8; font-size: 12px; margin-bottom: 8px; font-weight: 600; }
-            .cover-card strong { font-size: 18px; font-weight: 700; }
-            .footer { position: absolute; bottom: 28px; left: 42px; right: 42px; display: flex; justify-content: space-between; color: #94a3b8; font-size: 12px; z-index: 2; }
-            .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 16px; margin-bottom: 26px; }
-            .header h2 { margin: 0; font-size: 24px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
-            .header p { margin: 6px 0 0; color: #64748b; font-size: 12.5px; font-weight: 600; }
-            .page-no { display: none !important; }
-            .section-title { font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 16px; letter-spacing: -0.5px; }
-            .notice { border-right: 4px solid #0f172a; border-left: 1px solid #e2e8f0; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; background: #f8fafc; padding: 20px; border-radius: 12px; line-height: 2.05; color: #334155; font-size: 13.5px; font-weight: 400; }
+            .artwork-stamp { position: absolute; left: 34px; right: 34px; bottom: 30px; z-index: 2; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 16px; border-radius: 18px; background: rgba(15,23,42,.72); color: #fff; font-size: 11px; font-weight: 900; }
+
+            .header { display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 24px; }
+            .header-main { flex: 1; min-width: 0; }
+            .header-main h2 { margin: 0; font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.3px; }
+            .header-main p { margin: 6px 0 0; color: #64748b; font-size: 12px; font-weight: 600; }
+            .header-page { font-size: 20px; font-weight: 800; color: #0f172a; padding: 0 8px; }
+            .header img { height: 34px; object-fit: contain; display: block; }
+
+            .footer { position: absolute; bottom: 34px; left: 48px; right: 48px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 11px; color: #64748b; font-weight: 600; }
+            .footer-page { font-size: 13px; font-weight: 800; color: #0f172a; }
+            .footer-brand { display: flex; align-items: center; gap: 8px; }
+            .footer-brand img { height: 16px; object-fit: contain; }
+
+            .section-title { font-size: 18px; font-weight: 800; color: #0f172a; margin: 0 0 14px; letter-spacing: -0.3px; }
+            .muted { color: #64748b; line-height: 1.8; font-size: 12.5px; }
+            .notice { background: #f8fafc; border: 1px solid #e2e8f0; border-right: 4px solid #0f172a; border-radius: 16px; padding: 20px; line-height: 2; color: #334155; font-size: 13px; }
+            .small-list { margin: 0; padding-right: 18px; color: #334155; line-height: 2; font-size: 12.5px; }
+            hr.divider { border: none; border-top: 1px solid #e2e8f0; margin: 20px 0; }
+
             .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
-            .stat { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; min-height: 94px; text-align: center; }
+            .stat { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; min-height: 92px; text-align: center; }
             .stat span { display: block; color: #64748b; font-size: 11px; margin-bottom: 8px; font-weight: 700; }
-            .stat strong { font-size: 26px; color: #0f172a; font-weight: 800; }
+            .stat strong { display: block; font-size: 26px; color: #0f172a; font-weight: 800; }
+            .large-number { font-size: 34px; font-weight: 800; color: #0f172a; letter-spacing: -1px; }
             .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-            .panel { border: 1px solid #e2e8f0; background: #fff; border-radius: 18px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+            .panel { border: 1px solid #e2e8f0; background: #fff; border-radius: 18px; padding: 18px; }
             .panel.dark { background: #0f172a; color: #fff; border-color: #0f172a; }
-            .panel.dark h3 { color: #fff !important; }
-            .muted { color: #64748b; line-height: 1.8; font-size: 13px; }
-            .large-number { font-size: 38px; font-weight: 800; color: #0f172a; letter-spacing: -1px; }
+            .panel.dark .section-title { color: #fff !important; }
+            .panel.dark .small-list { color: #e2e8f0; }
+
             table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-top: 12px; font-size: 11px; }
-            th { background: #0f172a; color: #fff; padding: 12px 14px; text-align: right; font-weight: 700; font-size: 11.5px; }
-            td { border-bottom: 1px solid #e2e8f0; padding: 10px 14px; color: #334155; font-size: 11px; font-weight: 400; }
+            th { background: #0f172a; color: #fff; padding: 12px 14px; text-align: right; font-weight: 700; font-size: 11px; }
+            td { border-bottom: 1px solid #e2e8f0; padding: 10px 14px; color: #334155; font-size: 11px; }
             tr:last-child td { border-bottom: none; }
             tr:nth-child(even) td { background: #f8fafc; }
-            .agenda { border: none !important; border-radius: 0; }
-            .agenda tr { border-bottom: 1px dashed #e2e8f0; }
-            .agenda tr:last-child { border-bottom: none; }
-            .agenda td { border: none !important; padding: 10px 0; font-size: 13px; font-weight: 600; color: #1e293b; }
+            .agenda { border: none !important; border-radius: 0 !important; }
+            .agenda tbody tr { border-bottom: 1px dashed #e2e8f0; }
+            .agenda tbody tr:last-child { border-bottom: none; }
+            .agenda td { border: none !important; background: none !important; padding: 10px 0; font-size: 13px; font-weight: 600; color: #1e293b; }
             .agenda td:first-child { color: #2563eb; width: 50px; font-weight: 800; }
-            .diagram { width: 100%; border: 1px solid #e2e8f0; border-radius: 20px; background: #f8fafc; overflow: hidden; margin-top: 16px; }
-            .rec { font-size: 16px; line-height: 1.9; font-weight: 600; background: #f8fafc; border-right: 5px solid #2563eb; border-left: 1px solid #e2e8f0; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; color: #0f172a; }
-            .small-list { margin: 0; padding-right: 20px; color: #334155; line-height: 2; font-size: 13px; }
-            .bottom { position: absolute; bottom: 48px; left: 42px; right: 42px; color: #94a3b8; font-size: 11px; display: flex; justify-content: space-between; padding-top: 10px; font-weight: 600; }
-            .ai-badge { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(34,197,94,.14); color: #22c55e; border: 1px solid rgba(34,197,94,.35); padding: 9px 14px; font-size: 12px; font-weight: 800; margin-top: 18px; }
-            .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-            .metric { border: 1px solid #e2e8f0; border-top: 4px solid #3b82f6; border-radius: 16px; padding: 18px; background: #fff; min-height: 118px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
-            .metric:nth-child(2) { border-top-color: #ef4444; }
-            .metric:nth-child(3) { border-top-color: #10b981; }
-            .metric:nth-child(4) { border-top-color: #f59e0b; }
-            .metric:nth-child(5) { border-top-color: #8b5cf6; }
-            .metric:nth-child(6) { border-top-color: #64748b; }
-            .metric span { display: block; color: #64748b; font-size: 11px; font-weight: 700; margin-bottom: 10px; }
-            .metric strong { display: block; color: #0f172a; font-size: 32px; font-weight: 800; letter-spacing: -1px; }
-            .metric p { margin: 8px 0 0; color: #64748b; font-size: 11px; line-height: 1.6; font-weight: 600; }
-            .decision-hero { display: grid; grid-template-columns: 190px 1fr; gap: 18px; align-items: stretch; margin-bottom: 18px; }
-            .decision-score { border-radius: 22px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #fff; padding: 24px; text-align: center; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08); }
-            .decision-score span { display: block; color: #cbd5e1; font-size: 12px; font-weight: 700; margin-bottom: 12px; }
-            .decision-score strong { display: block; font-size: 58px; font-weight: 800; line-height: 1; color: #38bdf8; }
-            .decision-score p { margin: 12px 0 0; color: #e2e8f0; font-size: 13.5px; font-weight: 700; }
-            .score-note { border: 1px solid #e2e8f0; border-radius: 22px; padding: 20px; background: #f8fafc; line-height: 1.9; color: #334155; font-size: 13.5px; font-weight: 400; }
-            .risk-pill { display: inline-block; min-width: 68px; text-align: center; border-radius: 9999px; padding: 4px 12px; font-size: 10px; font-weight: 700; }
-            .risk-low { color: #15803d; background: #dcfce7; }
-            .risk-mid { color: #b45309; background: #fef3c7; }
-            .risk-high { color: #b91c1c; background: #fee2e2; }
+
+            .diagram { width: 100%; border: 1px solid #e2e8f0; border-radius: 20px; background: #f8fafc; overflow: hidden; margin-top: 14px; }
             .visual-caption { display: grid; grid-template-columns: 1.2fr .8fr; gap: 14px; margin-top: 14px; }
-            .explain-card { border: 1px solid #e2e8f0; border-radius: 18px; background: #fff; padding: 14px 16px; }
+            .explain-card { border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; padding: 14px 16px; }
             .explain-card h4 { margin: 0 0 8px; color: #0f172a; font-size: 14px; font-weight: 800; }
-            .explain-card p { margin: 0; color: #64748b; font-size: 11px; line-height: 1.8; font-weight: 400; }
+            .explain-card p { margin: 0; color: #64748b; font-size: 11px; line-height: 1.8; }
             .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
             .legend-item { display: flex; align-items: center; gap: 8px; color: #334155; font-size: 10px; font-weight: 700; }
             .legend-dot { width: 9px; height: 9px; border-radius: 999px; display: inline-block; }
+
+            .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+            .metric { border: 1px solid #e2e8f0; border-top: 4px solid #2563eb; border-radius: 16px; padding: 18px; background: #fff; min-height: 112px; }
+            .metric:nth-child(2) { border-top-color: #dc2626; }
+            .metric:nth-child(3) { border-top-color: #16a34a; }
+            .metric:nth-child(4) { border-top-color: #f59e0b; }
+            .metric:nth-child(5) { border-top-color: #7c3aed; }
+            .metric:nth-child(6) { border-top-color: #64748b; }
+            .metric span { display: block; color: #64748b; font-size: 11px; font-weight: 700; margin-bottom: 10px; }
+            .metric strong { display: block; color: #0f172a; font-size: 30px; font-weight: 800; }
+            .metric p { margin: 8px 0 0; color: #64748b; font-size: 11px; line-height: 1.6; font-weight: 600; }
+
+            .decision-hero { display: grid; grid-template-columns: 190px 1fr; gap: 18px; align-items: stretch; margin-bottom: 18px; }
+            .decision-score { border-radius: 22px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #fff; padding: 24px; text-align: center; }
+            .decision-score span { display: block; color: #94a3b8; font-size: 12px; font-weight: 700; margin-bottom: 12px; }
+            .decision-score strong { display: block; font-size: 56px; font-weight: 800; line-height: 1; color: #2563eb; }
+            .decision-score p { margin: 12px 0 0; color: #e2e8f0; font-size: 13px; font-weight: 700; }
+            .score-note { border: 1px solid #e2e8f0; border-radius: 22px; padding: 20px; background: #f8fafc; line-height: 1.9; color: #334155; font-size: 13px; }
+
+            .risk-pill { display: inline-block; min-width: 68px; text-align: center; border-radius: 9999px; padding: 4px 12px; font-size: 10px; font-weight: 700; border: 1px solid #e2e8f0; }
+            .risk-low { color: #16a34a; background: #f8fafc; border-color: #16a34a; }
+            .risk-mid { color: #f59e0b; background: #f8fafc; border-color: #f59e0b; }
+            .risk-high { color: #dc2626; background: #f8fafc; border-color: #dc2626; }
+
+            .rec { font-size: 15px; line-height: 1.9; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0; border-right: 5px solid #2563eb; border-radius: 16px; padding: 22px; color: #0f172a; }
+
+            .cover { background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); color: #fff; padding: 0; display: flex; flex-direction: column; justify-content: space-between; }
+            .cover-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+            .cover-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,.90) 0%, rgba(15,23,42,.72) 60%, rgba(30,41,59,.86) 100%); z-index: 1; }
+            .cover-frame { position: absolute; inset: 36px; border: 1px solid rgba(255,255,255,.14); border-radius: 28px; z-index: 2; pointer-events: none; }
+            .cover-content { position: relative; z-index: 3; padding: 44px 48px 36px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+            .cover-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+            .cover-logo { height: 44px; object-fit: contain; }
+            .cover-brand { font-size: 20px; font-weight: 900; letter-spacing: 1px; }
+            .ai-badge { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(22,163,74,.12); color: #16a34a; border: 1px solid rgba(22,163,74,.35); padding: 8px 14px; font-size: 12px; font-weight: 800; }
+            .cover-hero { padding: 28px 0; }
+            .cover .eyebrow { color: #94a3b8; font-size: 13px; font-weight: 800; margin-bottom: 10px; letter-spacing: 1px; }
+            .cover .title { font-size: 52px; line-height: 1.2; font-weight: 900; margin: 0; letter-spacing: 0; }
+            .cover .subtitle { color: #e2e8f0; font-size: 18px; line-height: 1.8; max-width: 650px; margin: 14px 0 0; }
+            .cover-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 28px; }
+            .cover-card { border: 1px solid rgba(255,255,255,.14); border-radius: 18px; padding: 16px; background: rgba(255,255,255,.06); backdrop-filter: blur(12px); }
+            .cover-card span { display: block; color: #94a3b8; font-size: 11px; margin-bottom: 6px; font-weight: 700; }
+            .cover-card strong { font-size: 18px; font-weight: 800; }
+            .cover-coords { margin-top: 16px; border: 1px solid rgba(255,255,255,.14); border-radius: 14px; padding: 14px 18px; background: rgba(255,255,255,.06); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+            .cover-coords span { color: #94a3b8; font-size: 12px; font-weight: 700; }
+            .cover-coords strong { color: #fff; font-size: 15px; font-weight: 700; font-family: monospace; }
+            .cover-meta { margin-top: 14px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+            .report-code { font-family: monospace; font-size: 13px; color: #94a3b8; font-weight: 700; letter-spacing: 1px; }
+            .cover-footer { position: relative; z-index: 3; display: flex; justify-content: space-between; align-items: center; padding: 0 48px 34px; font-size: 11px; color: #94a3b8; font-weight: 700; }
           </style>
         </head>
-        <body style="${params.coverImage ? `--report-cover: url('${params.coverImage}')` : ''}">
+        <body>
           ${params.startImage ? `
-          <section class="page cover" style="padding: 0; min-height: 297mm; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-            <img class="cover-img" src="${params.startImage}" alt="Start Background" />
-            <div class="cover-shade" style="background: rgba(15, 23, 42, 0.75);"></div>
-            <div class="cover-content" style="padding: 60px; text-align: center; z-index: 5; width: 100%;">
-              <h2 style="color: #fff; font-size: 56px; font-weight: 900; margin: 0 0 24px; text-shadow: 0 4px 20px rgba(0,0,0,0.5);">الوساطة الرقمية</h2>
-              <p style="color: #e2e8f0; font-size: 18px; line-height: 2.2; max-width: 700px; font-weight: 500; margin: 0 auto; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
-                يقدم هذا التقرير تحليلاً مكانياً دقيقاً وشاملاً لمحيط الموقع المختار. نهدف من خلال هذا المسح الاستكشافي إلى تحويل البيانات الجغرافية الخام إلى مؤشرات واضحة ورؤى استثمارية ذكية، تسهم في دعم متخذي القرار العقاري وتوضيح مدى الملاءمة والجاذبية للفرص المتاحة في السوق.
-              </p>
+          <section class="page artwork-page">
+            <img class="artwork-img" src="${params.startImage}" alt="Intro artwork" />
+            <div class="artwork-stamp">
+              <span>DigitalBrokerage AI Research</span>
+              <span>${reportCode}</span>
             </div>
           </section>
           ` : ''}
 
-          <section class="page">
-            <div class="header">
-              <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <div>
-                  <h2>إخلاء المسؤولية القانونية</h2>
-                  <p>${escapedLocationName} • ${params.latitude.toFixed(5)}, ${params.longitude.toFixed(5)}</p>
+          <section class="page cover">
+            ${params.coverImage ? `<img class="cover-bg" src="${params.coverImage}" alt="cover" />` : ''}
+            <div class="cover-overlay"></div>
+            <div class="cover-frame"></div>
+            <div class="cover-content">
+              <div class="cover-top">
+                ${coverLogo}
+                <div class="ai-badge">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                  تقرير مُولّد بالذكاء الاصطناعي
                 </div>
-                ${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 36px; object-fit: contain;" />` : ''}
+              </div>
+              <div class="cover-hero">
+                <div class="eyebrow">تقرير مسح مكاني</div>
+                <h1 class="title">تقرير مسح المنطقة</h1>
+                <p class="subtitle">${escapedLocationName}</p>
+                <div class="cover-grid">
+                  <div class="cover-card"><span>عدد المواقع</span><strong>${total}</strong></div>
+                  <div class="cover-card"><span>عدد التصنيفات</span><strong>${Object.keys(typeCounts).length}</strong></div>
+                  <div class="cover-card"><span>نطاق البحث</span><strong>${params.radius.toLocaleString()} م</strong></div>
+                  <div class="cover-card"><span>تاريخ التقرير</span><strong>${this.formatReportDate(params.generatedAt)}</strong></div>
+                </div>
+                <div class="cover-coords">
+                  <span>الإحداثيات</span>
+                  <strong>${params.latitude.toFixed(6)}, ${params.longitude.toFixed(6)}</strong>
+                </div>
+                <div class="cover-meta">
+                  <span class="report-code">${reportCode}</span>
+                </div>
               </div>
             </div>
-            
-            <div style="margin-top: 30px;">
-              <h3 class="section-title">إخلاء مسؤولية</h3>
-              <div class="notice" style="line-height: 2; font-size: 13.5px; padding: 24px; border-radius: 16px;">
-                <ul style="margin: 0; padding-right: 18px; list-style-type: square;">
-                  <li style="margin-bottom: 12px;">تم تقديم المعلومات والبيانات في هذا التقرير بهدف تقديم المعلومات العامة فقط، على الرغم من أننا نسعى للحفاظ على دقة وموثوقية البيانات المقدمة، إلا أننا لا نقدم أي تصريحات أو ضمانات صريحة أو ضمنية بشأن اكتمال أو ملاءمة أو دقة هذه المعلومات.</li>
-                  <li style="margin-bottom: 12px;">لا تتحمل المنصة أي مسؤولية أو التزام بأي خطأ أو نقص في محتوى التقرير، كما يُنصح المستخدمون بالتحقق بشكل مستقل من المعلومات المقدمة، وإذا لزم الأمر البحث عن استشارة مهنية قبل اتخاذ أي قرارات استناداً على البيانات المقدمة.</li>
-                  <li style="margin-bottom: 12px;">قد يحتوي هذا التقرير على توقعات، تقديرات، أو بيانات توجيهية أخرى قابلة للتغيير بناءً على عوامل متنوعة، ولا تتحمل المنصة أي التزام بتحديث أو إعلام المستخدمين بأي تغييرات من هذا القبيل.</li>
-                  <li style="margin-bottom: 12px;">تخلي المنصة نفسها من جميع المسؤوليات عن أي خسارة أو ضرر أو إزعاج ناتج عن استخدام أو الاعتماد على المعلومات المقدمة في هذا التقرير، ويقر المستخدمون ويوافقون على الالتزام بالشروط والأحكام المبينة هنا وفي سياسة حدود الاستخدام لمنصة الوساطة الرقمية.</li>
-                  <li style="margin-bottom: 12px;">لا تشكل محتويات هذا التقرير نصائح مالية أو مهنية، كما يُنصح المستخدمون باستشارة الخبراء العقاريين المؤهلين للحصول على نصائح شخصية مصممة وفقاً لظروفهم الفردية.</li>
-                </ul>
-                <p style="margin: 18px 0 0; font-weight: bold; line-height: 1.6; color: #0f172a;">من خلال الوصول إلى هذا التقرير واستخدامه، يقر المستخدمون ويوافقون على الالتزام بالشروط والأحكام المبينة هنا وفي سياسة حدود الاستخدام لمنصة الوساطة الرقمية.</p>
-              </div>
+            <div class="cover-footer">
+              <span>DigitalBrokerage AI Research</span>
+              <span>الصفحة 01</span>
             </div>
-            <div class="bottom"><span style="display: flex; align-items: center; gap: 8px;">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 16px; object-fit: contain;" />` : 'DigitalBrokerage'}<span style="color: #cbd5e1; font-weight: 300;">|</span><span>إخلاء المسؤولية القانونية</span></span><span>02</span></div>
           </section>
 
           <section class="page">
-            <div class="header">
-              <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <div>
-                  <h2>أجندة تقرير مسح المنطقة</h2>
-                  <p>${escapedLocationName} • ${params.latitude.toFixed(5)}, ${params.longitude.toFixed(5)}</p>
-                </div>
-                ${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 36px; object-fit: contain;" />` : ''}
-              </div>
+            ${pageHeader('إخلاء المسؤولية القانونية', `${escapedLocationName} • ${params.latitude.toFixed(5)}, ${params.longitude.toFixed(5)}`, '02')}
+            <h3 class="section-title">إخلاء مسؤولية</h3>
+            <div class="notice">
+              <ul style="margin: 0; padding-right: 18px; list-style-type: square;">
+                <li style="margin-bottom: 12px;">تم تقديم المعلومات والبيانات في هذا التقرير بهدف تقديم المعلومات العامة فقط، على الرغم من أننا نسعى للحفاظ على دقة وموثوقية البيانات المقدمة، إلا أننا لا نقدم أي تصريحات أو ضمانات صريحة أو ضمنية بشأن اكتمال أو ملاءمة أو دقة هذه المعلومات.</li>
+                <li style="margin-bottom: 12px;">لا تتحمل المنصة أي مسؤولية أو التزام بأي خطأ أو نقص في محتوى التقرير، كما يُنصح المستخدمون بالتحقق بشكل مستقل من المعلومات المقدمة، وإذا لزم الأمر البحث عن استشارة مهنية قبل اتخاذ أي قرارات استناداً على البيانات المقدمة.</li>
+                <li style="margin-bottom: 12px;">قد يحتوي هذا التقرير على توقعات، تقديرات، أو بيانات توجيهية أخرى قابلة للتغيير بناءً على عوامل متنوعة، ولا تتحمل المنصة أي التزام بتحديث أو إعلام المستخدمين بأي تغييرات من هذا القبيل.</li>
+                <li style="margin-bottom: 12px;">تخلي المنصة نفسها من جميع المسؤوليات عن أي خسارة أو ضرر أو إزعاج ناتج عن استخدام أو الاعتماد على المعلومات المقدمة في هذا التقرير، ويقر المستخدمون ويوافقون على الالتزام بالشروط والأحكام المبينة هنا وفي سياسة حدود الاستخدام لمنصة الوساطة الرقمية.</li>
+                <li style="margin-bottom: 12px;">لا تشكل محتويات هذا التقرير نصائح مالية أو مهنية، كما يُنصح المستخدمون باستشارة الخبراء العقاريين المؤهلين للحصول على نصائح شخصية مصممة وفقاً لظروفهم الفردية.</li>
+              </ul>
+              <p style="margin: 18px 0 0; font-weight: bold; line-height: 1.6; color: #0f172a;">من خلال الوصول إلى هذا التقرير واستخدامه، يقر المستخدمون ويوافقون على الالتزام بالشروط والأحكام المبينة هنا وفي سياسة حدود الاستخدام لمنصة الوساطة الرقمية.</p>
             </div>
-            
-            <div style="margin-top: 30px;">
-              <h3 class="section-title" style="margin-bottom: 15px;">محتويات وأقسام التقرير</h3>
-              <table class="agenda">
-                <tr><td>01</td><td>غلاف التقرير والبيانات الأساسية للموقع</td></tr>
-                <tr><td>02</td><td>إخلاء المسؤولية القانونية وشروط الاستخدام</td></tr>
-                <tr><td>03</td><td>أجندة ومحتويات التقرير التفصيلية</td></tr>
-                <tr><td>04</td><td>تفاصيل الموقع ونطاق البحث الجغرافي</td></tr>
-                <tr><td>05</td><td>منهجية المسح والمعالجة الفنية للبيانات</td></tr>
-                <tr><td>06</td><td>مؤشرات وتقييم الخدمات العامة المحيطة</td></tr>
-                <tr><td>07</td><td>توزيع التصنيفات والخدمات ضمن النطاق</td></tr>
-                <tr><td>08</td><td>صورة تحليلية ومخطط مكاني لتوزيع المواقع</td></tr>
-                <tr><td>09</td><td>النموذج ثلاثي الأبعاد لكثافة الخدمات</td></tr>
-                <tr><td>10</td><td>تحليل المسافات وسهولة الوصول الجغرافي</td></tr>
-                <tr><td>11</td><td>لوحة أرقام وإحصائيات البحث التفصيلية</td></tr>
-                <tr><td>12</td><td>لوحة قرار الاستثمار والتقييم العقاري</td></tr>
-                <tr><td>13</td><td>فجوات الخدمات والفرص الاستثمارية المرصودة</td></tr>
+            ${pageFooter('إخلاء المسؤولية القانونية', '02')}
+          </section>
+
+          <section class="page">
+            ${pageHeader('أجندة التقرير', `${escapedLocationName} • ${params.latitude.toFixed(5)}, ${params.longitude.toFixed(5)}`, '03')}
+            <h3 class="section-title">محتويات وأقسام التقرير</h3>
+            <table class="agenda">
+              <tbody>
+                <tr><td>01</td><td>غلاف التقرير والبيانات الأساسية</td></tr>
+                <tr><td>02</td><td>إخلاء المسؤولية القانونية</td></tr>
+                <tr><td>03</td><td>أجندة التقرير</td></tr>
+                <tr><td>04</td><td>تفاصيل الموقع ونطاق البحث</td></tr>
+                <tr><td>05</td><td>منهجية المسح</td></tr>
+                <tr><td>06</td><td>مؤشرات الخدمات العامة</td></tr>
+                <tr><td>07</td><td>توزيع التصنيفات والخدمات</td></tr>
+                <tr><td>08</td><td>الصورة التحليلية والمخطط المكاني</td></tr>
+                <tr><td>09</td><td>النموذج ثلاثي الأبعاد</td></tr>
+                <tr><td>10</td><td>تحليل المسافات والوصول</td></tr>
+                <tr><td>11</td><td>لوحة أرقام البحث</td></tr>
+                <tr><td>12</td><td>لوحة قرار الاستثمار</td></tr>
+                <tr><td>13</td><td>فجوات الخدمات والفرص</td></tr>
                 <tr><td>14</td><td>مصفوفة المخاطر وملاءمة الاستخدام</td></tr>
-                <tr><td>15</td><td>التوصية النهائية والملخص التنفيذي للموقع</td></tr>
-                <tr><td>16</td><td>ملحق البيانات وعينة النتائج التفصيلية</td></tr>
-              </table>
-            </div>
-            <div class="bottom"><span style="display: flex; align-items: center; gap: 8px;">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 16px; object-fit: contain;" />` : 'DigitalBrokerage'}<span style="color: #cbd5e1; font-weight: 300;">|</span><span>أجندة تقرير مسح المنطقة</span></span><span>03</span></div>
+                <tr><td>15</td><td>التوصية النهائية</td></tr>
+                <tr><td>16</td><td>ملحق البيانات</td></tr>
+              </tbody>
+            </table>
+            ${pageFooter('أجندة التقرير', '03')}
           </section>
 
           <section class="page">
-            <div class="header"><div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><div><h2>تفاصيل الموقع</h2><p>ملخص كمي للمسح الحالي</p></div>${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 30px; object-fit: contain; margin-left: 10px;" />` : ''}</div><div class="page-no">04</div></div>
+            ${pageHeader('تفاصيل الموقع ونطاق البحث', 'ملخص كمي للمسح الحالي', '04')}
             <div class="stats">
               <div class="stat"><span>عدد المواقع</span><strong>${total}</strong></div>
               <div class="stat"><span>عدد التصنيفات</span><strong>${Object.keys(typeCounts).length}</strong></div>
@@ -773,27 +835,47 @@ export class FinancialService {
               <div class="stat"><span>كثافة المواقع/كم²</span><strong>${density}</strong></div>
             </div>
             <div class="two-col">
-              <div class="panel"><h3 class="section-title">إحداثيات المركز</h3><div class="large-number" style="font-size:26px">${params.latitude.toFixed(5)}</div><div class="large-number" style="font-size:26px">${params.longitude.toFixed(5)}</div><p class="muted">تم حساب المسافات من نقطة المركز المختارة في الخريطة.</p></div>
-              <div class="panel"><h3 class="section-title">نطاق البحث</h3><div class="large-number">${params.radius.toLocaleString()}م</div><p class="muted">المساحة التقريبية المغطاة: ${(Math.PI * Math.pow(params.radius / 1000, 2)).toFixed(2)} كم²</p></div>
+              <div class="panel">
+                <h3 class="section-title">إحداثيات المركز</h3>
+                <div class="large-number" style="font-size:24px">${params.latitude.toFixed(6)}</div>
+                <div class="large-number" style="font-size:24px">${params.longitude.toFixed(6)}</div>
+                <p class="muted">تم حساب المسافات من نقطة المركز المختارة في الخريطة.</p>
+              </div>
+              <div class="panel">
+                <h3 class="section-title">نطاق البحث</h3>
+                <div class="large-number">${params.radius.toLocaleString()}م</div>
+                <p class="muted">المساحة التقريبية المغطاة: ${(Math.PI * Math.pow(params.radius / 1000, 2)).toFixed(2)} كم²</p>
+              </div>
             </div>
-            <div class="bottom"><span style="display: flex; align-items: center; gap: 8px;">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 16px; object-fit: contain;" />` : 'DigitalBrokerage'}<span style="color: #cbd5e1; font-weight: 300;">|</span><span>تفاصيل الموقع</span></span><span>04</span></div>
+            ${pageFooter('تفاصيل الموقع ونطاق البحث', '04')}
           </section>
 
           <section class="page">
-            <div class="header"><div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><div><h2>منهجية المسح</h2><p>طريقة تجميع وتحليل بيانات الخريطة</p></div>${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 30px; object-fit: contain; margin-left: 10px;" />` : ''}</div><div class="page-no">05</div></div>
+            ${pageHeader('منهجية المسح', 'طريقة تجميع وتحليل بيانات الخريطة', '05')}
             <div class="notice">
               يقوم النظام بجلب جميع المواقع الواقعة داخل نصف قطر البحث، ثم يحسب المسافة الجغرافية بين كل موقع ونقطة المركز باستخدام معادلة Haversine.
               بعد ذلك يتم ترتيب النتائج حسب القرب، واستخراج التوزيع حسب التصنيف، وحساب كثافة الخدمات، ومؤشرات التنوع وسهولة الوصول.
             </div>
-            <div class="two-col" style="margin-top:20px">
-              <div class="panel dark"><h3>مصادر القياس</h3><ul class="small-list" style="color:#cbd5e1"><li>الإحداثيات المختارة من المستخدم</li><li>نطاق البحث بالمتر</li><li>قاعدة بيانات الأماكن المحيطة</li><li>حسابات مسافة مباشرة</li></ul></div>
-              <div class="panel"><h3 class="section-title">حدود التحليل</h3><p class="muted">التقرير يقيس القرب المكاني وليس جودة الخدمة أو الازدحام أو ساعات العمل. لذلك يعتبر أداة بحث أولية قوية وليست بديلاً عن التحقق الميداني.</p></div>
+            <div class="two-col" style="margin-top:18px">
+              <div class="panel dark">
+                <h3 class="section-title">مصادر القياس</h3>
+                <ul class="small-list">
+                  <li>الإحداثيات المختارة من المستخدم</li>
+                  <li>نطاق البحث بالمتر</li>
+                  <li>قاعدة بيانات الأماكن المحيطة</li>
+                  <li>حسابات مسافة مباشرة</li>
+                </ul>
+              </div>
+              <div class="panel">
+                <h3 class="section-title">حدود التحليل</h3>
+                <p class="muted">التقرير يقيس القرب المكاني وليس جودة الخدمة أو الازدحام أو ساعات العمل. لذلك يعتبر أداة بحث أولية قوية وليست بديلاً عن التحقق الميداني.</p>
+              </div>
             </div>
-            <div class="bottom"><span style="display: flex; align-items: center; gap: 8px;">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 16px; object-fit: contain;" />` : 'DigitalBrokerage'}<span style="color: #cbd5e1; font-weight: 300;">|</span><span>منهجية المسح</span></span><span>05</span></div>
+            ${pageFooter('منهجية المسح', '05')}
           </section>
 
           <section class="page">
-            <div class="header"><div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><div><h2>مؤشرات الخدمات العامة</h2><p>درجات كمية مركبة من نتائج المسح</p></div>${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 30px; object-fit: contain; margin-left: 10px;" />` : ''}</div><div class="page-no">06</div></div>
+            ${pageHeader('مؤشرات الخدمات العامة', 'درجات كمية مركبة من نتائج المسح', '06')}
             <div class="stats">
               <div class="stat"><span>درجة الجاذبية</span><strong>${serviceScore}%</strong></div>
               <div class="stat"><span>تنوع الخدمات</span><strong>${diversityScore}%</strong></div>
@@ -801,31 +883,32 @@ export class FinancialService {
               <div class="stat"><span>داخل 1000م</span><strong>${within1000}</strong></div>
             </div>
             <div class="diagram">
-              <svg width="100%" height="300" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
-                <rect width="640" height="300" fill="#f8fafc"/>
+              <svg width="100%" height="280" viewBox="0 0 640 280" xmlns="http://www.w3.org/2000/svg">
+                <rect width="640" height="280" fill="#f8fafc"/>
                 ${scoreBars}
               </svg>
             </div>
-            <div class="bottom"><span style="display: flex; align-items: center; gap: 8px;">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 16px; object-fit: contain;" />` : 'DigitalBrokerage'}<span style="color: #cbd5e1; font-weight: 300;">|</span><span>مؤشرات الخدمات العامة</span></span><span>06</span></div>
+            ${pageFooter('مؤشرات الخدمات العامة', '06')}
           </section>
 
           <section class="page">
-            <div class="header"><div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><div><h2>توزيع التصنيفات</h2><p>أكثر التصنيفات تكراراً ضمن نطاق البحث</p></div>${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 30px; object-fit: contain; margin-left: 10px;" />` : ''}</div><div class="page-no">07</div></div>
+            ${pageHeader('توزيع التصنيفات والخدمات', 'أكثر التصنيفات تكراراً ضمن نطاق البحث', '07')}
             <div class="diagram">
-              <svg width="100%" height="410" viewBox="0 0 640 410" xmlns="http://www.w3.org/2000/svg">
-                <rect width="640" height="410" fill="#f8fafc"/>
+              <svg width="100%" height="390" viewBox="0 0 640 390" xmlns="http://www.w3.org/2000/svg">
+                <rect width="640" height="390" fill="#f8fafc"/>
                 ${barChart}
               </svg>
             </div>
-            <table><thead><tr><th>#</th><th>التصنيف</th><th>العدد</th><th>النسبة</th></tr></thead><tbody>${topTypeRows}</tbody></table>
-            <div class="bottom"><span style="display: flex; align-items: center; gap: 8px;">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 16px; object-fit: contain;" />` : 'DigitalBrokerage'}<span style="color: #cbd5e1; font-weight: 300;">|</span><span>توزيع التصنيفات والخدمات</span></span><span>07</span></div>
+            <table>
+              <thead><tr><th>#</th><th>التصنيف</th><th>العدد</th><th>النسبة</th></tr></thead>
+              <tbody>${topTypeRows}</tbody>
+            </table>
+            ${pageFooter('توزيع التصنيفات والخدمات', '07')}
           </section>
 
           <section class="page">
-            <div class="header"><div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><div><h2>صورة تحليلية للموقع</h2><p>تمثيل مكاني تقريبي لتوزيع المواقع حول نقطة المركز</p></div>${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 30px; object-fit: contain; margin-left: 10px;" />` : ''}</div><div class="page-no">08</div></div>
-            <div class="diagram">
-              ${mapVisual}
-            </div>
+            ${pageHeader('الصورة التحليلية والمخطط المكاني', 'تمثيل مكاني تقريبي لتوزيع المواقع حول نقطة المركز', '08')}
+            <div class="diagram">${mapVisual}</div>
             <div class="visual-caption">
               <div class="explain-card">
                 <h4>كيف تقرأ المخطط؟</h4>
@@ -841,18 +924,17 @@ export class FinancialService {
                 </div>
               </div>
             </div>
-            <h3 class="section-title" style="margin-top:16px">مشهد تحليلي ثلاثي الأبعاد</h3>
-            <div class="diagram" style="margin-top:10px">
-              ${aerialVisual}
-            </div>
+            <hr class="divider" />
+            <h3 class="section-title">مشهد تحليلي ثلاثي الأبعاد</h3>
+            <div class="diagram">${aerialVisual}</div>
             <p class="muted" style="margin-top:10px">
               ارتفاع الأعمدة يعبر عن قوة حضور الخدمات وقربها من المركز. الأعمدة الأطول تعني مواقع أقرب أو أكثر تأثيراً في قرار الموقع، بينما انخفاض الأعمدة يعني تأثيراً أقل أو بعداً نسبياً.
             </p>
-            <div class="bottom"><span style="display: flex; align-items: center; gap: 8px;">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 16px; object-fit: contain;" />` : 'DigitalBrokerage'}<span style="color: #cbd5e1; font-weight: 300;">|</span><span>صورة تحليلية ومخطط مكاني</span></span><span>08</span></div>
+            ${pageFooter('الصورة التحليلية والمخطط المكاني', '08')}
           </section>
 
           <section class="page">
-            <div class="header"><div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><div><h2>نموذج ثلاثي الأبعاد</h2><p>تصوير بحثي لكثافة الخدمات حسب التصنيف</p></div>${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 30px; object-fit: contain; margin-left: 10px;" />` : ''}</div><div class="page-no">09</div></div>
+            ${pageHeader('النموذج ثلاثي الأبعاد', 'تصوير بحثي لكثافة الخدمات حسب التصنيف', '09')}
             <div class="diagram">
               <svg width="100%" height="430" viewBox="0 0 640 430" xmlns="http://www.w3.org/2000/svg">
                 <rect width="640" height="430" fill="#f8fafc"/>
@@ -861,27 +943,27 @@ export class FinancialService {
                 ${isoBars}
               </svg>
             </div>
-            <div class="bottom"><span style="display: flex; align-items: center; gap: 8px;">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 16px; object-fit: contain;" />` : 'DigitalBrokerage'}<span style="color: #cbd5e1; font-weight: 300;">|</span><span>النموذج ثلاثي الأبعاد لكثافة الخدمات</span></span><span>09</span></div>
+            ${pageFooter('النموذج ثلاثي الأبعاد', '09')}
           </section>
 
           <section class="page">
-            <div class="header"><div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><div><h2>تحليل المسافات والوصول</h2><p>توزيع النتائج حسب القرب من المركز</p></div>${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 30px; object-fit: contain; margin-left: 10px;" />` : ''}</div><div class="page-no">10</div></div>
+            ${pageHeader('تحليل المسافات والوصول', 'توزيع النتائج حسب القرب من المركز', '10')}
             <div class="diagram">
-              <svg width="100%" height="300" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
-                <rect width="640" height="300" fill="#f8fafc"/>
+              <svg width="100%" height="270" viewBox="0 0 640 270" xmlns="http://www.w3.org/2000/svg">
+                <rect width="640" height="270" fill="#f8fafc"/>
                 ${ringChart}
               </svg>
             </div>
-            <h3 class="section-title" style="margin-top:22px">أقرب المواقع</h3>
+            <h3 class="section-title" style="margin-top:18px">أقرب المواقع</h3>
             <table>
-              <thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>المسافة</th><th>الإحداثيات</th></tr></thead>
+              <thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>المسافة</th><th>المدينة</th><th>الإحداثيات</th></tr></thead>
               <tbody>${nearestRows}</tbody>
             </table>
-            <div class="bottom"><span style="display: flex; align-items: center; gap: 8px;">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 16px; object-fit: contain;" />` : 'DigitalBrokerage'}<span style="color: #cbd5e1; font-weight: 300;">|</span><span>تحليل المسافات والوصول الجغرافي</span></span><span>10</span></div>
+            ${pageFooter('تحليل المسافات والوصول', '10')}
           </section>
 
           <section class="page">
-            <div class="header"><div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><div><h2>لوحة أرقام البحث</h2><p>أرقام تشغيلية مختصرة قبل قراءة القرار</p></div>${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 30px; object-fit: contain; margin-left: 10px;" />` : ''}</div><div class="page-no">11</div></div>
+            ${pageHeader('لوحة أرقام البحث', 'أرقام تشغيلية مختصرة قبل قراءة القرار', '11')}
             <div class="metric-grid">
               <div class="metric"><span>أقرب موقع</span><strong>${nearest[0] ? Math.round(nearest[0].distance || 0) : 0}م</strong><p>${this.escapeHtml(nearest[0]?.name || 'لا يوجد')}</p></div>
               <div class="metric"><span>أبعد موقع داخل النطاق</span><strong>${farthestDistance}م</strong><p>يعكس مدى انتشار النتائج داخل نصف القطر.</p></div>
@@ -890,11 +972,11 @@ export class FinancialService {
               <div class="metric"><span>نسبة داخل 1000م</span><strong>${total ? Math.round((within1000 / total) * 100) : 0}%</strong><p>${within1000} موقع ضمن نطاق وصول سريع.</p></div>
               <div class="metric"><span>خارج 2000م</span><strong>${outside2000}</strong><p>مواقع أبعد نسبياً وتؤثر أقل على سهولة الوصول.</p></div>
             </div>
-            <div class="bottom"><span style="display: flex; align-items: center; gap: 8px;">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 16px; object-fit: contain;" />` : 'DigitalBrokerage'}<span style="color: #cbd5e1; font-weight: 300;">|</span><span>لوحة أرقام وإحصائيات البحث التفصيلية</span></span><span>11</span></div>
+            ${pageFooter('لوحة أرقام البحث', '11')}
           </section>
 
           <section class="page">
-            <div class="header"><div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><div><h2>لوحة قرار الاستثمار</h2><p>مؤشر مركب يساعد على المقارنة بين المواقع</p></div>${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 30px; object-fit: contain; margin-left: 10px;" />` : ''}</div><div class="page-no">12</div></div>
+            ${pageHeader('لوحة قرار الاستثمار', 'مؤشر مركب يساعد على المقارنة بين المواقع', '12')}
             <div class="decision-hero">
               <div class="decision-score"><span>Decision Score</span><strong>${decisionScore}</strong><p>${decisionBand}</p></div>
               <div class="score-note">
@@ -906,16 +988,16 @@ export class FinancialService {
               <thead><tr><th>العامل</th><th>الوزن</th><th>القيمة</th><th>قراءة القرار</th></tr></thead>
               <tbody>${decisionRows}</tbody>
             </table>
-            <h3 class="section-title" style="margin-top:22px">تحليل الخدمات الأساسية</h3>
+            <h3 class="section-title" style="margin-top:20px">تحليل الخدمات الأساسية</h3>
             <table>
               <thead><tr><th>#</th><th>المجموعة</th><th>العدد</th><th>الأقرب</th><th>الدرجة</th><th>أثرها على القرار</th></tr></thead>
               <tbody>${serviceGroupRows}</tbody>
             </table>
-            <div class="bottom"><span style="display: flex; align-items: center; gap: 8px;">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 16px; object-fit: contain;" />` : 'DigitalBrokerage'}<span style="color: #cbd5e1; font-weight: 300;">|</span><span>لوحة قرار الاستثمار والتقييم العقاري</span></span><span>12</span></div>
+            ${pageFooter('لوحة قرار الاستثمار', '12')}
           </section>
 
           <section class="page">
-            <div class="header"><div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><div><h2>فجوات الخدمات والفرص</h2><p>قراءة الفجوات التي قد تتحول إلى مخاطر أو فرص</p></div>${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 30px; object-fit: contain; margin-left: 10px;" />` : ''}</div><div class="page-no">13</div></div>
+            ${pageHeader('فجوات الخدمات والفرص', 'قراءة الفجوات التي قد تتحول إلى مخاطر أو فرص', '13')}
             <div class="notice">
               الفجوة لا تعني دائماً ضعف الموقع. أحياناً تعني وجود فرصة تشغيلية إذا كان الطلب مثبتاً ولا توجد منافسة قوية.
               لذلك يجب قراءة هذه الصفحة مع الزيارة الميدانية وسعر الأرض أو العقار ونمو المنطقة.
@@ -924,43 +1006,88 @@ export class FinancialService {
               <thead><tr><th>المجموعة الناقصة</th><th>العدد المرصود</th><th>درجة التغطية</th><th>قراءة الفرصة</th></tr></thead>
               <tbody>${gapRows}</tbody>
             </table>
-            <div class="two-col" style="margin-top:22px">
-              <div class="panel"><h3 class="section-title">أفضل استخدامات حسب البيانات</h3><table><thead><tr><th>الاستخدام</th><th>الدرجة</th><th>الحكم</th><th>السبب</th></tr></thead><tbody>${fitRows}</tbody></table></div>
-              <div class="panel"><h3 class="section-title">أسئلة القرار قبل الاعتماد</h3><ul class="small-list"><li>هل السعر يعكس قوة الموقع أو يبالغ فيها؟</li><li>هل الخدمات الأقرب تعمل فعلياً وبجودة مقبولة؟</li><li>هل توجد مشاريع مستقبلية تغير الطلب؟</li><li>هل الوصول الفعلي أسهل من المسافة المباشرة؟</li></ul></div>
+            <div class="two-col" style="margin-top:18px">
+              <div class="panel">
+                <h3 class="section-title">أفضل استخدامات حسب البيانات</h3>
+                <table>
+                  <thead><tr><th>الاستخدام</th><th>الدرجة</th><th>الحكم</th><th>السبب</th></tr></thead>
+                  <tbody>${fitRows}</tbody>
+                </table>
+              </div>
+              <div class="panel">
+                <h3 class="section-title">أسئلة القرار قبل الاعتماد</h3>
+                <ul class="small-list">
+                  <li>هل السعر يعكس قوة الموقع أو يبالغ فيها؟</li>
+                  <li>هل الخدمات الأقرب تعمل فعلياً وبجودة مقبولة؟</li>
+                  <li>هل توجد مشاريع مستقبلية تغير الطلب؟</li>
+                  <li>هل الوصول الفعلي أسهل من المسافة المباشرة؟</li>
+                </ul>
+              </div>
             </div>
-            <div class="bottom"><span style="display: flex; align-items: center; gap: 8px;">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 16px; object-fit: contain;" />` : 'DigitalBrokerage'}<span style="color: #cbd5e1; font-weight: 300;">|</span><span>فجوات الخدمات والفرص الاستثمارية</span></span><span>13</span></div>
+            ${pageFooter('فجوات الخدمات والفرص', '13')}
           </section>
 
           <section class="page">
-            <div class="header"><div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><div><h2>مصفوفة المخاطر</h2><p>تحويل نتائج المسح إلى عناصر تحقق واضحة</p></div>${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 30px; object-fit: contain; margin-left: 10px;" />` : ''}</div><div class="page-no">14</div></div>
+            ${pageHeader('مصفوفة المخاطر وملاءمة الاستخدام', 'تحويل نتائج المسح إلى عناصر تحقق واضحة', '14')}
             <table>
               <thead><tr><th>الخطر</th><th>الإشارة من البيانات</th><th>المستوى</th><th>إجراء التخفيف</th></tr></thead>
               <tbody>${riskRows}</tbody>
             </table>
-            <div class="two-col" style="margin-top:26px">
-              <div class="panel dark"><h3>قراءة القرار المختصرة</h3><p style="line-height:2;color:#cbd5e1">الدرجة الحالية: <strong style="color:#fff;font-size:24px">${decisionScore}%</strong><br/>الحكم: ${decisionBand}<br/>أكبر تصنيف: ${this.escapeHtml(topTypes[0]?.[0] || 'غير محدد')} (${concentrationShare}%).</p></div>
-              <div class="panel"><h3 class="section-title">ما الذي يجعل القرار أقوى؟</h3><ul class="small-list"><li>مقارنة موقعين أو ثلاثة بنفس التقرير.</li><li>رفع النطاق عند انخفاض عدد النتائج.</li><li>إضافة صور ميدانية وملاحظات المرور.</li><li>مراجعة السعر والعائد المتوقع خارج هذا التقرير.</li></ul></div>
+            <div class="two-col" style="margin-top:18px">
+              <div class="panel dark">
+                <h3 class="section-title">قراءة القرار المختصرة</h3>
+                <p style="line-height:2;color:#e2e8f0">
+                  الدرجة الحالية: <strong style="color:#fff;font-size:24px">${decisionScore}%</strong><br/>
+                  الحكم: ${decisionBand}<br/>
+                  أكبر تصنيف: ${this.escapeHtml(topTypes[0]?.[0] || 'غير محدد')} (${concentrationShare}%).
+                </p>
+              </div>
+              <div class="panel">
+                <h3 class="section-title">ما الذي يجعل القرار أقوى؟</h3>
+                <ul class="small-list">
+                  <li>مقارنة موقعين أو ثلاثة بنفس التقرير.</li>
+                  <li>رفع النطاق عند انخفاض عدد النتائج.</li>
+                  <li>إضافة صور ميدانية وملاحظات المرور.</li>
+                  <li>مراجعة السعر والعائد المتوقع خارج هذا التقرير.</li>
+                </ul>
+              </div>
             </div>
-            <div class="bottom"><span style="display: flex; align-items: center; gap: 8px;">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 16px; object-fit: contain;" />` : 'DigitalBrokerage'}<span style="color: #cbd5e1; font-weight: 300;">|</span><span>مصفوفة المخاطر وملاءمة الاستخدام</span></span><span>14</span></div>
+            ${pageFooter('مصفوفة المخاطر وملاءمة الاستخدام', '14')}
           </section>
 
           <section class="page">
-            <div class="header"><div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><div><h2>التوصية النهائية</h2><p>قراءة تنفيذية مبنية على نتائج المسح</p></div>${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 30px; object-fit: contain; margin-left: 10px;" />` : ''}</div><div class="page-no">15</div></div>
+            ${pageHeader('التوصية النهائية', 'قراءة تنفيذية مبنية على نتائج المسح', '15')}
             <div class="rec">${this.escapeHtml(recommendation)}</div>
-            <div class="two-col" style="margin-top:24px">
-              <div class="panel"><h3 class="section-title">نقاط القوة</h3><ul class="small-list"><li>عدد مواقع مرصود: ${total}</li><li>تصنيفات مختلفة: ${Object.keys(typeCounts).length}</li><li>مواقع ضمن 500م: ${within500}</li><li>مواقع ضمن 1000م: ${within1000}</li></ul></div>
-              <div class="panel"><h3 class="section-title">ما يجب التحقق منه</h3><ul class="small-list"><li>جودة الخدمات الأقرب وساعات عملها</li><li>سهولة الوصول الفعلية بالسيارة والمشي</li><li>حركة المرور ومداخل الموقع</li><li>مطابقة البيانات مع زيارة ميدانية</li></ul></div>
+            <div class="two-col" style="margin-top:20px">
+              <div class="panel">
+                <h3 class="section-title">نقاط القوة</h3>
+                <ul class="small-list">
+                  <li>عدد مواقع مرصود: ${total}</li>
+                  <li>تصنيفات مختلفة: ${Object.keys(typeCounts).length}</li>
+                  <li>مواقع ضمن 500م: ${within500}</li>
+                  <li>مواقع ضمن 1000م: ${within1000}</li>
+                </ul>
+              </div>
+              <div class="panel">
+                <h3 class="section-title">ما يجب التحقق منه</h3>
+                <ul class="small-list">
+                  <li>جودة الخدمات الأقرب وساعات عملها</li>
+                  <li>سهولة الوصول الفعلية بالسيارة والمشي</li>
+                  <li>حركة المرور ومداخل الموقع</li>
+                  <li>مطابقة البيانات مع زيارة ميدانية</li>
+                </ul>
+              </div>
             </div>
-            <div class="bottom"><span style="display: flex; align-items: center; gap: 8px;">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 16px; object-fit: contain;" />` : 'DigitalBrokerage'}<span style="color: #cbd5e1; font-weight: 300;">|</span><span>التوصية النهائية والملخص التنفيذي للموقع</span></span><span>15</span></div>
+            ${pageFooter('التوصية النهائية', '15')}
           </section>
 
           <section class="page">
-            <div class="header"><div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><div><h2>ملحق البيانات</h2><p>عينة موسعة من نتائج المسح، والملف الكامل متوفر في Excel</p></div>${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 30px; object-fit: contain; margin-left: 10px;" />` : ''}</div><div class="page-no">16</div></div>
+            ${pageHeader('ملحق البيانات', 'عينة موسعة من نتائج المسح، والملف الكامل متوفر في Excel', '16')}
             <table>
               <thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>المسافة بالمتر</th><th>المدينة</th></tr></thead>
               <tbody>${appendixRows}</tbody>
             </table>
-            <div class="bottom"><span style="display: flex; align-items: center; gap: 8px;">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" style="height: 16px; object-fit: contain;" />` : 'DigitalBrokerage'}<span style="color: #cbd5e1; font-weight: 300;">|</span><span>ملحق البيانات وعينة النتائج التفصيلية</span></span><span>16</span></div>
+            ${pageFooter('ملحق البيانات', '16')}
           </section>
 
           ${params.endImage ? `

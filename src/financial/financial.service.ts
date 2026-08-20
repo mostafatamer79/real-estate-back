@@ -601,21 +601,22 @@ export class FinancialService {
         ? 'الموقع متوسط الجاذبية الخدمية ويحتاج إلى تقييم نوعية الخدمات الأقرب قبل اتخاذ قرار نهائي.'
         : 'الموقع منخفض نسبياً في كثافة أو تنوع الخدمات ضمن النطاق الحالي، وينصح بتوسيع نطاق المقارنة أو مراجعة بدائل قريبة.';
 
-    const pageHeader = (title: string, subtitle: string, page: string) => `
+    const pageHeader = (title: string, subtitle: string) => `
       <div class="header">
-        <div class="header-main">
-          <h2>${title}</h2>
-          <p>${subtitle}</p>
+        <div class="header-top">
+          <span class="header-date">${this.formatReportDate(params.generatedAt)}</span>
+          ${params.logoBlackImage ? `<img src="${params.logoBlackImage}" alt="logo" />` : ''}
         </div>
-        <div class="header-page">${page}</div>
-        ${params.logoBlackImage ? `<img src="${params.logoBlackImage}" alt="logo" />` : ''}
+        <div class="header-location">${escapedLocationName}</div>
+        <div class="header-title">${title}</div>
+        <div class="header-subtitle">${subtitle}</div>
       </div>
     `;
     const pageFooter = (label: string, page: string) => `
       <div class="footer">
-        <span class="footer-section">${label}</span>
-        <span class="footer-page">${page}</span>
-        <span class="footer-brand">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" alt="logo" />` : 'DigitalBrokerage'}</span>
+        <span class="footer-right">${label}</span>
+        <span class="footer-center">${page}</span>
+        <span class="footer-left">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" alt="logo" />` : 'DigitalBrokerage'}</span>
       </div>
     `;
 
@@ -639,23 +640,35 @@ export class FinancialService {
 
             .artwork-page { padding: 0; background: #0f172a; min-height: 297mm; }
             .artwork-img { width: 210mm; height: 297mm; object-fit: cover; display: block; }
-            .artwork-stamp { position: absolute; left: 34px; right: 34px; bottom: 30px; z-index: 2; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 16px; border-radius: 18px; background: rgba(15,23,42,.72); color: #fff; font-size: 11px; font-weight: 900; }
+            .artwork-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,.88) 0%, rgba(15,23,42,.75) 50%, rgba(30,41,59,.85) 100%); display: flex; align-items: center; justify-content: center; }
+            .artwork-welcome { text-align: center; color: #fff; padding: 40px; }
+            .artwork-brand { font-size: 18px; font-weight: 900; letter-spacing: 1px; margin-bottom: 24px; opacity: .9; }
+            .artwork-title { font-size: 42px; font-weight: 900; margin-bottom: 12px; }
+            .artwork-location { font-size: 24px; font-weight: 700; color: #e2e8f0; margin-bottom: 28px; }
+            .artwork-stats { display: flex; justify-content: center; gap: 20px; margin-bottom: 24px; }
+            .artwork-stat { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); border-radius: 14px; padding: 14px 24px; }
+            .artwork-stat span { display: block; font-size: 11px; color: #94a3b8; margin-bottom: 4px; font-weight: 700; }
+            .artwork-stat strong { font-size: 22px; font-weight: 800; }
+            .artwork-coords { font-family: monospace; font-size: 15px; color: #94a3b8; margin-bottom: 8px; }
+            .artwork-date { font-size: 13px; color: #64748b; font-weight: 600; }
 
-            .header { display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 14px; margin-bottom: 20px; }
-            .header-main { flex: 1; min-width: 0; }
-            .header-main h2 { margin: 0; font-size: 20px; font-weight: 800; color: #0f172a; }
-            .header-main p { margin: 4px 0 0; color: #64748b; font-size: 11px; font-weight: 600; }
-            .header-page { font-size: 18px; font-weight: 800; color: #0f172a; padding: 0 6px; }
-            .header img { height: 32px; object-fit: contain; display: block; }
+            .header { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #e2e8f0; }
+            .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+            .header-date { font-size: 11px; color: #64748b; font-weight: 600; }
+            .header-top img { height: 28px; object-fit: contain; }
+            .header-location { font-size: 22px; font-weight: 900; color: #0f172a; margin-bottom: 8px; line-height: 1.3; }
+            .header-title { font-size: 15px; font-weight: 700; color: #2563eb; margin-bottom: 4px; }
+            .header-subtitle { font-size: 11px; color: #64748b; font-weight: 600; }
 
-            .footer { position: absolute; bottom: 26px; left: 44px; right: 44px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 10px; color: #64748b; font-weight: 600; }
-            .footer-page { font-size: 12px; font-weight: 800; color: #0f172a; }
-            .footer-brand { display: flex; align-items: center; gap: 8px; }
-            .footer-brand img { height: 15px; object-fit: contain; }
+            .footer { position: absolute; bottom: 24px; left: 44px; right: 44px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 10px; color: #64748b; font-weight: 600; }
+            .footer-right { font-weight: 700; color: #0f172a; }
+            .footer-center { font-size: 13px; font-weight: 800; color: #0f172a; background: #f8fafc; padding: 4px 12px; border-radius: 6px; border: 1px solid #e2e8f0; }
+            .footer-left { display: flex; align-items: center; gap: 8px; }
+            .footer-left img { height: 15px; object-fit: contain; }
 
             .section-title { font-size: 16px; font-weight: 800; color: #0f172a; margin: 0 0 12px; }
             .muted { color: #64748b; line-height: 1.7; font-size: 12px; }
-            .notice { background: #f8fafc; border: 1px solid #e2e8f0; border-right: 4px solid #0f172a; border-radius: 14px; padding: 18px; line-height: 1.9; color: #334155; font-size: 12.5px; }
+            .notice { background: #f8fafc; border: 1px solid #e2e8f0; border-right: 4px solid #0f172a; border-radius: 14px; padding: 14px; line-height: 1.8; color: #334155; font-size: 12px; }
             .small-list { margin: 0; padding-right: 18px; color: #334155; line-height: 1.9; font-size: 12px; }
             hr.divider { border: none; border-top: 1px solid #e2e8f0; margin: 18px 0; }
 
@@ -678,8 +691,8 @@ export class FinancialService {
             .agenda { border: none !important; border-radius: 0 !important; }
             .agenda tbody tr { border-bottom: 1px dashed #e2e8f0; }
             .agenda tbody tr:last-child { border-bottom: none; }
-            .agenda td { border: none !important; background: none !important; padding: 8px 0; font-size: 12.5px; font-weight: 600; color: #1e293b; }
-            .agenda td:first-child { color: #2563eb; width: 46px; font-weight: 800; }
+            .agenda td { border: none !important; background: none !important; padding: 6px 0; font-size: 11.5px; font-weight: 600; color: #1e293b; }
+            .agenda td:first-child { color: #2563eb; width: 40px; font-weight: 800; }
 
             .diagram { width: 100%; border: 1px solid #e2e8f0; border-radius: 16px; background: #f8fafc; overflow: hidden; margin-top: 12px; }
             .visual-caption { display: grid; grid-template-columns: 1.2fr .8fr; gap: 12px; margin-top: 12px; }
@@ -715,20 +728,20 @@ export class FinancialService {
 
             .rec { font-size: 14px; line-height: 1.8; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0; border-right: 5px solid #2563eb; border-radius: 14px; padding: 20px; color: #0f172a; }
 
-            .cover { background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); color: #fff; padding: 0; display: flex; flex-direction: column; justify-content: space-between; }
+            .cover { background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); color: #fff; padding: 0; display: flex; flex-direction: column; }
             .cover-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
-            .cover-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,.92) 0%, rgba(15,23,42,.78) 60%, rgba(30,41,59,.88) 100%); z-index: 1; }
-            .cover-frame { position: absolute; inset: 32px; border: 1px solid rgba(255,255,255,.14); border-radius: 26px; z-index: 2; pointer-events: none; }
-            .cover-content { position: relative; z-index: 3; padding: 40px 44px 32px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
-            .cover-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+            .cover-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,.88) 0%, rgba(15,23,42,.72) 50%, rgba(30,41,59,.85) 100%); z-index: 1; }
+            .cover-frame { position: absolute; inset: 28px; border: 1px solid rgba(255,255,255,.14); border-radius: 24px; z-index: 2; pointer-events: none; }
+            .cover-content { position: relative; z-index: 3; padding: 36px 44px; flex: 1; display: flex; flex-direction: column; justify-content: flex-start; }
+            .cover-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 40px; }
             .cover-logo { height: 40px; object-fit: contain; }
             .cover-brand { font-size: 19px; font-weight: 900; letter-spacing: 1px; }
             .ai-badge { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(22,163,74,.12); color: #16a34a; border: 1px solid rgba(22,163,74,.35); padding: 7px 13px; font-size: 11px; font-weight: 800; }
-            .cover-hero { padding: 24px 0; }
+            .cover-hero { }
             .cover .eyebrow { color: #94a3b8; font-size: 12px; font-weight: 800; margin-bottom: 8px; letter-spacing: 1px; }
-            .cover .title { font-size: 46px; line-height: 1.2; font-weight: 900; margin: 0; }
-            .cover .subtitle { color: #e2e8f0; font-size: 17px; line-height: 1.7; max-width: 620px; margin: 12px 0 0; }
-            .cover-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 24px; }
+            .cover .title { font-size: 44px; line-height: 1.15; font-weight: 900; margin: 0 0 10px; }
+            .cover .subtitle { color: #e2e8f0; font-size: 16px; line-height: 1.6; max-width: 620px; margin: 0; }
+            .cover-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 28px; }
             .cover-card { border: 1px solid rgba(255,255,255,.14); border-radius: 16px; padding: 14px; background: rgba(255,255,255,.06); }
             .cover-card span { display: block; color: #94a3b8; font-size: 10px; margin-bottom: 5px; font-weight: 700; }
             .cover-card strong { font-size: 16px; font-weight: 800; }
@@ -737,16 +750,26 @@ export class FinancialService {
             .cover-coords strong { color: #fff; font-size: 14px; font-weight: 700; font-family: monospace; }
             .cover-meta { margin-top: 12px; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
             .report-code { font-family: monospace; font-size: 12px; color: #94a3b8; font-weight: 700; letter-spacing: 1px; }
-            .cover-footer { position: relative; z-index: 3; display: flex; justify-content: space-between; align-items: center; padding: 0 44px 30px; font-size: 10px; color: #94a3b8; font-weight: 700; }
+            .cover-footer { position: absolute; bottom: 0; left: 0; right: 0; z-index: 3; display: flex; justify-content: space-between; align-items: center; padding: 0 44px 28px; font-size: 10px; color: #94a3b8; font-weight: 700; }
           </style>
         </head>
         <body>
           ${params.startImage ? `
           <section class="page artwork-page">
             <img class="artwork-img" src="${params.startImage}" alt="Intro artwork" />
-            <div class="artwork-stamp">
-              <span>DigitalBrokerage AI Research</span>
-              <span>${reportCode}</span>
+            <div class="artwork-overlay">
+              <div class="artwork-welcome">
+                <div class="artwork-brand">${params.logoWhiteImage ? `<img src="${params.logoWhiteImage}" style="height: 44px; object-fit: contain; filter: brightness(0) invert(1);" />` : 'DigitalBrokerage'}</div>
+                <div class="artwork-title">تقرير مسح المنطقة</div>
+                <div class="artwork-location">${escapedLocationName}</div>
+                <div class="artwork-stats">
+                  <div class="artwork-stat"><span>عدد المواقع</span><strong>${total}</strong></div>
+                  <div class="artwork-stat"><span>عدد التصنيفات</span><strong>${Object.keys(typeCounts).length}</strong></div>
+                  <div class="artwork-stat"><span>نطاق البحث</span><strong>${params.radius.toLocaleString()} م</strong></div>
+                </div>
+                <div class="artwork-coords">${params.latitude.toFixed(6)}, ${params.longitude.toFixed(6)}</div>
+                <div class="artwork-date">${this.formatReportDate(params.generatedAt)}</div>
+              </div>
             </div>
           </section>
           ` : ''}
@@ -789,44 +812,43 @@ export class FinancialService {
           </section>
 
           <section class="page major">
-            ${pageHeader('إخلاء المسؤولية وأجندة التقرير', `${escapedLocationName} • ${params.latitude.toFixed(5)}, ${params.longitude.toFixed(5)}`, '02')}
+            ${pageHeader('إخلاء المسؤولية وأجندة التقرير', `${escapedLocationName} • ${params.latitude.toFixed(5)}, ${params.longitude.toFixed(5)}`)}
             <h3 class="section-title">إخلاء مسؤولية</h3>
             <div class="notice keep">
-              <ul style="margin: 0; padding-right: 18px; list-style-type: square;">
-                <li style="margin-bottom: 10px;">تم تقديم المعلومات والبيانات في هذا التقرير بهدف تقديم المعلومات العامة فقط، على الرغم من أننا نسعى للحفاظ على دقة وموثوقية البيانات المقدمة، إلا أننا لا نقدم أي تصريحات أو ضمانات صريحة أو ضمنية بشأن اكتمال أو ملاءمة أو دقة هذه المعلومات.</li>
-                <li style="margin-bottom: 10px;">لا تتحمل المنصة أي مسؤولية أو التزام بأي خطأ أو نقص في محتوى التقرير، كما يُنصح المستخدمون بالتحقق بشكل مستقل من المعلومات المقدمة، وإذا لزم الأمر البحث عن استشارة مهنية قبل اتخاذ أي قرارات استناداً على البيانات المقدمة.</li>
-                <li style="margin-bottom: 10px;">قد يحتوي هذا التقرير على توقعات، تقديرات، أو بيانات توجيهية أخرى قابلة للتغيير بناءً على عوامل متنوعة، ولا تتحمل المنصة أي التزام بتحديث أو إعلام المستخدمين بأي تغييرات من هذا القبيل.</li>
-                <li style="margin-bottom: 10px;">تخلي المنصة نفسها من جميع المسؤوليات عن أي خسارة أو ضرر أو إزعاج ناتج عن استخدام أو الاعتماد على المعلومات المقدمة في هذا التقرير، ويقر المستخدمون ويوافقون على الالتزام بالشروط والأحكام المبينة هنا وفي سياسة حدود الاستخدام لمنصة الوساطة الرقمية.</li>
+              <ul style="margin: 0; padding-right: 16px; list-style-type: square; font-size: 11px; line-height: 1.7;">
+                <li style="margin-bottom: 8px;">تم تقديم المعلومات والبيانات في هذا التقرير بهدف تقديم المعلومات العامة فقط، على الرغم من أننا نسعى للحفاظ على دقة وموثوقية البيانات المقدمة، إلا أننا لا نقدم أي تصريحات أو ضمانات صريحة أو ضمنية بشأن اكتمال أو ملاءمة أو دقة هذه المعلومات.</li>
+                <li style="margin-bottom: 8px;">لا تتحمل المنصة أي مسؤولية أو التزام بأي خطأ أو نقص في محتوى التقرير، كما يُنصح المستخدمون بالتحقق بشكل مستقل من المعلومات المقدمة، وإذا لزم الأمر البحث عن استشارة مهنية قبل اتخاذ أي قرارات استناداً على البيانات المقدمة.</li>
+                <li style="margin-bottom: 8px;">قد يحتوي هذا التقرير على توقعات، تقديرات، أو بيانات توجيهية أخرى قابلة للتغيير بناءً على عوامل متنوعة، ولا تتحمل المنصة أي التزام بتحديث أو إعلام المستخدمين بأي تغييرات من هذا القبيل.</li>
+                <li style="margin-bottom: 8px;">تخلي المنصة نفسها من جميع المسؤوليات عن أي خسارة أو ضرر أو إزعاج ناتج عن استخدام أو الاعتماد على المعلومات المقدمة في هذا التقرير، ويقر المستخدمون ويوافقون على الالتزام بالشروط والأحكام المبينة هنا وفي سياسة حدود الاستخدام لمنصة الوساطة الرقمية.</li>
                 <li>لا تشكل محتويات هذا التقرير نصائح مالية أو مهنية، كما يُنصح المستخدمون باستشارة الخبراء العقاريين المؤهلين للحصول على نصائح شخصية مصممة وفقاً لظروفهم الفردية.</li>
               </ul>
-              <p style="margin: 14px 0 0; font-weight: bold; line-height: 1.5; color: #0f172a;">من خلال الوصول إلى هذا التقرير واستخدامه، يقر المستخدمون ويوافقون على الالتزام بالشروط والأحكام المبينة هنا وفي سياسة حدود الاستخدام لمنصة الوساطة الرقمية.</p>
+              <p style="margin: 10px 0 0; font-weight: bold; line-height: 1.4; color: #0f172a; font-size: 11px;">من خلال الوصول إلى هذا التقرير واستخدامه، يقر المستخدمون ويوافقون على الالتزام بالشروط والأحكام المبينة هنا وفي سياسة حدود الاستخدام لمنصة الوساطة الرقمية.</p>
             </div>
 
             <hr class="divider" />
 
-            <h3 class="section-title">أجندة التقرير</h3>
+            <h3 class="section-title" style="font-size: 14px;">أجندة التقرير</h3>
             <table class="agenda keep">
               <tbody>
                 <tr><td>01</td><td>غلاف التقرير والبيانات الأساسية</td></tr>
                 <tr><td>02</td><td>إخلاء المسؤولية وأجندة التقرير</td></tr>
                 <tr><td>03</td><td>تفاصيل الموقع ومنهجية المسح</td></tr>
-                <tr><td>04</td><td>مؤشرات الخدمات العامة</td></tr>
-                <tr><td>05</td><td>توزيع التصنيفات والخدمات</td></tr>
-                <tr><td>06</td><td>الصورة التحليلية والمخطط المكاني</td></tr>
-                <tr><td>07</td><td>النموذج ثلاثي الأبعاد ولوحة أرقام البحث</td></tr>
-                <tr><td>08</td><td>تحليل المسافات والوصول</td></tr>
-                <tr><td>09</td><td>لوحة قرار الاستثمار</td></tr>
-                <tr><td>10</td><td>فجوات الخدمات والفرص</td></tr>
-                <tr><td>11</td><td>مصفوفة المخاطر وملاءمة الاستخدام</td></tr>
-                <tr><td>12</td><td>التوصية النهائية</td></tr>
-                <tr><td>13</td><td>ملحق البيانات</td></tr>
+                <tr><td>04</td><td>مؤشرات الخدمات وتوزيع التصنيفات</td></tr>
+                <tr><td>05</td><td>الصورة التحليلية والمخطط المكاني</td></tr>
+                <tr><td>06</td><td>النموذج ثلاثي الأبعاد ولوحة أرقام البحث</td></tr>
+                <tr><td>07</td><td>تحليل المسافات والوصول</td></tr>
+                <tr><td>08</td><td>لوحة قرار الاستثمار</td></tr>
+                <tr><td>09</td><td>فجوات الخدمات والفرص</td></tr>
+                <tr><td>10</td><td>مصفوفة المخاطر وملاءمة الاستخدام</td></tr>
+                <tr><td>11</td><td>التوصية النهائية</td></tr>
+                <tr><td>12</td><td>ملحق البيانات</td></tr>
               </tbody>
             </table>
             ${pageFooter('إخلاء المسؤولية وأجندة التقرير', '02')}
           </section>
 
           <section class="page major">
-            ${pageHeader('تفاصيل الموقع ومنهجية المسح', 'ملخص كمي للمسح الحالي', '03')}
+            ${pageHeader('تفاصيل الموقع ومنهجية المسح', 'ملخص كمي للمسح الحالي')}
             <div class="stats">
               <div class="stat"><span>عدد المواقع</span><strong>${total}</strong></div>
               <div class="stat"><span>عدد التصنيفات</span><strong>${Object.keys(typeCounts).length}</strong></div>
@@ -871,7 +893,7 @@ export class FinancialService {
           </section>
 
           <section class="page major">
-            ${pageHeader('مؤشرات الخدمات العامة', 'درجات كمية مركبة من نتائج المسح', '04')}
+            ${pageHeader('مؤشرات الخدمات وتوزيع التصنيفات', 'درجات كمية مركبة وتوزيع الخدمات ضمن نطاق البحث')}
             <div class="stats">
               <div class="stat"><span>درجة الجاذبية</span><strong>${serviceScore}%</strong></div>
               <div class="stat"><span>تنوع الخدمات</span><strong>${diversityScore}%</strong></div>
@@ -879,19 +901,15 @@ export class FinancialService {
               <div class="stat"><span>داخل 1000م</span><strong>${within1000}</strong></div>
             </div>
             <div class="diagram keep">
-              <svg width="100%" height="260" viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg">
-                <rect width="640" height="260" fill="#f8fafc"/>
+              <svg width="100%" height="220" viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg">
+                <rect width="640" height="220" fill="#f8fafc"/>
                 ${scoreBars}
               </svg>
             </div>
-            ${pageFooter('مؤشرات الخدمات العامة', '04')}
-          </section>
-
-          <section class="page major">
-            ${pageHeader('توزيع التصنيفات والخدمات', 'أكثر التصنيفات تكراراً ضمن نطاق البحث', '05')}
+            <h3 class="section-title" style="margin-top:16px">توزيع التصنيفات</h3>
             <div class="diagram keep">
-              <svg width="100%" height="370" viewBox="0 0 640 370" xmlns="http://www.w3.org/2000/svg">
-                <rect width="640" height="370" fill="#f8fafc"/>
+              <svg width="100%" height="280" viewBox="0 0 640 280" xmlns="http://www.w3.org/2000/svg">
+                <rect width="640" height="280" fill="#f8fafc"/>
                 ${barChart}
               </svg>
             </div>
@@ -899,11 +917,11 @@ export class FinancialService {
               <thead><tr><th>#</th><th>التصنيف</th><th>العدد</th><th>النسبة</th></tr></thead>
               <tbody>${topTypeRows}</tbody>
             </table>
-            ${pageFooter('توزيع التصنيفات والخدمات', '05')}
+            ${pageFooter('مؤشرات الخدمات وتوزيع التصنيفات', '04')}
           </section>
 
           <section class="page major">
-            ${pageHeader('الصورة التحليلية والمخطط المكاني', 'تمثيل مكاني تقريبي لتوزيع المواقع حول نقطة المركز', '06')}
+            ${pageHeader('الصورة التحليلية والمخطط المكاني', 'تمثيل مكاني تقريبي لتوزيع المواقع حول نقطة المركز')}
             <div class="diagram keep">${mapVisual}</div>
             <div class="visual-caption keep">
               <div class="explain-card">
@@ -926,11 +944,11 @@ export class FinancialService {
             <p class="muted" style="margin-top:8px">
               ارتفاع الأعمدة يعبر عن قوة حضور الخدمات وقربها من المركز. الأعمدة الأطول تعني مواقع أقرب أو أكثر تأثيراً في قرار الموقع، بينما انخفاض الأعمدة يعني تأثيراً أقل أو بعداً نسبياً.
             </p>
-            ${pageFooter('الصورة التحليلية والمخطط المكاني', '06')}
+            ${pageFooter('الصورة التحليلية والمخطط المكاني', '05')}
           </section>
 
           <section class="page major">
-            ${pageHeader('النموذج ثلاثي الأبعاد ولوحة أرقام البحث', 'تصوير بحثي لكثافة الخدمات حسب التصنيف', '07')}
+            ${pageHeader('النموذج ثلاثي الأبعاد ولوحة أرقام البحث', 'تصوير بحثي لكثافة الخدمات حسب التصنيف')}
             <div class="diagram keep">
               <svg width="100%" height="380" viewBox="0 0 640 380" xmlns="http://www.w3.org/2000/svg">
                 <rect width="640" height="380" fill="#f8fafc"/>
@@ -949,11 +967,11 @@ export class FinancialService {
               <div class="metric"><span>نسبة داخل 1000م</span><strong>${total ? Math.round((within1000 / total) * 100) : 0}%</strong><p>${within1000} موقع ضمن نطاق وصول سريع.</p></div>
               <div class="metric"><span>خارج 2000م</span><strong>${outside2000}</strong><p>مواقع أبعد نسبياً وتؤثر أقل على سهولة الوصول.</p></div>
             </div>
-            ${pageFooter('النموذج ثلاثي الأبعاد ولوحة أرقام البحث', '07')}
+            ${pageFooter('النموذج ثلاثي الأبعاد ولوحة أرقام البحث', '06')}
           </section>
 
           <section class="page major">
-            ${pageHeader('تحليل المسافات والوصول', 'توزيع النتائج حسب القرب من المركز', '08')}
+            ${pageHeader('تحليل المسافات والوصول', 'توزيع النتائج حسب القرب من المركز')}
             <div class="diagram keep">
               <svg width="100%" height="250" viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
                 <rect width="640" height="250" fill="#f8fafc"/>
@@ -965,11 +983,11 @@ export class FinancialService {
               <thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>المسافة</th><th>المدينة</th><th>الإحداثيات</th></tr></thead>
               <tbody>${nearestRows}</tbody>
             </table>
-            ${pageFooter('تحليل المسافات والوصول', '08')}
+            ${pageFooter('تحليل المسافات والوصول', '07')}
           </section>
 
           <section class="page major">
-            ${pageHeader('لوحة قرار الاستثمار', 'مؤشر مركب يساعد على المقارنة بين المواقع', '09')}
+            ${pageHeader('لوحة قرار الاستثمار', 'مؤشر مركب يساعد على المقارنة بين المواقع')}
             <div class="decision-hero keep">
               <div class="decision-score"><span>Decision Score</span><strong>${decisionScore}</strong><p>${decisionBand}</p></div>
               <div class="score-note">
@@ -986,11 +1004,11 @@ export class FinancialService {
               <thead><tr><th>#</th><th>المجموعة</th><th>العدد</th><th>الأقرب</th><th>الدرجة</th><th>أثرها على القرار</th></tr></thead>
               <tbody>${serviceGroupRows}</tbody>
             </table>
-            ${pageFooter('لوحة قرار الاستثمار', '09')}
+            ${pageFooter('لوحة قرار الاستثمار', '08')}
           </section>
 
           <section class="page major">
-            ${pageHeader('فجوات الخدمات والفرص', 'قراءة الفجوات التي قد تتحول إلى مخاطر أو فرص', '10')}
+            ${pageHeader('فجوات الخدمات والفرص', 'قراءة الفجوات التي قد تتحول إلى مخاطر أو فرص')}
             <div class="notice keep">
               الفجوة لا تعني دائماً ضعف الموقع. أحياناً تعني وجود فرصة تشغيلية إذا كان الطلب مثبتاً ولا توجد منافسة قوية.
               لذلك يجب قراءة هذه الصفحة مع الزيارة الميدانية وسعر الأرض أو العقار ونمو المنطقة.
@@ -1017,11 +1035,11 @@ export class FinancialService {
                 </ul>
               </div>
             </div>
-            ${pageFooter('فجوات الخدمات والفرص', '10')}
+            ${pageFooter('فجوات الخدمات والفرص', '09')}
           </section>
 
           <section class="page major">
-            ${pageHeader('مصفوفة المخاطر وملاءمة الاستخدام', 'تحويل نتائج المسح إلى عناصر تحقق واضحة', '11')}
+            ${pageHeader('مصفوفة المخاطر وملاءمة الاستخدام', 'تحويل نتائج المسح إلى عناصر تحقق واضحة')}
             <table class="keep">
               <thead><tr><th>الخطر</th><th>الإشارة من البيانات</th><th>المستوى</th><th>إجراء التخفيف</th></tr></thead>
               <tbody>${riskRows}</tbody>
@@ -1045,11 +1063,11 @@ export class FinancialService {
                 </ul>
               </div>
             </div>
-            ${pageFooter('مصفوفة المخاطر وملاءمة الاستخدام', '11')}
+            ${pageFooter('مصفوفة المخاطر وملاءمة الاستخدام', '10')}
           </section>
 
           <section class="page major">
-            ${pageHeader('التوصية النهائية', 'قراءة تنفيذية مبنية على نتائج المسح', '12')}
+            ${pageHeader('التوصية النهائية', 'قراءة تنفيذية مبنية على نتائج المسح')}
             <div class="rec keep">${this.escapeHtml(recommendation)}</div>
             <div class="two-col keep" style="margin-top:18px">
               <div class="panel">
@@ -1071,24 +1089,34 @@ export class FinancialService {
                 </ul>
               </div>
             </div>
-            ${pageFooter('التوصية النهائية', '12')}
+            ${pageFooter('التوصية النهائية', '11')}
           </section>
 
           <section class="page major">
-            ${pageHeader('ملحق البيانات', 'عينة موسعة من نتائج المسح، والملف الكامل متوفر في Excel', '13')}
-            <table class="keep">
+            ${pageHeader('ملحق البيانات', 'عينة موسعة من نتائج المسح، والملف الكامل متوفر في Excel')}
+            <table>
               <thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>المسافة بالمتر</th><th>المدينة</th></tr></thead>
               <tbody>${appendixRows}</tbody>
             </table>
-            ${pageFooter('ملحق البيانات', '13')}
+            ${pageFooter('ملحق البيانات', '12')}
           </section>
 
           ${params.endImage ? `
           <section class="page artwork-page">
             <img class="artwork-img" src="${params.endImage}" alt="Report closing page" />
-            <div class="artwork-stamp">
-              <span>DigitalBrokerage AI Research</span>
-              <span>${reportCode}</span>
+            <div class="artwork-overlay">
+              <div class="artwork-welcome">
+                <div class="artwork-brand">${params.logoWhiteImage ? `<img src="${params.logoWhiteImage}" style="height: 44px; object-fit: contain; filter: brightness(0) invert(1);" />` : 'DigitalBrokerage'}</div>
+                <div class="artwork-title">نهاية التقرير</div>
+                <div class="artwork-location">${escapedLocationName}</div>
+                <div class="artwork-stats">
+                  <div class="artwork-stat"><span>عدد المواقع</span><strong>${total}</strong></div>
+                  <div class="artwork-stat"><span>عدد التصنيفات</span><strong>${Object.keys(typeCounts).length}</strong></div>
+                  <div class="artwork-stat"><span>نطاق البحث</span><strong>${params.radius.toLocaleString()} م</strong></div>
+                </div>
+                <div class="artwork-coords">${params.latitude.toFixed(6)}, ${params.longitude.toFixed(6)}</div>
+                <div class="artwork-date">${this.formatReportDate(params.generatedAt)} • ${reportCode}</div>
+              </div>
             </div>
           </section>
           ` : ''}

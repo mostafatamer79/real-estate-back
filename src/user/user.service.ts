@@ -440,6 +440,10 @@ export class UserService {
             throw new NotFoundException('auth.user_not_found');
         }
 
+        if (updateUserDto.role === Role.ADMIN && user.role !== Role.ADMIN) {
+            throw new BadRequestException('Cannot set role to admin');
+        }
+
         // Handle verification status reset if critical info changes
         if (updateUserDto.falLicenseNumber) {
             // Logic to verify Fal license could go here or trigger a job

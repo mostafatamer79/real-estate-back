@@ -99,7 +99,9 @@ export class FinancialService {
   }
 
   private getUploadsRoot() {
-    return join(__dirname, '..', '..', 'uploads');
+    const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.cwd().startsWith('/var/task');
+    const basePath = isServerless ? '/tmp' : process.cwd();
+    return join(basePath, 'uploads');
   }
 
   private getUserScanReportsDir(userId: string) {

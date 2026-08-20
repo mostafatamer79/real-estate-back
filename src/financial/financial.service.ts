@@ -632,110 +632,112 @@ export class FinancialService {
             @page { size: A4; margin: 0; }
             * { box-sizing: border-box; }
             body { margin: 0; font-family: 'Cairo', Arial, Tahoma, sans-serif; color: #0f172a; background: #fff; direction: rtl; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .page { width: 210mm; min-height: 297mm; padding: 42px 48px 80px; page-break-after: always; position: relative; overflow: hidden; background: #fff; }
+            .page { width: 210mm; min-height: 297mm; padding: 36px 44px 64px; position: relative; background: #fff; }
+            .page.major { break-before: page; }
             .page > * { position: relative; z-index: 1; }
+            .keep { break-inside: avoid; }
 
-            .artwork-page { padding: 0; background: #0f172a; }
+            .artwork-page { padding: 0; background: #0f172a; min-height: 297mm; }
             .artwork-img { width: 210mm; height: 297mm; object-fit: cover; display: block; }
             .artwork-stamp { position: absolute; left: 34px; right: 34px; bottom: 30px; z-index: 2; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 16px; border-radius: 18px; background: rgba(15,23,42,.72); color: #fff; font-size: 11px; font-weight: 900; }
 
-            .header { display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 24px; }
+            .header { display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 14px; margin-bottom: 20px; }
             .header-main { flex: 1; min-width: 0; }
-            .header-main h2 { margin: 0; font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.3px; }
-            .header-main p { margin: 6px 0 0; color: #64748b; font-size: 12px; font-weight: 600; }
-            .header-page { font-size: 20px; font-weight: 800; color: #0f172a; padding: 0 8px; }
-            .header img { height: 34px; object-fit: contain; display: block; }
+            .header-main h2 { margin: 0; font-size: 20px; font-weight: 800; color: #0f172a; }
+            .header-main p { margin: 4px 0 0; color: #64748b; font-size: 11px; font-weight: 600; }
+            .header-page { font-size: 18px; font-weight: 800; color: #0f172a; padding: 0 6px; }
+            .header img { height: 32px; object-fit: contain; display: block; }
 
-            .footer { position: absolute; bottom: 34px; left: 48px; right: 48px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 11px; color: #64748b; font-weight: 600; }
-            .footer-page { font-size: 13px; font-weight: 800; color: #0f172a; }
+            .footer { position: absolute; bottom: 26px; left: 44px; right: 44px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 10px; color: #64748b; font-weight: 600; }
+            .footer-page { font-size: 12px; font-weight: 800; color: #0f172a; }
             .footer-brand { display: flex; align-items: center; gap: 8px; }
-            .footer-brand img { height: 16px; object-fit: contain; }
+            .footer-brand img { height: 15px; object-fit: contain; }
 
-            .section-title { font-size: 18px; font-weight: 800; color: #0f172a; margin: 0 0 14px; letter-spacing: -0.3px; }
-            .muted { color: #64748b; line-height: 1.8; font-size: 12.5px; }
-            .notice { background: #f8fafc; border: 1px solid #e2e8f0; border-right: 4px solid #0f172a; border-radius: 16px; padding: 20px; line-height: 2; color: #334155; font-size: 13px; }
-            .small-list { margin: 0; padding-right: 18px; color: #334155; line-height: 2; font-size: 12.5px; }
-            hr.divider { border: none; border-top: 1px solid #e2e8f0; margin: 20px 0; }
+            .section-title { font-size: 16px; font-weight: 800; color: #0f172a; margin: 0 0 12px; }
+            .muted { color: #64748b; line-height: 1.7; font-size: 12px; }
+            .notice { background: #f8fafc; border: 1px solid #e2e8f0; border-right: 4px solid #0f172a; border-radius: 14px; padding: 18px; line-height: 1.9; color: #334155; font-size: 12.5px; }
+            .small-list { margin: 0; padding-right: 18px; color: #334155; line-height: 1.9; font-size: 12px; }
+            hr.divider { border: none; border-top: 1px solid #e2e8f0; margin: 18px 0; }
 
-            .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
-            .stat { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; min-height: 92px; text-align: center; }
-            .stat span { display: block; color: #64748b; font-size: 11px; margin-bottom: 8px; font-weight: 700; }
-            .stat strong { display: block; font-size: 26px; color: #0f172a; font-weight: 800; }
-            .large-number { font-size: 34px; font-weight: 800; color: #0f172a; letter-spacing: -1px; }
-            .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-            .panel { border: 1px solid #e2e8f0; background: #fff; border-radius: 18px; padding: 18px; }
+            .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+            .stat { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; min-height: 86px; text-align: center; }
+            .stat span { display: block; color: #64748b; font-size: 10px; margin-bottom: 6px; font-weight: 700; }
+            .stat strong { display: block; font-size: 24px; color: #0f172a; font-weight: 800; }
+            .large-number { font-size: 30px; font-weight: 800; color: #0f172a; letter-spacing: -1px; }
+            .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+            .panel { border: 1px solid #e2e8f0; background: #fff; border-radius: 16px; padding: 16px; }
             .panel.dark { background: #0f172a; color: #fff; border-color: #0f172a; }
             .panel.dark .section-title { color: #fff !important; }
             .panel.dark .small-list { color: #e2e8f0; }
 
-            table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-top: 12px; font-size: 11px; }
-            th { background: #0f172a; color: #fff; padding: 12px 14px; text-align: right; font-weight: 700; font-size: 11px; }
-            td { border-bottom: 1px solid #e2e8f0; padding: 10px 14px; color: #334155; font-size: 11px; }
+            table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; margin-top: 10px; font-size: 10.5px; }
+            th { background: #0f172a; color: #fff; padding: 10px 12px; text-align: right; font-weight: 700; font-size: 10.5px; }
+            td { border-bottom: 1px solid #e2e8f0; padding: 9px 12px; color: #334155; font-size: 10.5px; }
             tr:last-child td { border-bottom: none; }
             tr:nth-child(even) td { background: #f8fafc; }
             .agenda { border: none !important; border-radius: 0 !important; }
             .agenda tbody tr { border-bottom: 1px dashed #e2e8f0; }
             .agenda tbody tr:last-child { border-bottom: none; }
-            .agenda td { border: none !important; background: none !important; padding: 10px 0; font-size: 13px; font-weight: 600; color: #1e293b; }
-            .agenda td:first-child { color: #2563eb; width: 50px; font-weight: 800; }
+            .agenda td { border: none !important; background: none !important; padding: 8px 0; font-size: 12.5px; font-weight: 600; color: #1e293b; }
+            .agenda td:first-child { color: #2563eb; width: 46px; font-weight: 800; }
 
-            .diagram { width: 100%; border: 1px solid #e2e8f0; border-radius: 20px; background: #f8fafc; overflow: hidden; margin-top: 14px; }
-            .visual-caption { display: grid; grid-template-columns: 1.2fr .8fr; gap: 14px; margin-top: 14px; }
-            .explain-card { border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; padding: 14px 16px; }
-            .explain-card h4 { margin: 0 0 8px; color: #0f172a; font-size: 14px; font-weight: 800; }
-            .explain-card p { margin: 0; color: #64748b; font-size: 11px; line-height: 1.8; }
-            .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-            .legend-item { display: flex; align-items: center; gap: 8px; color: #334155; font-size: 10px; font-weight: 700; }
-            .legend-dot { width: 9px; height: 9px; border-radius: 999px; display: inline-block; }
+            .diagram { width: 100%; border: 1px solid #e2e8f0; border-radius: 16px; background: #f8fafc; overflow: hidden; margin-top: 12px; }
+            .visual-caption { display: grid; grid-template-columns: 1.2fr .8fr; gap: 12px; margin-top: 12px; }
+            .explain-card { border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; padding: 12px 14px; }
+            .explain-card h4 { margin: 0 0 6px; color: #0f172a; font-size: 13px; font-weight: 800; }
+            .explain-card p { margin: 0; color: #64748b; font-size: 10.5px; line-height: 1.7; }
+            .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+            .legend-item { display: flex; align-items: center; gap: 6px; color: #334155; font-size: 9.5px; font-weight: 700; }
+            .legend-dot { width: 8px; height: 8px; border-radius: 999px; display: inline-block; }
 
-            .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-            .metric { border: 1px solid #e2e8f0; border-top: 4px solid #2563eb; border-radius: 16px; padding: 18px; background: #fff; min-height: 112px; }
+            .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+            .metric { border: 1px solid #e2e8f0; border-top: 4px solid #2563eb; border-radius: 14px; padding: 14px; background: #fff; min-height: 104px; }
             .metric:nth-child(2) { border-top-color: #dc2626; }
             .metric:nth-child(3) { border-top-color: #16a34a; }
             .metric:nth-child(4) { border-top-color: #f59e0b; }
             .metric:nth-child(5) { border-top-color: #7c3aed; }
             .metric:nth-child(6) { border-top-color: #64748b; }
-            .metric span { display: block; color: #64748b; font-size: 11px; font-weight: 700; margin-bottom: 10px; }
-            .metric strong { display: block; color: #0f172a; font-size: 30px; font-weight: 800; }
-            .metric p { margin: 8px 0 0; color: #64748b; font-size: 11px; line-height: 1.6; font-weight: 600; }
+            .metric span { display: block; color: #64748b; font-size: 10px; font-weight: 700; margin-bottom: 8px; }
+            .metric strong { display: block; color: #0f172a; font-size: 26px; font-weight: 800; }
+            .metric p { margin: 6px 0 0; color: #64748b; font-size: 10px; line-height: 1.5; font-weight: 600; }
 
-            .decision-hero { display: grid; grid-template-columns: 190px 1fr; gap: 18px; align-items: stretch; margin-bottom: 18px; }
-            .decision-score { border-radius: 22px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #fff; padding: 24px; text-align: center; }
-            .decision-score span { display: block; color: #94a3b8; font-size: 12px; font-weight: 700; margin-bottom: 12px; }
-            .decision-score strong { display: block; font-size: 56px; font-weight: 800; line-height: 1; color: #2563eb; }
-            .decision-score p { margin: 12px 0 0; color: #e2e8f0; font-size: 13px; font-weight: 700; }
-            .score-note { border: 1px solid #e2e8f0; border-radius: 22px; padding: 20px; background: #f8fafc; line-height: 1.9; color: #334155; font-size: 13px; }
+            .decision-hero { display: grid; grid-template-columns: 180px 1fr; gap: 14px; align-items: stretch; margin-bottom: 16px; }
+            .decision-score { border-radius: 18px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #fff; padding: 20px; text-align: center; }
+            .decision-score span { display: block; color: #94a3b8; font-size: 11px; font-weight: 700; margin-bottom: 10px; }
+            .decision-score strong { display: block; font-size: 48px; font-weight: 800; line-height: 1; color: #2563eb; }
+            .decision-score p { margin: 10px 0 0; color: #e2e8f0; font-size: 12px; font-weight: 700; }
+            .score-note { border: 1px solid #e2e8f0; border-radius: 18px; padding: 18px; background: #f8fafc; line-height: 1.8; color: #334155; font-size: 12.5px; }
 
-            .risk-pill { display: inline-block; min-width: 68px; text-align: center; border-radius: 9999px; padding: 4px 12px; font-size: 10px; font-weight: 700; border: 1px solid #e2e8f0; }
+            .risk-pill { display: inline-block; min-width: 62px; text-align: center; border-radius: 999px; padding: 4px 10px; font-size: 9px; font-weight: 700; border: 1px solid #e2e8f0; }
             .risk-low { color: #16a34a; background: #f8fafc; border-color: #16a34a; }
             .risk-mid { color: #f59e0b; background: #f8fafc; border-color: #f59e0b; }
             .risk-high { color: #dc2626; background: #f8fafc; border-color: #dc2626; }
 
-            .rec { font-size: 15px; line-height: 1.9; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0; border-right: 5px solid #2563eb; border-radius: 16px; padding: 22px; color: #0f172a; }
+            .rec { font-size: 14px; line-height: 1.8; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0; border-right: 5px solid #2563eb; border-radius: 14px; padding: 20px; color: #0f172a; }
 
             .cover { background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); color: #fff; padding: 0; display: flex; flex-direction: column; justify-content: space-between; }
             .cover-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
-            .cover-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,.90) 0%, rgba(15,23,42,.72) 60%, rgba(30,41,59,.86) 100%); z-index: 1; }
-            .cover-frame { position: absolute; inset: 36px; border: 1px solid rgba(255,255,255,.14); border-radius: 28px; z-index: 2; pointer-events: none; }
-            .cover-content { position: relative; z-index: 3; padding: 44px 48px 36px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+            .cover-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,.92) 0%, rgba(15,23,42,.78) 60%, rgba(30,41,59,.88) 100%); z-index: 1; }
+            .cover-frame { position: absolute; inset: 32px; border: 1px solid rgba(255,255,255,.14); border-radius: 26px; z-index: 2; pointer-events: none; }
+            .cover-content { position: relative; z-index: 3; padding: 40px 44px 32px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
             .cover-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
-            .cover-logo { height: 44px; object-fit: contain; }
-            .cover-brand { font-size: 20px; font-weight: 900; letter-spacing: 1px; }
-            .ai-badge { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(22,163,74,.12); color: #16a34a; border: 1px solid rgba(22,163,74,.35); padding: 8px 14px; font-size: 12px; font-weight: 800; }
-            .cover-hero { padding: 28px 0; }
-            .cover .eyebrow { color: #94a3b8; font-size: 13px; font-weight: 800; margin-bottom: 10px; letter-spacing: 1px; }
-            .cover .title { font-size: 52px; line-height: 1.2; font-weight: 900; margin: 0; letter-spacing: 0; }
-            .cover .subtitle { color: #e2e8f0; font-size: 18px; line-height: 1.8; max-width: 650px; margin: 14px 0 0; }
-            .cover-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 28px; }
-            .cover-card { border: 1px solid rgba(255,255,255,.14); border-radius: 18px; padding: 16px; background: rgba(255,255,255,.06); backdrop-filter: blur(12px); }
-            .cover-card span { display: block; color: #94a3b8; font-size: 11px; margin-bottom: 6px; font-weight: 700; }
-            .cover-card strong { font-size: 18px; font-weight: 800; }
-            .cover-coords { margin-top: 16px; border: 1px solid rgba(255,255,255,.14); border-radius: 14px; padding: 14px 18px; background: rgba(255,255,255,.06); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-            .cover-coords span { color: #94a3b8; font-size: 12px; font-weight: 700; }
-            .cover-coords strong { color: #fff; font-size: 15px; font-weight: 700; font-family: monospace; }
-            .cover-meta { margin-top: 14px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
-            .report-code { font-family: monospace; font-size: 13px; color: #94a3b8; font-weight: 700; letter-spacing: 1px; }
-            .cover-footer { position: relative; z-index: 3; display: flex; justify-content: space-between; align-items: center; padding: 0 48px 34px; font-size: 11px; color: #94a3b8; font-weight: 700; }
+            .cover-logo { height: 40px; object-fit: contain; }
+            .cover-brand { font-size: 19px; font-weight: 900; letter-spacing: 1px; }
+            .ai-badge { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(22,163,74,.12); color: #16a34a; border: 1px solid rgba(22,163,74,.35); padding: 7px 13px; font-size: 11px; font-weight: 800; }
+            .cover-hero { padding: 24px 0; }
+            .cover .eyebrow { color: #94a3b8; font-size: 12px; font-weight: 800; margin-bottom: 8px; letter-spacing: 1px; }
+            .cover .title { font-size: 46px; line-height: 1.2; font-weight: 900; margin: 0; }
+            .cover .subtitle { color: #e2e8f0; font-size: 17px; line-height: 1.7; max-width: 620px; margin: 12px 0 0; }
+            .cover-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 24px; }
+            .cover-card { border: 1px solid rgba(255,255,255,.14); border-radius: 16px; padding: 14px; background: rgba(255,255,255,.06); }
+            .cover-card span { display: block; color: #94a3b8; font-size: 10px; margin-bottom: 5px; font-weight: 700; }
+            .cover-card strong { font-size: 16px; font-weight: 800; }
+            .cover-coords { margin-top: 14px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 12px 16px; background: rgba(255,255,255,.06); display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+            .cover-coords span { color: #94a3b8; font-size: 11px; font-weight: 700; }
+            .cover-coords strong { color: #fff; font-size: 14px; font-weight: 700; font-family: monospace; }
+            .cover-meta { margin-top: 12px; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
+            .report-code { font-family: monospace; font-size: 12px; color: #94a3b8; font-weight: 700; letter-spacing: 1px; }
+            .cover-footer { position: relative; z-index: 3; display: flex; justify-content: space-between; align-items: center; padding: 0 44px 30px; font-size: 10px; color: #94a3b8; font-weight: 700; }
           </style>
         </head>
         <body>
@@ -786,61 +788,56 @@ export class FinancialService {
             </div>
           </section>
 
-          <section class="page">
-            ${pageHeader('إخلاء المسؤولية القانونية', `${escapedLocationName} • ${params.latitude.toFixed(5)}, ${params.longitude.toFixed(5)}`, '02')}
+          <section class="page major">
+            ${pageHeader('إخلاء المسؤولية وأجندة التقرير', `${escapedLocationName} • ${params.latitude.toFixed(5)}, ${params.longitude.toFixed(5)}`, '02')}
             <h3 class="section-title">إخلاء مسؤولية</h3>
-            <div class="notice">
+            <div class="notice keep">
               <ul style="margin: 0; padding-right: 18px; list-style-type: square;">
-                <li style="margin-bottom: 12px;">تم تقديم المعلومات والبيانات في هذا التقرير بهدف تقديم المعلومات العامة فقط، على الرغم من أننا نسعى للحفاظ على دقة وموثوقية البيانات المقدمة، إلا أننا لا نقدم أي تصريحات أو ضمانات صريحة أو ضمنية بشأن اكتمال أو ملاءمة أو دقة هذه المعلومات.</li>
-                <li style="margin-bottom: 12px;">لا تتحمل المنصة أي مسؤولية أو التزام بأي خطأ أو نقص في محتوى التقرير، كما يُنصح المستخدمون بالتحقق بشكل مستقل من المعلومات المقدمة، وإذا لزم الأمر البحث عن استشارة مهنية قبل اتخاذ أي قرارات استناداً على البيانات المقدمة.</li>
-                <li style="margin-bottom: 12px;">قد يحتوي هذا التقرير على توقعات، تقديرات، أو بيانات توجيهية أخرى قابلة للتغيير بناءً على عوامل متنوعة، ولا تتحمل المنصة أي التزام بتحديث أو إعلام المستخدمين بأي تغييرات من هذا القبيل.</li>
-                <li style="margin-bottom: 12px;">تخلي المنصة نفسها من جميع المسؤوليات عن أي خسارة أو ضرر أو إزعاج ناتج عن استخدام أو الاعتماد على المعلومات المقدمة في هذا التقرير، ويقر المستخدمون ويوافقون على الالتزام بالشروط والأحكام المبينة هنا وفي سياسة حدود الاستخدام لمنصة الوساطة الرقمية.</li>
-                <li style="margin-bottom: 12px;">لا تشكل محتويات هذا التقرير نصائح مالية أو مهنية، كما يُنصح المستخدمون باستشارة الخبراء العقاريين المؤهلين للحصول على نصائح شخصية مصممة وفقاً لظروفهم الفردية.</li>
+                <li style="margin-bottom: 10px;">تم تقديم المعلومات والبيانات في هذا التقرير بهدف تقديم المعلومات العامة فقط، على الرغم من أننا نسعى للحفاظ على دقة وموثوقية البيانات المقدمة، إلا أننا لا نقدم أي تصريحات أو ضمانات صريحة أو ضمنية بشأن اكتمال أو ملاءمة أو دقة هذه المعلومات.</li>
+                <li style="margin-bottom: 10px;">لا تتحمل المنصة أي مسؤولية أو التزام بأي خطأ أو نقص في محتوى التقرير، كما يُنصح المستخدمون بالتحقق بشكل مستقل من المعلومات المقدمة، وإذا لزم الأمر البحث عن استشارة مهنية قبل اتخاذ أي قرارات استناداً على البيانات المقدمة.</li>
+                <li style="margin-bottom: 10px;">قد يحتوي هذا التقرير على توقعات، تقديرات، أو بيانات توجيهية أخرى قابلة للتغيير بناءً على عوامل متنوعة، ولا تتحمل المنصة أي التزام بتحديث أو إعلام المستخدمين بأي تغييرات من هذا القبيل.</li>
+                <li style="margin-bottom: 10px;">تخلي المنصة نفسها من جميع المسؤوليات عن أي خسارة أو ضرر أو إزعاج ناتج عن استخدام أو الاعتماد على المعلومات المقدمة في هذا التقرير، ويقر المستخدمون ويوافقون على الالتزام بالشروط والأحكام المبينة هنا وفي سياسة حدود الاستخدام لمنصة الوساطة الرقمية.</li>
+                <li>لا تشكل محتويات هذا التقرير نصائح مالية أو مهنية، كما يُنصح المستخدمون باستشارة الخبراء العقاريين المؤهلين للحصول على نصائح شخصية مصممة وفقاً لظروفهم الفردية.</li>
               </ul>
-              <p style="margin: 18px 0 0; font-weight: bold; line-height: 1.6; color: #0f172a;">من خلال الوصول إلى هذا التقرير واستخدامه، يقر المستخدمون ويوافقون على الالتزام بالشروط والأحكام المبينة هنا وفي سياسة حدود الاستخدام لمنصة الوساطة الرقمية.</p>
+              <p style="margin: 14px 0 0; font-weight: bold; line-height: 1.5; color: #0f172a;">من خلال الوصول إلى هذا التقرير واستخدامه، يقر المستخدمون ويوافقون على الالتزام بالشروط والأحكام المبينة هنا وفي سياسة حدود الاستخدام لمنصة الوساطة الرقمية.</p>
             </div>
-            ${pageFooter('إخلاء المسؤولية القانونية', '02')}
-          </section>
 
-          <section class="page">
-            ${pageHeader('أجندة التقرير', `${escapedLocationName} • ${params.latitude.toFixed(5)}, ${params.longitude.toFixed(5)}`, '03')}
-            <h3 class="section-title">محتويات وأقسام التقرير</h3>
-            <table class="agenda">
+            <hr class="divider" />
+
+            <h3 class="section-title">أجندة التقرير</h3>
+            <table class="agenda keep">
               <tbody>
                 <tr><td>01</td><td>غلاف التقرير والبيانات الأساسية</td></tr>
-                <tr><td>02</td><td>إخلاء المسؤولية القانونية</td></tr>
-                <tr><td>03</td><td>أجندة التقرير</td></tr>
-                <tr><td>04</td><td>تفاصيل الموقع ونطاق البحث</td></tr>
-                <tr><td>05</td><td>منهجية المسح</td></tr>
-                <tr><td>06</td><td>مؤشرات الخدمات العامة</td></tr>
-                <tr><td>07</td><td>توزيع التصنيفات والخدمات</td></tr>
-                <tr><td>08</td><td>الصورة التحليلية والمخطط المكاني</td></tr>
-                <tr><td>09</td><td>النموذج ثلاثي الأبعاد</td></tr>
-                <tr><td>10</td><td>تحليل المسافات والوصول</td></tr>
-                <tr><td>11</td><td>لوحة أرقام البحث</td></tr>
-                <tr><td>12</td><td>لوحة قرار الاستثمار</td></tr>
-                <tr><td>13</td><td>فجوات الخدمات والفرص</td></tr>
-                <tr><td>14</td><td>مصفوفة المخاطر وملاءمة الاستخدام</td></tr>
-                <tr><td>15</td><td>التوصية النهائية</td></tr>
-                <tr><td>16</td><td>ملحق البيانات</td></tr>
+                <tr><td>02</td><td>إخلاء المسؤولية وأجندة التقرير</td></tr>
+                <tr><td>03</td><td>تفاصيل الموقع ومنهجية المسح</td></tr>
+                <tr><td>04</td><td>مؤشرات الخدمات العامة</td></tr>
+                <tr><td>05</td><td>توزيع التصنيفات والخدمات</td></tr>
+                <tr><td>06</td><td>الصورة التحليلية والمخطط المكاني</td></tr>
+                <tr><td>07</td><td>النموذج ثلاثي الأبعاد ولوحة أرقام البحث</td></tr>
+                <tr><td>08</td><td>تحليل المسافات والوصول</td></tr>
+                <tr><td>09</td><td>لوحة قرار الاستثمار</td></tr>
+                <tr><td>10</td><td>فجوات الخدمات والفرص</td></tr>
+                <tr><td>11</td><td>مصفوفة المخاطر وملاءمة الاستخدام</td></tr>
+                <tr><td>12</td><td>التوصية النهائية</td></tr>
+                <tr><td>13</td><td>ملحق البيانات</td></tr>
               </tbody>
             </table>
-            ${pageFooter('أجندة التقرير', '03')}
+            ${pageFooter('إخلاء المسؤولية وأجندة التقرير', '02')}
           </section>
 
-          <section class="page">
-            ${pageHeader('تفاصيل الموقع ونطاق البحث', 'ملخص كمي للمسح الحالي', '04')}
+          <section class="page major">
+            ${pageHeader('تفاصيل الموقع ومنهجية المسح', 'ملخص كمي للمسح الحالي', '03')}
             <div class="stats">
               <div class="stat"><span>عدد المواقع</span><strong>${total}</strong></div>
               <div class="stat"><span>عدد التصنيفات</span><strong>${Object.keys(typeCounts).length}</strong></div>
               <div class="stat"><span>متوسط المسافة</span><strong>${avgDistance}م</strong></div>
               <div class="stat"><span>كثافة المواقع/كم²</span><strong>${density}</strong></div>
             </div>
-            <div class="two-col">
+            <div class="two-col keep" style="margin-bottom:16px">
               <div class="panel">
                 <h3 class="section-title">إحداثيات المركز</h3>
-                <div class="large-number" style="font-size:24px">${params.latitude.toFixed(6)}</div>
-                <div class="large-number" style="font-size:24px">${params.longitude.toFixed(6)}</div>
+                <div class="large-number" style="font-size:22px">${params.latitude.toFixed(6)}</div>
+                <div class="large-number" style="font-size:22px">${params.longitude.toFixed(6)}</div>
                 <p class="muted">تم حساب المسافات من نقطة المركز المختارة في الخريطة.</p>
               </div>
               <div class="panel">
@@ -849,16 +846,13 @@ export class FinancialService {
                 <p class="muted">المساحة التقريبية المغطاة: ${(Math.PI * Math.pow(params.radius / 1000, 2)).toFixed(2)} كم²</p>
               </div>
             </div>
-            ${pageFooter('تفاصيل الموقع ونطاق البحث', '04')}
-          </section>
 
-          <section class="page">
-            ${pageHeader('منهجية المسح', 'طريقة تجميع وتحليل بيانات الخريطة', '05')}
-            <div class="notice">
+            <h3 class="section-title">منهجية المسح</h3>
+            <div class="notice keep">
               يقوم النظام بجلب جميع المواقع الواقعة داخل نصف قطر البحث، ثم يحسب المسافة الجغرافية بين كل موقع ونقطة المركز باستخدام معادلة Haversine.
               بعد ذلك يتم ترتيب النتائج حسب القرب، واستخراج التوزيع حسب التصنيف، وحساب كثافة الخدمات، ومؤشرات التنوع وسهولة الوصول.
             </div>
-            <div class="two-col" style="margin-top:18px">
+            <div class="two-col keep" style="margin-top:14px">
               <div class="panel dark">
                 <h3 class="section-title">مصادر القياس</h3>
                 <ul class="small-list">
@@ -873,45 +867,45 @@ export class FinancialService {
                 <p class="muted">التقرير يقيس القرب المكاني وليس جودة الخدمة أو الازدحام أو ساعات العمل. لذلك يعتبر أداة بحث أولية قوية وليست بديلاً عن التحقق الميداني.</p>
               </div>
             </div>
-            ${pageFooter('منهجية المسح', '05')}
+            ${pageFooter('تفاصيل الموقع ومنهجية المسح', '03')}
           </section>
 
-          <section class="page">
-            ${pageHeader('مؤشرات الخدمات العامة', 'درجات كمية مركبة من نتائج المسح', '06')}
+          <section class="page major">
+            ${pageHeader('مؤشرات الخدمات العامة', 'درجات كمية مركبة من نتائج المسح', '04')}
             <div class="stats">
               <div class="stat"><span>درجة الجاذبية</span><strong>${serviceScore}%</strong></div>
               <div class="stat"><span>تنوع الخدمات</span><strong>${diversityScore}%</strong></div>
               <div class="stat"><span>سهولة الوصول</span><strong>${accessibilityScore}%</strong></div>
               <div class="stat"><span>داخل 1000م</span><strong>${within1000}</strong></div>
             </div>
-            <div class="diagram">
-              <svg width="100%" height="280" viewBox="0 0 640 280" xmlns="http://www.w3.org/2000/svg">
-                <rect width="640" height="280" fill="#f8fafc"/>
+            <div class="diagram keep">
+              <svg width="100%" height="260" viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg">
+                <rect width="640" height="260" fill="#f8fafc"/>
                 ${scoreBars}
               </svg>
             </div>
-            ${pageFooter('مؤشرات الخدمات العامة', '06')}
+            ${pageFooter('مؤشرات الخدمات العامة', '04')}
           </section>
 
-          <section class="page">
-            ${pageHeader('توزيع التصنيفات والخدمات', 'أكثر التصنيفات تكراراً ضمن نطاق البحث', '07')}
-            <div class="diagram">
-              <svg width="100%" height="390" viewBox="0 0 640 390" xmlns="http://www.w3.org/2000/svg">
-                <rect width="640" height="390" fill="#f8fafc"/>
+          <section class="page major">
+            ${pageHeader('توزيع التصنيفات والخدمات', 'أكثر التصنيفات تكراراً ضمن نطاق البحث', '05')}
+            <div class="diagram keep">
+              <svg width="100%" height="370" viewBox="0 0 640 370" xmlns="http://www.w3.org/2000/svg">
+                <rect width="640" height="370" fill="#f8fafc"/>
                 ${barChart}
               </svg>
             </div>
-            <table>
+            <table class="keep">
               <thead><tr><th>#</th><th>التصنيف</th><th>العدد</th><th>النسبة</th></tr></thead>
               <tbody>${topTypeRows}</tbody>
             </table>
-            ${pageFooter('توزيع التصنيفات والخدمات', '07')}
+            ${pageFooter('توزيع التصنيفات والخدمات', '05')}
           </section>
 
-          <section class="page">
-            ${pageHeader('الصورة التحليلية والمخطط المكاني', 'تمثيل مكاني تقريبي لتوزيع المواقع حول نقطة المركز', '08')}
-            <div class="diagram">${mapVisual}</div>
-            <div class="visual-caption">
+          <section class="page major">
+            ${pageHeader('الصورة التحليلية والمخطط المكاني', 'تمثيل مكاني تقريبي لتوزيع المواقع حول نقطة المركز', '06')}
+            <div class="diagram keep">${mapVisual}</div>
+            <div class="visual-caption keep">
               <div class="explain-card">
                 <h4>كيف تقرأ المخطط؟</h4>
                 <p>النقطة الحمراء تمثل مركز الموقع. كل نقطة حولها تمثل خدمة أو مرفقاً مرصوداً داخل نطاق البحث. قرب النقاط من المركز يعني سهولة وصول أعلى، وكثرة الألوان تعني تنوعاً أكبر في البيئة المحيطة.</p>
@@ -928,45 +922,26 @@ export class FinancialService {
             </div>
             <hr class="divider" />
             <h3 class="section-title">مشهد تحليلي ثلاثي الأبعاد</h3>
-            <div class="diagram">${aerialVisual}</div>
-            <p class="muted" style="margin-top:10px">
+            <div class="diagram keep">${aerialVisual}</div>
+            <p class="muted" style="margin-top:8px">
               ارتفاع الأعمدة يعبر عن قوة حضور الخدمات وقربها من المركز. الأعمدة الأطول تعني مواقع أقرب أو أكثر تأثيراً في قرار الموقع، بينما انخفاض الأعمدة يعني تأثيراً أقل أو بعداً نسبياً.
             </p>
-            ${pageFooter('الصورة التحليلية والمخطط المكاني', '08')}
+            ${pageFooter('الصورة التحليلية والمخطط المكاني', '06')}
           </section>
 
-          <section class="page">
-            ${pageHeader('النموذج ثلاثي الأبعاد', 'تصوير بحثي لكثافة الخدمات حسب التصنيف', '09')}
-            <div class="diagram">
-              <svg width="100%" height="430" viewBox="0 0 640 430" xmlns="http://www.w3.org/2000/svg">
-                <rect width="640" height="430" fill="#f8fafc"/>
-                <text x="320" y="36" font-size="18" fill="#0f172a" text-anchor="middle" font-weight="900">نموذج 3D لكثافة الخدمات حسب التصنيف</text>
-                <text x="320" y="62" font-size="12" fill="#64748b" text-anchor="middle">ارتفاع كل عمود يمثل قوة حضور التصنيف داخل نطاق المسح</text>
+          <section class="page major">
+            ${pageHeader('النموذج ثلاثي الأبعاد ولوحة أرقام البحث', 'تصوير بحثي لكثافة الخدمات حسب التصنيف', '07')}
+            <div class="diagram keep">
+              <svg width="100%" height="380" viewBox="0 0 640 380" xmlns="http://www.w3.org/2000/svg">
+                <rect width="640" height="380" fill="#f8fafc"/>
+                <text x="320" y="32" font-size="16" fill="#0f172a" text-anchor="middle" font-weight="900">نموذج 3D لكثافة الخدمات حسب التصنيف</text>
+                <text x="320" y="54" font-size="10.5" fill="#64748b" text-anchor="middle">ارتفاع كل عمود يمثل قوة حضور التصنيف داخل نطاق المسح</text>
                 ${isoBars}
               </svg>
             </div>
-            ${pageFooter('النموذج ثلاثي الأبعاد', '09')}
-          </section>
-
-          <section class="page">
-            ${pageHeader('تحليل المسافات والوصول', 'توزيع النتائج حسب القرب من المركز', '10')}
-            <div class="diagram">
-              <svg width="100%" height="270" viewBox="0 0 640 270" xmlns="http://www.w3.org/2000/svg">
-                <rect width="640" height="270" fill="#f8fafc"/>
-                ${ringChart}
-              </svg>
-            </div>
-            <h3 class="section-title" style="margin-top:18px">أقرب المواقع</h3>
-            <table>
-              <thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>المسافة</th><th>المدينة</th><th>الإحداثيات</th></tr></thead>
-              <tbody>${nearestRows}</tbody>
-            </table>
-            ${pageFooter('تحليل المسافات والوصول', '10')}
-          </section>
-
-          <section class="page">
-            ${pageHeader('لوحة أرقام البحث', 'أرقام تشغيلية مختصرة قبل قراءة القرار', '11')}
-            <div class="metric-grid">
+            <hr class="divider" />
+            <h3 class="section-title">لوحة أرقام البحث</h3>
+            <div class="metric-grid keep">
               <div class="metric"><span>أقرب موقع</span><strong>${nearest[0] ? Math.round(nearest[0].distance || 0) : 0}م</strong><p>${this.escapeHtml(nearest[0]?.name || 'لا يوجد')}</p></div>
               <div class="metric"><span>أبعد موقع داخل النطاق</span><strong>${farthestDistance}م</strong><p>يعكس مدى انتشار النتائج داخل نصف القطر.</p></div>
               <div class="metric"><span>وسيط المسافة</span><strong>${medianDistance}م</strong><p>نصف المواقع أقرب من هذا الرقم تقريباً.</p></div>
@@ -974,41 +949,57 @@ export class FinancialService {
               <div class="metric"><span>نسبة داخل 1000م</span><strong>${total ? Math.round((within1000 / total) * 100) : 0}%</strong><p>${within1000} موقع ضمن نطاق وصول سريع.</p></div>
               <div class="metric"><span>خارج 2000م</span><strong>${outside2000}</strong><p>مواقع أبعد نسبياً وتؤثر أقل على سهولة الوصول.</p></div>
             </div>
-            ${pageFooter('لوحة أرقام البحث', '11')}
+            ${pageFooter('النموذج ثلاثي الأبعاد ولوحة أرقام البحث', '07')}
           </section>
 
-          <section class="page">
-            ${pageHeader('لوحة قرار الاستثمار', 'مؤشر مركب يساعد على المقارنة بين المواقع', '12')}
-            <div class="decision-hero">
+          <section class="page major">
+            ${pageHeader('تحليل المسافات والوصول', 'توزيع النتائج حسب القرب من المركز', '08')}
+            <div class="diagram keep">
+              <svg width="100%" height="250" viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+                <rect width="640" height="250" fill="#f8fafc"/>
+                ${ringChart}
+              </svg>
+            </div>
+            <h3 class="section-title" style="margin-top:16px">أقرب المواقع</h3>
+            <table class="keep">
+              <thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>المسافة</th><th>المدينة</th><th>الإحداثيات</th></tr></thead>
+              <tbody>${nearestRows}</tbody>
+            </table>
+            ${pageFooter('تحليل المسافات والوصول', '08')}
+          </section>
+
+          <section class="page major">
+            ${pageHeader('لوحة قرار الاستثمار', 'مؤشر مركب يساعد على المقارنة بين المواقع', '09')}
+            <div class="decision-hero keep">
               <div class="decision-score"><span>Decision Score</span><strong>${decisionScore}</strong><p>${decisionBand}</p></div>
               <div class="score-note">
                 تم بناء الدرجة من قوة الخدمات، تنوع التصنيفات، القرب، قوة عينة البيانات، وتوازن السوق المحيط.
                 هذه الدرجة لا تعني شراء أو عدم شراء مباشرة، لكنها تجعل المقارنة بين المواقع أسرع وأكثر انضباطاً.
               </div>
             </div>
-            <table>
+            <table class="keep">
               <thead><tr><th>العامل</th><th>الوزن</th><th>القيمة</th><th>قراءة القرار</th></tr></thead>
               <tbody>${decisionRows}</tbody>
             </table>
-            <h3 class="section-title" style="margin-top:20px">تحليل الخدمات الأساسية</h3>
-            <table>
+            <h3 class="section-title" style="margin-top:18px">تحليل الخدمات الأساسية</h3>
+            <table class="keep">
               <thead><tr><th>#</th><th>المجموعة</th><th>العدد</th><th>الأقرب</th><th>الدرجة</th><th>أثرها على القرار</th></tr></thead>
               <tbody>${serviceGroupRows}</tbody>
             </table>
-            ${pageFooter('لوحة قرار الاستثمار', '12')}
+            ${pageFooter('لوحة قرار الاستثمار', '09')}
           </section>
 
-          <section class="page">
-            ${pageHeader('فجوات الخدمات والفرص', 'قراءة الفجوات التي قد تتحول إلى مخاطر أو فرص', '13')}
-            <div class="notice">
+          <section class="page major">
+            ${pageHeader('فجوات الخدمات والفرص', 'قراءة الفجوات التي قد تتحول إلى مخاطر أو فرص', '10')}
+            <div class="notice keep">
               الفجوة لا تعني دائماً ضعف الموقع. أحياناً تعني وجود فرصة تشغيلية إذا كان الطلب مثبتاً ولا توجد منافسة قوية.
               لذلك يجب قراءة هذه الصفحة مع الزيارة الميدانية وسعر الأرض أو العقار ونمو المنطقة.
             </div>
-            <table>
+            <table class="keep">
               <thead><tr><th>المجموعة الناقصة</th><th>العدد المرصود</th><th>درجة التغطية</th><th>قراءة الفرصة</th></tr></thead>
               <tbody>${gapRows}</tbody>
             </table>
-            <div class="two-col" style="margin-top:18px">
+            <div class="two-col keep" style="margin-top:16px">
               <div class="panel">
                 <h3 class="section-title">أفضل استخدامات حسب البيانات</h3>
                 <table>
@@ -1026,20 +1017,20 @@ export class FinancialService {
                 </ul>
               </div>
             </div>
-            ${pageFooter('فجوات الخدمات والفرص', '13')}
+            ${pageFooter('فجوات الخدمات والفرص', '10')}
           </section>
 
-          <section class="page">
-            ${pageHeader('مصفوفة المخاطر وملاءمة الاستخدام', 'تحويل نتائج المسح إلى عناصر تحقق واضحة', '14')}
-            <table>
+          <section class="page major">
+            ${pageHeader('مصفوفة المخاطر وملاءمة الاستخدام', 'تحويل نتائج المسح إلى عناصر تحقق واضحة', '11')}
+            <table class="keep">
               <thead><tr><th>الخطر</th><th>الإشارة من البيانات</th><th>المستوى</th><th>إجراء التخفيف</th></tr></thead>
               <tbody>${riskRows}</tbody>
             </table>
-            <div class="two-col" style="margin-top:18px">
+            <div class="two-col keep" style="margin-top:16px">
               <div class="panel dark">
                 <h3 class="section-title">قراءة القرار المختصرة</h3>
-                <p style="line-height:2;color:#e2e8f0">
-                  الدرجة الحالية: <strong style="color:#fff;font-size:24px">${decisionScore}%</strong><br/>
+                <p style="line-height:1.9;color:#e2e8f0">
+                  الدرجة الحالية: <strong style="color:#fff;font-size:22px">${decisionScore}%</strong><br/>
                   الحكم: ${decisionBand}<br/>
                   أكبر تصنيف: ${this.escapeHtml(topTypes[0]?.[0] || 'غير محدد')} (${concentrationShare}%).
                 </p>
@@ -1054,13 +1045,13 @@ export class FinancialService {
                 </ul>
               </div>
             </div>
-            ${pageFooter('مصفوفة المخاطر وملاءمة الاستخدام', '14')}
+            ${pageFooter('مصفوفة المخاطر وملاءمة الاستخدام', '11')}
           </section>
 
-          <section class="page">
-            ${pageHeader('التوصية النهائية', 'قراءة تنفيذية مبنية على نتائج المسح', '15')}
-            <div class="rec">${this.escapeHtml(recommendation)}</div>
-            <div class="two-col" style="margin-top:20px">
+          <section class="page major">
+            ${pageHeader('التوصية النهائية', 'قراءة تنفيذية مبنية على نتائج المسح', '12')}
+            <div class="rec keep">${this.escapeHtml(recommendation)}</div>
+            <div class="two-col keep" style="margin-top:18px">
               <div class="panel">
                 <h3 class="section-title">نقاط القوة</h3>
                 <ul class="small-list">
@@ -1080,16 +1071,16 @@ export class FinancialService {
                 </ul>
               </div>
             </div>
-            ${pageFooter('التوصية النهائية', '15')}
+            ${pageFooter('التوصية النهائية', '12')}
           </section>
 
-          <section class="page">
-            ${pageHeader('ملحق البيانات', 'عينة موسعة من نتائج المسح، والملف الكامل متوفر في Excel', '16')}
-            <table>
+          <section class="page major">
+            ${pageHeader('ملحق البيانات', 'عينة موسعة من نتائج المسح، والملف الكامل متوفر في Excel', '13')}
+            <table class="keep">
               <thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>المسافة بالمتر</th><th>المدينة</th></tr></thead>
               <tbody>${appendixRows}</tbody>
             </table>
-            ${pageFooter('ملحق البيانات', '16')}
+            ${pageFooter('ملحق البيانات', '13')}
           </section>
 
           ${params.endImage ? `

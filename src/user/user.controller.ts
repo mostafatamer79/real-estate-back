@@ -7,6 +7,7 @@ import { UpdateUserDto } from './create-user-dto';
 import { Department, Role, User, VerifyStatus } from './user-entity';
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
 import { EmployeeManagementGuard } from '../common/guards/employee-management.guard';
+import { SkipSubscriptionGuard } from '../common/decorators/skip-subscription.decorator';
 import { MailService } from '../mail/mail.service';
 import { AuthService } from '../auth/auth.service';
 
@@ -39,6 +40,7 @@ export class UserController {
     }
 
     @Get('profile')
+    @SkipSubscriptionGuard()
     async getProfile(@Request() req) {
         return this.userService.getUserProfile(req.user.id);
     }
@@ -56,6 +58,7 @@ export class UserController {
     }
 
     @Put('profile')
+    @SkipSubscriptionGuard()
     async updateProfile(@Request() req, @Body() updateUserDto: UpdateUserDto) {
         return this.userService.updateUserDetails(req.user.id, updateUserDto);
     }
@@ -71,6 +74,7 @@ export class UserController {
 
 
     @Post('nafath/send-otp')
+    @SkipSubscriptionGuard()
     async sendNafathOtp(@Request() req, @Body('nationalId') nationalId: string) {
         if (!nationalId) {
             throw new BadRequestException('National ID is required');
@@ -95,6 +99,7 @@ export class UserController {
     }
 
     @Post('nafath/verify')
+    @SkipSubscriptionGuard()
     async verifyNafath(@Request() req, @Body('nationalId') nationalId: string, @Body('otp') otp: string) {
         const user = await this.userService.findOne(req.user.id);
         if (!user) {
@@ -114,6 +119,7 @@ export class UserController {
 
     @Post('upload')
     @UseInterceptors(FileInterceptor('file'))
+    @SkipSubscriptionGuard()
     async uploadProfileImage(@UploadedFile() file: Express.Multer.File) {
         // Folder 'profile-images'
         const uploaded = await this.fileUploadService.uploadFile(file, 'profile-images');

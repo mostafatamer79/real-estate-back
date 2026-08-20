@@ -348,12 +348,12 @@ export class FinancialService {
     `).join('');
 
     const barChart = topTypes.map(([type, count], index) => {
-      const width = total ? Math.max(12, Math.round((count / Math.max(topTypes[0]?.[1] || 1, 1)) * 360)) : 0;
-      const y = 24 + index * 24;
+      const width = total ? Math.max(12, Math.round((count / Math.max(topTypes[0]?.[1] || 1, 1)) * 380)) : 0;
+      const y = 32 + index * 34;
       return `
-        <text x="585" y="${y + 13}" font-size="11" fill="#334155" text-anchor="end">${this.escapeHtml(type).slice(0, 38)}</text>
-        <rect x="${200 + (360 - width)}" y="${y}" width="${width}" height="16" rx="7" fill="#0f172a"/>
-        <text x="185" y="${y + 12}" font-size="11" fill="#0f172a" font-weight="700">${count}</text>
+        <text x="585" y="${y + 15}" font-size="12" fill="#334155" text-anchor="end">${this.escapeHtml(type).slice(0, 38)}</text>
+        <rect x="${190 + (380 - width)}" y="${y}" width="${width}" height="18" rx="8" fill="#0f172a"/>
+        <text x="175" y="${y + 14}" font-size="12" fill="#0f172a" font-weight="700">${count}</text>
       `;
     }).join('');
     const ringChart = [
@@ -728,12 +728,12 @@ export class FinancialService {
 
             .rec { font-size: 14px; line-height: 1.8; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0; border-right: 5px solid #2563eb; border-radius: 14px; padding: 20px; color: #0f172a; }
 
-            .cover { background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); color: #fff; padding: 0; display: flex; flex-direction: column; justify-content: space-between; min-height: 297mm; }
+            .cover { background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); color: #fff; padding: 0; display: flex; flex-direction: column; }
             .cover-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
             .cover-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,.88) 0%, rgba(15,23,42,.72) 50%, rgba(30,41,59,.85) 100%); z-index: 1; }
             .cover-frame { position: absolute; inset: 28px; border: 1px solid rgba(255,255,255,.14); border-radius: 24px; z-index: 2; pointer-events: none; }
-            .cover-content { position: relative; z-index: 3; padding: 36px 44px; flex: 1; display: flex; flex-direction: column; justify-content: center; }
-            .cover-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 32px; }
+            .cover-content { position: relative; z-index: 3; padding: 36px 44px; flex: 1; display: flex; flex-direction: column; justify-content: flex-start; }
+            .cover-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 40px; }
             .cover-logo { height: 40px; object-fit: contain; }
             .cover-brand { font-size: 19px; font-weight: 900; letter-spacing: 1px; }
             .ai-badge { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(22,163,74,.12); color: #16a34a; border: 1px solid rgba(22,163,74,.35); padding: 7px 13px; font-size: 11px; font-weight: 800; }
@@ -833,16 +833,15 @@ export class FinancialService {
                 <tr><td>01</td><td>غلاف التقرير والبيانات الأساسية</td></tr>
                 <tr><td>02</td><td>إخلاء المسؤولية وأجندة التقرير</td></tr>
                 <tr><td>03</td><td>تفاصيل الموقع ومنهجية المسح</td></tr>
-                <tr><td>04</td><td>مؤشرات الخدمات العامة</td></tr>
-                <tr><td>05</td><td>توزيع التصنيفات والخدمات</td></tr>
-                <tr><td>06</td><td>الصورة التحليلية والمخطط المكاني</td></tr>
-                <tr><td>07</td><td>النموذج ثلاثي الأبعاد ولوحة أرقام البحث</td></tr>
-                <tr><td>08</td><td>تحليل المسافات والوصول</td></tr>
-                <tr><td>09</td><td>لوحة قرار الاستثمار</td></tr>
-                <tr><td>10</td><td>فجوات الخدمات والفرص</td></tr>
-                <tr><td>11</td><td>مصفوفة المخاطر وملاءمة الاستخدام</td></tr>
-                <tr><td>12</td><td>التوصية النهائية</td></tr>
-                <tr><td>13</td><td>ملحق البيانات</td></tr>
+                <tr><td>04</td><td>مؤشرات الخدمات وتوزيع التصنيفات</td></tr>
+                <tr><td>05</td><td>الصورة التحليلية والمخطط المكاني</td></tr>
+                <tr><td>06</td><td>النموذج ثلاثي الأبعاد ولوحة أرقام البحث</td></tr>
+                <tr><td>07</td><td>تحليل المسافات والوصول</td></tr>
+                <tr><td>08</td><td>لوحة قرار الاستثمار</td></tr>
+                <tr><td>09</td><td>فجوات الخدمات والفرص</td></tr>
+                <tr><td>10</td><td>مصفوفة المخاطر وملاءمة الاستخدام</td></tr>
+                <tr><td>11</td><td>التوصية النهائية</td></tr>
+                <tr><td>12</td><td>ملحق البيانات</td></tr>
               </tbody>
             </table>
             ${pageFooter('إخلاء المسؤولية وأجندة التقرير', '02')}
@@ -894,7 +893,7 @@ export class FinancialService {
           </section>
 
           <section class="page major">
-            ${pageHeader('مؤشرات الخدمات العامة', 'درجات كمية مركبة من نتائج المسح')}
+            ${pageHeader('مؤشرات الخدمات وتوزيع التصنيفات', 'درجات كمية مركبة وتوزيع الخدمات ضمن نطاق البحث')}
             <div class="stats">
               <div class="stat"><span>درجة الجاذبية</span><strong>${serviceScore}%</strong></div>
               <div class="stat"><span>تنوع الخدمات</span><strong>${diversityScore}%</strong></div>
@@ -902,16 +901,12 @@ export class FinancialService {
               <div class="stat"><span>داخل 1000م</span><strong>${within1000}</strong></div>
             </div>
             <div class="diagram keep">
-              <svg width="100%" height="280" viewBox="0 0 640 280" xmlns="http://www.w3.org/2000/svg">
-                <rect width="640" height="280" fill="#f8fafc"/>
+              <svg width="100%" height="220" viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg">
+                <rect width="640" height="220" fill="#f8fafc"/>
                 ${scoreBars}
               </svg>
             </div>
-            ${pageFooter('مؤشرات الخدمات العامة', '04')}
-          </section>
-
-          <section class="page major">
-            ${pageHeader('توزيع التصنيفات والخدمات', 'أكثر التصنيفات تكراراً ضمن نطاق البحث')}
+            <h3 class="section-title" style="margin-top:16px">توزيع التصنيفات</h3>
             <div class="diagram keep">
               <svg width="100%" height="280" viewBox="0 0 640 280" xmlns="http://www.w3.org/2000/svg">
                 <rect width="640" height="280" fill="#f8fafc"/>
@@ -922,7 +917,7 @@ export class FinancialService {
               <thead><tr><th>#</th><th>التصنيف</th><th>العدد</th><th>النسبة</th></tr></thead>
               <tbody>${topTypeRows}</tbody>
             </table>
-            ${pageFooter('توزيع التصنيفات والخدمات', '05')}
+            ${pageFooter('مؤشرات الخدمات وتوزيع التصنيفات', '04')}
           </section>
 
           <section class="page major">
@@ -949,7 +944,7 @@ export class FinancialService {
             <p class="muted" style="margin-top:8px">
               ارتفاع الأعمدة يعبر عن قوة حضور الخدمات وقربها من المركز. الأعمدة الأطول تعني مواقع أقرب أو أكثر تأثيراً في قرار الموقع، بينما انخفاض الأعمدة يعني تأثيراً أقل أو بعداً نسبياً.
             </p>
-            ${pageFooter('الصورة التحليلية والمخطط المكاني', '06')}
+            ${pageFooter('الصورة التحليلية والمخطط المكاني', '05')}
           </section>
 
           <section class="page major">
@@ -972,7 +967,7 @@ export class FinancialService {
               <div class="metric"><span>نسبة داخل 1000م</span><strong>${total ? Math.round((within1000 / total) * 100) : 0}%</strong><p>${within1000} موقع ضمن نطاق وصول سريع.</p></div>
               <div class="metric"><span>خارج 2000م</span><strong>${outside2000}</strong><p>مواقع أبعد نسبياً وتؤثر أقل على سهولة الوصول.</p></div>
             </div>
-            ${pageFooter('النموذج ثلاثي الأبعاد ولوحة أرقام البحث', '07')}
+            ${pageFooter('النموذج ثلاثي الأبعاد ولوحة أرقام البحث', '06')}
           </section>
 
           <section class="page major">
@@ -988,7 +983,7 @@ export class FinancialService {
               <thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>المسافة</th><th>المدينة</th><th>الإحداثيات</th></tr></thead>
               <tbody>${nearestRows}</tbody>
             </table>
-            ${pageFooter('تحليل المسافات والوصول', '08')}
+            ${pageFooter('تحليل المسافات والوصول', '07')}
           </section>
 
           <section class="page major">
@@ -1009,7 +1004,7 @@ export class FinancialService {
               <thead><tr><th>#</th><th>المجموعة</th><th>العدد</th><th>الأقرب</th><th>الدرجة</th><th>أثرها على القرار</th></tr></thead>
               <tbody>${serviceGroupRows}</tbody>
             </table>
-            ${pageFooter('لوحة قرار الاستثمار', '09')}
+            ${pageFooter('لوحة قرار الاستثمار', '08')}
           </section>
 
           <section class="page major">
@@ -1040,7 +1035,7 @@ export class FinancialService {
                 </ul>
               </div>
             </div>
-            ${pageFooter('فجوات الخدمات والفرص', '10')}
+            ${pageFooter('فجوات الخدمات والفرص', '09')}
           </section>
 
           <section class="page major">
@@ -1068,7 +1063,7 @@ export class FinancialService {
                 </ul>
               </div>
             </div>
-            ${pageFooter('مصفوفة المخاطر وملاءمة الاستخدام', '11')}
+            ${pageFooter('مصفوفة المخاطر وملاءمة الاستخدام', '10')}
           </section>
 
           <section class="page major">
@@ -1094,7 +1089,7 @@ export class FinancialService {
                 </ul>
               </div>
             </div>
-            ${pageFooter('التوصية النهائية', '12')}
+            ${pageFooter('التوصية النهائية', '11')}
           </section>
 
           <section class="page major">
@@ -1103,7 +1098,7 @@ export class FinancialService {
               <thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>المسافة بالمتر</th><th>المدينة</th></tr></thead>
               <tbody>${appendixRows}</tbody>
             </table>
-            ${pageFooter('ملحق البيانات', '13')}
+            ${pageFooter('ملحق البيانات', '12')}
           </section>
 
           ${params.endImage ? `

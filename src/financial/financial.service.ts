@@ -601,15 +601,17 @@ export class FinancialService {
         ? 'الموقع متوسط الجاذبية الخدمية ويحتاج إلى تقييم نوعية الخدمات الأقرب قبل اتخاذ قرار نهائي.'
         : 'الموقع منخفض نسبياً في كثافة أو تنوع الخدمات ضمن النطاق الحالي، وينصح بتوسيع نطاق المقارنة أو مراجعة بدائل قريبة.';
 
-    const pageHeader = (title: string, subtitle: string) => `
+    const pageHeader = (title: string) => `
       <div class="header">
         <div class="header-top">
-          <span class="header-date">${this.formatReportDate(params.generatedAt)}</span>
+          <div class="header-meta">
+            <span class="header-date">${this.formatReportDate(params.generatedAt)}</span>
+            <span class="header-separator">•</span>
+            <span class="header-location">${escapedLocationName}</span>
+          </div>
           ${params.logoBlackImage ? `<img src="${params.logoBlackImage}" alt="logo" />` : ''}
         </div>
-        <div class="header-location">${escapedLocationName}</div>
         <div class="header-title">${title}</div>
-        <div class="header-subtitle">${subtitle}</div>
       </div>
     `;
     const pageFooter = (label: string, page: string) => `
@@ -652,13 +654,14 @@ export class FinancialService {
             .artwork-coords { font-family: monospace; font-size: 15px; color: #94a3b8; margin-bottom: 8px; }
             .artwork-date { font-size: 13px; color: #64748b; font-weight: 600; }
 
-            .header { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #e2e8f0; }
-            .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+            .header { margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0; }
+            .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+            .header-meta { display: flex; align-items: center; gap: 8px; }
             .header-date { font-size: 11px; color: #64748b; font-weight: 600; }
-            .header-top img { height: 28px; object-fit: contain; }
-            .header-location { font-size: 22px; font-weight: 900; color: #0f172a; margin-bottom: 8px; line-height: 1.3; }
-            .header-title { font-size: 15px; font-weight: 700; color: #2563eb; margin-bottom: 4px; }
-            .header-subtitle { font-size: 11px; color: #64748b; font-weight: 600; }
+            .header-separator { color: #cbd5e1; }
+            .header-location { font-size: 11px; color: #64748b; font-weight: 600; }
+            .header-top img { height: 26px; object-fit: contain; }
+            .header-title { font-size: 18px; font-weight: 800; color: #0f172a; }
 
             .footer { position: absolute; bottom: 24px; left: 44px; right: 44px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 10px; color: #64748b; font-weight: 600; }
             .footer-right { font-weight: 700; color: #0f172a; }
@@ -812,7 +815,7 @@ export class FinancialService {
           </section>
 
           <section class="page major">
-            ${pageHeader('إخلاء المسؤولية وأجندة التقرير', `${escapedLocationName} • ${params.latitude.toFixed(5)}, ${params.longitude.toFixed(5)}`)}
+            ${pageHeader('إخلاء المسؤولية وفهرس التقرير')}
             <h3 class="section-title">إخلاء مسؤولية</h3>
             <div class="notice keep">
               <ul style="margin: 0; padding-right: 16px; list-style-type: square; font-size: 11px; line-height: 1.7;">
@@ -827,11 +830,11 @@ export class FinancialService {
 
             <hr class="divider" />
 
-            <h3 class="section-title" style="font-size: 14px;">أجندة التقرير</h3>
+            <h3 class="section-title" style="font-size: 14px;">فهرس التقرير</h3>
             <table class="agenda keep">
               <tbody>
                 <tr><td>01</td><td>غلاف التقرير والبيانات الأساسية</td></tr>
-                <tr><td>02</td><td>إخلاء المسؤولية وأجندة التقرير</td></tr>
+                <tr><td>02</td><td>إخلاء المسؤولية وفهرس التقرير</td></tr>
                 <tr><td>03</td><td>تفاصيل الموقع ومنهجية المسح</td></tr>
                 <tr><td>04</td><td>مؤشرات الخدمات وتوزيع التصنيفات</td></tr>
                 <tr><td>05</td><td>الصورة التحليلية والمخطط المكاني</td></tr>
@@ -844,11 +847,11 @@ export class FinancialService {
                 <tr><td>12</td><td>ملحق البيانات</td></tr>
               </tbody>
             </table>
-            ${pageFooter('إخلاء المسؤولية وأجندة التقرير', '02')}
+            ${pageFooter('إخلاء المسؤولية وفهرس التقرير', '02')}
           </section>
 
           <section class="page major">
-            ${pageHeader('تفاصيل الموقع ومنهجية المسح', 'ملخص كمي للمسح الحالي')}
+            ${pageHeader('تفاصيل الموقع ومنهجية المسح')}
             <div class="stats">
               <div class="stat"><span>عدد المواقع</span><strong>${total}</strong></div>
               <div class="stat"><span>عدد التصنيفات</span><strong>${Object.keys(typeCounts).length}</strong></div>
@@ -893,7 +896,7 @@ export class FinancialService {
           </section>
 
           <section class="page major">
-            ${pageHeader('مؤشرات الخدمات وتوزيع التصنيفات', 'درجات كمية مركبة وتوزيع الخدمات ضمن نطاق البحث')}
+            ${pageHeader('مؤشرات الخدمات وتوزيع التصنيفات')}
             <div class="stats">
               <div class="stat"><span>درجة الجاذبية</span><strong>${serviceScore}%</strong></div>
               <div class="stat"><span>تنوع الخدمات</span><strong>${diversityScore}%</strong></div>
@@ -921,7 +924,7 @@ export class FinancialService {
           </section>
 
           <section class="page major">
-            ${pageHeader('الصورة التحليلية والمخطط المكاني', 'تمثيل مكاني تقريبي لتوزيع المواقع حول نقطة المركز')}
+            ${pageHeader('الصورة التحليلية والمخطط المكاني')}
             <div class="diagram keep">${mapVisual}</div>
             <div class="visual-caption keep">
               <div class="explain-card">
@@ -948,7 +951,7 @@ export class FinancialService {
           </section>
 
           <section class="page major">
-            ${pageHeader('النموذج ثلاثي الأبعاد ولوحة أرقام البحث', 'تصوير بحثي لكثافة الخدمات حسب التصنيف')}
+            ${pageHeader('النموذج ثلاثي الأبعاد ولوحة أرقام البحث')}
             <div class="diagram keep">
               <svg width="100%" height="380" viewBox="0 0 640 380" xmlns="http://www.w3.org/2000/svg">
                 <rect width="640" height="380" fill="#f8fafc"/>
@@ -971,7 +974,7 @@ export class FinancialService {
           </section>
 
           <section class="page major">
-            ${pageHeader('تحليل المسافات والوصول', 'توزيع النتائج حسب القرب من المركز')}
+            ${pageHeader('تحليل المسافات والوصول')}
             <div class="diagram keep">
               <svg width="100%" height="250" viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
                 <rect width="640" height="250" fill="#f8fafc"/>
@@ -987,7 +990,7 @@ export class FinancialService {
           </section>
 
           <section class="page major">
-            ${pageHeader('لوحة قرار الاستثمار', 'مؤشر مركب يساعد على المقارنة بين المواقع')}
+            ${pageHeader('لوحة قرار الاستثمار')}
             <div class="decision-hero keep">
               <div class="decision-score"><span>Decision Score</span><strong>${decisionScore}</strong><p>${decisionBand}</p></div>
               <div class="score-note">
@@ -1008,7 +1011,7 @@ export class FinancialService {
           </section>
 
           <section class="page major">
-            ${pageHeader('فجوات الخدمات والفرص', 'قراءة الفجوات التي قد تتحول إلى مخاطر أو فرص')}
+            ${pageHeader('فجوات الخدمات والفرص')}
             <div class="notice keep">
               الفجوة لا تعني دائماً ضعف الموقع. أحياناً تعني وجود فرصة تشغيلية إذا كان الطلب مثبتاً ولا توجد منافسة قوية.
               لذلك يجب قراءة هذه الصفحة مع الزيارة الميدانية وسعر الأرض أو العقار ونمو المنطقة.
@@ -1039,7 +1042,7 @@ export class FinancialService {
           </section>
 
           <section class="page major">
-            ${pageHeader('مصفوفة المخاطر وملاءمة الاستخدام', 'تحويل نتائج المسح إلى عناصر تحقق واضحة')}
+            ${pageHeader('مصفوفة المخاطر وملاءمة الاستخدام')}
             <table class="keep">
               <thead><tr><th>الخطر</th><th>الإشارة من البيانات</th><th>المستوى</th><th>إجراء التخفيف</th></tr></thead>
               <tbody>${riskRows}</tbody>
@@ -1067,7 +1070,7 @@ export class FinancialService {
           </section>
 
           <section class="page major">
-            ${pageHeader('التوصية النهائية', 'قراءة تنفيذية مبنية على نتائج المسح')}
+            ${pageHeader('التوصية النهائية')}
             <div class="rec keep">${this.escapeHtml(recommendation)}</div>
             <div class="two-col keep" style="margin-top:18px">
               <div class="panel">
@@ -1093,7 +1096,7 @@ export class FinancialService {
           </section>
 
           <section class="page major">
-            ${pageHeader('ملحق البيانات', 'عينة موسعة من نتائج المسح، والملف الكامل متوفر في Excel')}
+            ${pageHeader('ملحق البيانات')}
             <table>
               <thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>المسافة بالمتر</th><th>المدينة</th></tr></thead>
               <tbody>${appendixRows}</tbody>

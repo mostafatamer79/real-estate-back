@@ -351,7 +351,7 @@ export class FinancialService {
       const width = total ? Math.max(12, Math.round((count / Math.max(topTypes[0]?.[1] || 1, 1)) * 380)) : 0;
       const y = 32 + index * 34;
       return `
-        <text x="585" y="${y + 15}" font-size="12" fill="#334155" text-anchor="end">${this.escapeHtml(type).slice(0, 38)}</text>
+        <text x="585" y="${y + 15}" font-size="12" fill="#334155" text-anchor="end">${this.escapeHtml(type)}</text>
         <rect x="${190 + (380 - width)}" y="${y}" width="${width}" height="18" rx="8" fill="#0f172a"/>
         <text x="175" y="${y + 14}" font-size="12" fill="#0f172a" font-weight="700">${count}</text>
       `;
@@ -462,7 +462,7 @@ export class FinancialService {
         <polygon points="${x},${y - h} ${x + 46},${y - h - 22} ${x + 92},${y - h} ${x + 46},${y - h + 24}" fill="${color}"/>
         <polygon points="${x},${y} ${x},${y - h} ${x + 46},${y - h + 24} ${x + 46},${y + 24}" fill="${color}" opacity=".78"/>
         <polygon points="${x + 92},${y} ${x + 92},${y - h} ${x + 46},${y - h + 24} ${x + 46},${y + 24}" fill="${color}" opacity=".55"/>
-        <text x="${x + 46}" y="${y + 48}" font-size="10" fill="#334155" text-anchor="middle">${this.escapeHtml(type).slice(0, 18)}</text>
+        <text x="${x + 46}" y="${y + 48}" font-size="10" fill="#334155" text-anchor="middle">${this.escapeHtml(type)}</text>
         <text x="${x + 46}" y="${y - h - 30}" font-size="13" fill="#0f172a" text-anchor="middle" font-weight="900">${count}</text>
       `;
     }).join('');
@@ -622,10 +622,6 @@ export class FinancialService {
       </div>
     `;
 
-    const coverLogo = (params.logoWhiteImage || params.logoBlackImage)
-      ? `<img class="cover-logo" src="${params.logoWhiteImage || params.logoBlackImage}" alt="logo" style="${params.logoWhiteImage ? '' : 'filter:brightness(0) invert(1);'}" />`
-      : '<div class="cover-brand">DigitalBrokerage</div>';
-
     return `<!doctype html>
       <html dir="rtl" lang="ar">
         <head>
@@ -653,6 +649,11 @@ export class FinancialService {
             .artwork-stat strong { font-size: 22px; font-weight: 800; }
             .artwork-coords { font-family: monospace; font-size: 15px; color: #94a3b8; margin-bottom: 8px; }
             .artwork-date { font-size: 13px; color: #64748b; font-weight: 600; }
+            .artwork-overlay-end { position: absolute; left: 0; right: 0; bottom: 40px; display: flex; justify-content: center; }
+            .artwork-end-minimal { text-align: center; color: #fff; background: rgba(15,23,42,.55); border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 18px 34px; }
+            .artwork-end-title { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+            .artwork-end-location { font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; }
+            .artwork-end-meta { font-size: 11px; color: #94a3b8; font-weight: 600; }
 
             .header { margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0; }
             .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -661,7 +662,7 @@ export class FinancialService {
             .header-separator { color: #cbd5e1; }
             .header-location { font-size: 11px; color: #64748b; font-weight: 600; }
             .header-top img { height: 26px; object-fit: contain; }
-            .header-title { font-size: 18px; font-weight: 800; color: #0f172a; }
+            .header-title { font-size: 17px; font-weight: 800; color: #0f172a; }
 
             .footer { position: absolute; bottom: 24px; left: 44px; right: 44px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 10px; color: #64748b; font-weight: 600; }
             .footer-right { font-weight: 700; color: #0f172a; }
@@ -776,43 +777,6 @@ export class FinancialService {
             </div>
           </section>
           ` : ''}
-
-          <section class="page cover">
-            ${params.coverImage ? `<img class="cover-bg" src="${params.coverImage}" alt="cover" />` : ''}
-            <div class="cover-overlay"></div>
-            <div class="cover-frame"></div>
-            <div class="cover-content">
-              <div class="cover-top">
-                ${coverLogo}
-                <div class="ai-badge">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                  تقرير مُولّد بالذكاء الاصطناعي
-                </div>
-              </div>
-              <div class="cover-hero">
-                <div class="eyebrow">تقرير مسح مكاني</div>
-                <h1 class="title">تقرير مسح المنطقة</h1>
-                <p class="subtitle">${escapedLocationName}</p>
-                <div class="cover-grid">
-                  <div class="cover-card"><span>عدد المواقع</span><strong>${total}</strong></div>
-                  <div class="cover-card"><span>عدد التصنيفات</span><strong>${Object.keys(typeCounts).length}</strong></div>
-                  <div class="cover-card"><span>نطاق البحث</span><strong>${params.radius.toLocaleString()} م</strong></div>
-                  <div class="cover-card"><span>تاريخ التقرير</span><strong>${this.formatReportDate(params.generatedAt)}</strong></div>
-                </div>
-                <div class="cover-coords">
-                  <span>الإحداثيات</span>
-                  <strong>${params.latitude.toFixed(6)}, ${params.longitude.toFixed(6)}</strong>
-                </div>
-                <div class="cover-meta">
-                  <span class="report-code">${reportCode}</span>
-                </div>
-              </div>
-            </div>
-            <div class="cover-footer">
-              <span>DigitalBrokerage AI Research</span>
-              <span>الصفحة 01</span>
-            </div>
-          </section>
 
           <section class="page major">
             ${pageHeader('إخلاء المسؤولية وفهرس التقرير')}
@@ -1107,18 +1071,11 @@ export class FinancialService {
           ${params.endImage ? `
           <section class="page artwork-page">
             <img class="artwork-img" src="${params.endImage}" alt="Report closing page" />
-            <div class="artwork-overlay">
-              <div class="artwork-welcome">
-                <div class="artwork-brand">${params.logoWhiteImage ? `<img src="${params.logoWhiteImage}" style="height: 44px; object-fit: contain; filter: brightness(0) invert(1);" />` : 'DigitalBrokerage'}</div>
-                <div class="artwork-title">نهاية التقرير</div>
-                <div class="artwork-location">${escapedLocationName}</div>
-                <div class="artwork-stats">
-                  <div class="artwork-stat"><span>عدد المواقع</span><strong>${total}</strong></div>
-                  <div class="artwork-stat"><span>عدد التصنيفات</span><strong>${Object.keys(typeCounts).length}</strong></div>
-                  <div class="artwork-stat"><span>نطاق البحث</span><strong>${params.radius.toLocaleString()} م</strong></div>
-                </div>
-                <div class="artwork-coords">${params.latitude.toFixed(6)}, ${params.longitude.toFixed(6)}</div>
-                <div class="artwork-date">${this.formatReportDate(params.generatedAt)} • ${reportCode}</div>
+            <div class="artwork-overlay-end">
+              <div class="artwork-end-minimal">
+                <div class="artwork-end-title">نهاية التقرير</div>
+                <div class="artwork-end-location">${escapedLocationName}</div>
+                <div class="artwork-end-meta">${this.formatReportDate(params.generatedAt)} • ${reportCode}</div>
               </div>
             </div>
           </section>

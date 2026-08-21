@@ -347,9 +347,11 @@ export class FinancialService {
       </tr>
     `).join('');
 
+    const barChartRowHeight = 34;
+    const barChartHeight = Math.max(280, 32 + topTypes.length * barChartRowHeight + 16);
     const barChart = topTypes.map(([type, count], index) => {
       const width = total ? Math.max(12, Math.round((count / Math.max(topTypes[0]?.[1] || 1, 1)) * 380)) : 0;
-      const y = 32 + index * 34;
+      const y = 32 + index * barChartRowHeight;
       return `
         <text x="585" y="${y + 15}" font-size="12" fill="#334155" text-anchor="end">${this.escapeHtml(type)}</text>
         <rect x="${190 + (380 - width)}" y="${y}" width="${width}" height="18" rx="8" fill="#0f172a"/>
@@ -380,26 +382,26 @@ export class FinancialService {
       return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${index < 20 ? 4 : 2.6}" fill="${palette[index % palette.length]}" opacity=".78"/>`;
     }).join('');
     const mapVisual = params.mapImage
-      ? `<img src="${params.mapImage}" alt="Map Snapshot" style="width:100%; height:315px; object-fit:cover; display:block;" />`
-      : `<svg width="100%" height="315" viewBox="0 0 640 315" xmlns="http://www.w3.org/2000/svg">
-          <rect width="640" height="315" fill="#f8fafc"/>
-          <circle cx="300" cy="210" r="70" fill="none" stroke="#e2e8f0" stroke-width="2"/>
-          <circle cx="300" cy="210" r="140" fill="none" stroke="#e2e8f0" stroke-width="2"/>
-          <circle cx="300" cy="210" r="210" fill="none" stroke="#e2e8f0" stroke-width="2"/>
-          <line x1="300" y1="20" x2="300" y2="300" stroke="#e2e8f0" stroke-width="2"/>
-          <line x1="40" y1="210" x2="600" y2="210" stroke="#e2e8f0" stroke-width="2"/>
+      ? `<img src="${params.mapImage}" alt="Map Snapshot" style="width:100%; height:300px; object-fit:cover; display:block;" />`
+      : `<svg width="100%" height="300" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+          <rect width="640" height="300" fill="#f8fafc"/>
+          <circle cx="300" cy="200" r="70" fill="none" stroke="#e2e8f0" stroke-width="2"/>
+          <circle cx="300" cy="200" r="140" fill="none" stroke="#e2e8f0" stroke-width="2"/>
+          <circle cx="300" cy="200" r="210" fill="none" stroke="#e2e8f0" stroke-width="2"/>
+          <line x1="300" y1="20" x2="300" y2="290" stroke="#e2e8f0" stroke-width="2"/>
+          <line x1="40" y1="200" x2="600" y2="200" stroke="#e2e8f0" stroke-width="2"/>
           ${mapDots}
-          <circle cx="300" cy="210" r="10" fill="#dc2626"/>
-          <text x="300" y="198" font-size="13" fill="#0f172a" text-anchor="middle" font-weight="900">الموقع</text>
-          <text x="300" y="300" font-size="12" fill="#64748b" text-anchor="middle">مخطط تمثيلي وليس صورة جوية حقيقية</text>
+          <circle cx="300" cy="200" r="10" fill="#dc2626"/>
+          <text x="300" y="188" font-size="13" fill="#0f172a" text-anchor="middle" font-weight="900">الموقع</text>
+          <text x="300" y="290" font-size="12" fill="#64748b" text-anchor="middle">مخطط تمثيلي وليس صورة جوية حقيقية</text>
         </svg>`;
     const localAerialBlocks = nearest.slice(0, 36).map((place, index) => {
       const col = index % 9;
       const row = Math.floor(index / 9);
       const baseX = 76 + col * 54 + row * 18;
-      const baseY = 72 + row * 38 + col * 8;
+      const baseY = 92 + row * 34 + col * 8;
       const distanceFactor = Math.max(0.25, 1 - Math.min(Number(place.distance || 0), params.radius) / Math.max(params.radius, 1));
-      const height = Math.round(18 + distanceFactor * 72 + (index < 8 ? 18 : 0));
+      const height = Math.round(16 + distanceFactor * 54 + (index < 8 ? 14 : 0));
       const palette = ['#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed', '#0f766e'];
       const color = palette[index % palette.length];
       return `
@@ -413,10 +415,10 @@ export class FinancialService {
       `;
     }).join('');
     const localAerialRoads = [0, 1, 2, 3, 4].map((row) => `
-      <path d="M${36 + row * 34} ${84 + row * 32} L${550 + row * 16} ${170 + row * 32}" stroke="#e2e8f0" stroke-width="10" stroke-linecap="round" opacity=".82"/>
-      <path d="M${42 + row * 34} ${84 + row * 32} L${556 + row * 16} ${170 + row * 32}" stroke="#f8fafc" stroke-width="2" stroke-dasharray="10 12" opacity=".9"/>
+      <path d="M${36 + row * 34} ${104 + row * 28} L${550 + row * 16} ${194 + row * 28}" stroke="#e2e8f0" stroke-width="10" stroke-linecap="round" opacity=".82"/>
+      <path d="M${42 + row * 34} ${104 + row * 28} L${556 + row * 16} ${194 + row * 28}" stroke="#f8fafc" stroke-width="2" stroke-dasharray="10 12" opacity=".9"/>
     `).join('');
-    const aerialVisual = `<svg width="100%" height="250" viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+    const aerialVisual = `<svg width="100%" height="340" viewBox="0 -40 640 340" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="aerialSky" x1="0" x2="1" y1="0" y2="1">
           <stop offset="0%" stop-color="#f8fafc"/>
@@ -424,25 +426,27 @@ export class FinancialService {
           <stop offset="100%" stop-color="#f8fafc"/>
         </linearGradient>
       </defs>
-      <rect width="640" height="250" fill="url(#aerialSky)"/>
-      <polygon points="24,198 300,52 620,178 338,240" fill="#e2e8f0" opacity=".72"/>
-      <polygon points="74,182 305,72 560,176 330,224" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+      <rect width="640" height="340" fill="url(#aerialSky)" opacity="0"/>
+      <polygon points="24,228 300,72 620,208 338,270" fill="#e2e8f0" opacity=".72"/>
+      <polygon points="74,212 305,92 560,206 330,254" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
       ${localAerialRoads}
       ${localAerialBlocks}
       <g>
-        <circle cx="312" cy="150" r="18" fill="#dc2626" opacity=".2"/>
-        <circle cx="312" cy="150" r="8" fill="#dc2626"/>
-        <text x="312" y="135" font-size="12" fill="#0f172a" text-anchor="middle" font-weight="900">المركز</text>
+        <circle cx="312" cy="170" r="18" fill="#dc2626" opacity=".2"/>
+        <circle cx="312" cy="170" r="8" fill="#dc2626"/>
+        <text x="312" y="155" font-size="12" fill="#0f172a" text-anchor="middle" font-weight="900">المركز</text>
       </g>
       <text x="600" y="32" font-size="13" fill="#0f172a" text-anchor="end" font-weight="900">مشهد جوي 3D مولد محلياً</text>
       <text x="600" y="52" font-size="10" fill="#64748b" text-anchor="end">ارتفاع المباني يعكس قرب وكثافة الخدمات المرصودة</text>
     </svg>`;
-    const scoreBars = [
+    const scoreBarItems = [
       ['درجة الجاذبية الخدمية', serviceScore],
       ['تنوع الخدمات', diversityScore],
       ['سهولة الوصول', accessibilityScore],
       ['كثافة الخدمات', Math.min(100, Math.round(density * 5))],
-    ].map(([label, value]: any, index) => {
+    ];
+    const scoreBarsHeight = 56 + (scoreBarItems.length - 1) * 58 + 24 + 20;
+    const scoreBars = scoreBarItems.map(([label, value]: any, index) => {
       const y = 56 + index * 58;
       const width = Math.round((Number(value) / 100) * 390);
       return `
@@ -694,10 +698,10 @@ export class FinancialService {
             .agenda td:first-child { color: #2563eb; width: 40px; font-weight: 800; }
 
             .diagram { width: 100%; border: 1px solid #e2e8f0; border-radius: 16px; background: #f8fafc; overflow: hidden; margin-top: 12px; }
-            .visual-caption { display: grid; grid-template-columns: 1.2fr .8fr; gap: 12px; margin-top: 12px; }
-            .explain-card { border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; padding: 12px 14px; }
-            .explain-card h4 { margin: 0 0 6px; color: #0f172a; font-size: 13px; font-weight: 800; }
-            .explain-card p { margin: 0; color: #64748b; font-size: 10.5px; line-height: 1.7; }
+            .visual-caption { display: grid; grid-template-columns: 1.2fr .8fr; gap: 8px; margin-top: 10px; }
+            .explain-card { border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; padding: 10px 12px; }
+            .explain-card h4 { margin: 0 0 4px; color: #0f172a; font-size: 13px; font-weight: 800; }
+            .explain-card p { margin: 0; color: #64748b; font-size: 10.5px; line-height: 1.55; }
             .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
             .legend-item { display: flex; align-items: center; gap: 6px; color: #334155; font-size: 9.5px; font-weight: 700; }
             .legend-dot { width: 8px; height: 8px; border-radius: 999px; display: inline-block; }
@@ -750,28 +754,41 @@ export class FinancialService {
             .cover-meta { margin-top: 12px; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
             .report-code { font-family: monospace; font-size: 12px; color: #94a3b8; font-weight: 700; letter-spacing: 1px; }
             .cover-footer { position: absolute; bottom: 0; left: 0; right: 0; z-index: 3; display: flex; justify-content: space-between; align-items: center; padding: 0 44px 28px; font-size: 10px; color: #94a3b8; font-weight: 700; }
+
+            .cover-light { background: #fff; color: #0f172a; padding: 128px 44px 70px; min-height: 297mm; display: flex; flex-direction: column; align-items: center; text-align: center; }
+            .cover-light-brand { font-size: 18px; font-weight: 900; letter-spacing: 1px; color: #64748b; margin-bottom: 60px; }
+            .cover-light-brand img { height: 44px; object-fit: contain; }
+            .cover-light-eyebrow { font-size: 12px; font-weight: 800; color: #2563eb; margin-bottom: 16px; letter-spacing: 1px; }
+            .cover-light-title { font-size: 46px; font-weight: 900; line-height: 1.15; margin: 0 0 14px; }
+            .cover-light-location { font-size: 22px; font-weight: 700; color: #334155; margin-bottom: 40px; }
+            .cover-light-stats { display: flex; justify-content: center; gap: 16px; margin-bottom: 40px; flex-wrap: wrap; }
+            .cover-light-stat { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px 28px; min-width: 130px; }
+            .cover-light-stat span { display: block; font-size: 11px; color: #64748b; margin-bottom: 6px; font-weight: 700; }
+            .cover-light-stat strong { display: block; font-size: 24px; font-weight: 800; color: #0f172a; }
+            .cover-light-coords { font-family: monospace; font-size: 15px; color: #64748b; margin-bottom: 10px; }
+            .cover-light-date { font-size: 13px; color: #94a3b8; font-weight: 600; }
           </style>
         </head>
         <body style="${params.coverImage ? `--page-bg: url('${params.coverImage}')` : ''}">
           ${params.startImage ? `
           <section class="page artwork-page">
             <img class="artwork-img" src="${params.startImage}" alt="Intro artwork" />
-            <div class="artwork-overlay">
-              <div class="artwork-welcome">
-                <div class="artwork-brand">${params.logoWhiteImage ? `<img src="${params.logoWhiteImage}" style="height: 44px; object-fit: contain; filter: brightness(0) invert(1);" />` : 'DigitalBrokerage'}</div>
-                <div class="artwork-title">تقرير مسح المنطقة</div>
-                <div class="artwork-location">${escapedLocationName}</div>
-                <div class="artwork-stats">
-                  <div class="artwork-stat"><span>عدد المواقع</span><strong>${total}</strong></div>
-                  <div class="artwork-stat"><span>عدد التصنيفات</span><strong>${Object.keys(typeCounts).length}</strong></div>
-                  <div class="artwork-stat"><span>نطاق البحث</span><strong>${params.radius.toLocaleString()} م</strong></div>
-                </div>
-                <div class="artwork-coords">${params.latitude.toFixed(6)}, ${params.longitude.toFixed(6)}</div>
-                <div class="artwork-date">${this.formatReportDate(params.generatedAt)}</div>
-              </div>
-            </div>
           </section>
           ` : ''}
+
+          <section class="page cover-light" style="${params.coverImage ? `background-image: url('${params.coverImage}'); background-size: 100% 100%;` : ''}">
+            <div class="cover-light-brand">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" alt="logo" />` : 'DigitalBrokerage'}</div>
+            <div class="cover-light-eyebrow">تقرير مسح مكاني</div>
+            <div class="cover-light-title">تقرير مسح المنطقة</div>
+            <div class="cover-light-location">${escapedLocationName}</div>
+            <div class="cover-light-stats">
+              <div class="cover-light-stat"><span>عدد المواقع</span><strong>${total}</strong></div>
+              <div class="cover-light-stat"><span>عدد التصنيفات</span><strong>${Object.keys(typeCounts).length}</strong></div>
+              <div class="cover-light-stat"><span>نطاق البحث</span><strong>${params.radius.toLocaleString()} م</strong></div>
+            </div>
+            <div class="cover-light-coords">${params.latitude.toFixed(6)}, ${params.longitude.toFixed(6)}</div>
+            <div class="cover-light-date">${this.formatReportDate(params.generatedAt)}</div>
+          </section>
 
           <section class="page major">
             ${pageHeader('إخلاء المسؤولية وفهرس التقرير')}
@@ -784,7 +801,7 @@ export class FinancialService {
                 <li style="margin-bottom: 8px;">تخلي المنصة نفسها من جميع المسؤوليات عن أي خسارة أو ضرر أو إزعاج ناتج عن استخدام أو الاعتماد على المعلومات المقدمة في هذا التقرير، ويقر المستخدمون ويوافقون على الالتزام بالشروط والأحكام المبينة هنا وفي سياسة حدود الاستخدام لمنصة الوساطة الرقمية.</li>
                 <li>لا تشكل محتويات هذا التقرير نصائح مالية أو مهنية، كما يُنصح المستخدمون باستشارة الخبراء العقاريين المؤهلين للحصول على نصائح شخصية مصممة وفقاً لظروفهم الفردية.</li>
               </ul>
-              <p style="margin: 10px 0 0; font-weight: bold; line-height: 1.4; color: #0f172a; font-size: 11px;">من خلال الوصول إلى هذا التقرير واستخدامه، يقر المستخدمون ويوافقون على الالتزام بالشروط والأحكام المبينة هنا وفي سياسة حدود الاستخدام لمنصة الوساطة الرقمية.</p>
+              <p style="margin: 10px 0 0; font-weight: bold; line-height: 1.4; color: #0f172a; font-size: 11px;">من خلال الوصول إلى هذا التقرير واستخدامه، يقر المستخدمون ويوافقون على الالتزام بالشروط والأحكام المبينة هنا وفي سياسة الاستخدام لمنصة الوساطة الرقمية.</p>
             </div>
 
             <hr class="divider" />
@@ -792,21 +809,24 @@ export class FinancialService {
             <h3 class="section-title" style="font-size: 14px;">فهرس التقرير</h3>
             <table class="agenda keep">
               <tbody>
-                <tr><td>01</td><td>غلاف التقرير والبيانات الأساسية</td></tr>
-                <tr><td>02</td><td>إخلاء المسؤولية وفهرس التقرير</td></tr>
-                <tr><td>03</td><td>تفاصيل الموقع ومنهجية المسح</td></tr>
-                <tr><td>04</td><td>مؤشرات الخدمات وتوزيع التصنيفات</td></tr>
-                <tr><td>05</td><td>الصورة التحليلية والمخطط المكاني</td></tr>
-                <tr><td>06</td><td>النموذج ثلاثي الأبعاد ولوحة أرقام البحث</td></tr>
-                <tr><td>07</td><td>تحليل المسافات والوصول</td></tr>
-                <tr><td>08</td><td>لوحة قرار الاستثمار</td></tr>
-                <tr><td>09</td><td>فجوات الخدمات والفرص</td></tr>
-                <tr><td>10</td><td>مصفوفة المخاطر وملاءمة الاستخدام</td></tr>
-                <tr><td>11</td><td>التوصية النهائية</td></tr>
-                <tr><td>12</td><td>ملحق البيانات</td></tr>
+                <tr><td>01</td><td>غلاف التقرير</td></tr>
+                <tr><td>02</td><td>غلاف التقرير والبيانات الأساسية</td></tr>
+                <tr><td>03</td><td>إخلاء المسؤولية وفهرس التقرير</td></tr>
+                <tr><td>04</td><td>تفاصيل الموقع ومنهجية المسح</td></tr>
+                <tr><td>05</td><td>مؤشرات الخدمات</td></tr>
+                <tr><td>06</td><td>توزيع التصنيفات</td></tr>
+                <tr><td>07</td><td>الصورة التحليلية والمخطط المكاني</td></tr>
+                <tr><td>08</td><td>النموذج ثلاثي الأبعاد ولوحة أرقام البحث</td></tr>
+                <tr><td>09</td><td>تحليل المسافات والوصول</td></tr>
+                <tr><td>10</td><td>لوحة قرار الاستثمار</td></tr>
+                <tr><td>11</td><td>فجوات الخدمات والفرص</td></tr>
+                <tr><td>12</td><td>مصفوفة المخاطر وملاءمة الاستخدام</td></tr>
+                <tr><td>13</td><td>التوصية النهائية</td></tr>
+                <tr><td>14</td><td>ملحق البيانات</td></tr>
+                <tr><td>15</td><td>نهاية التقرير</td></tr>
               </tbody>
             </table>
-            ${pageFooter('إخلاء المسؤولية وفهرس التقرير', '02')}
+            ${pageFooter('إخلاء المسؤولية وفهرس التقرير', '03')}
           </section>
 
           <section class="page major">
@@ -847,15 +867,24 @@ export class FinancialService {
                 </ul>
               </div>
               <div class="panel">
-                <h3 class="section-title">حدود التحليل</h3>
+                <h3 class="section-title">التحليل</h3>
                 <p class="muted">التقرير يقيس القرب المكاني وليس جودة الخدمة أو الازدحام أو ساعات العمل. لذلك يعتبر أداة بحث أولية قوية وليست بديلاً عن التحقق الميداني.</p>
               </div>
             </div>
-            ${pageFooter('تفاصيل الموقع ومنهجية المسح', '03')}
+            <div class="panel keep" style="margin-top:14px">
+              <h3 class="section-title">أبرز النتائج</h3>
+              <div class="stats" style="margin-bottom:0">
+                <div class="stat"><span>أقرب موقع</span><strong>${nearest[0] ? Math.round(nearest[0].distance || 0) : 0}م</strong></div>
+                <div class="stat"><span>متوسط المسافة</span><strong>${avgDistance}م</strong></div>
+                <div class="stat"><span>المواقع ضمن 1000م</span><strong>${within1000}</strong></div>
+                <div class="stat"><span>أكبر تصنيف</span><strong>${this.escapeHtml(topTypes[0]?.[0] || 'غير محدد')}</strong></div>
+              </div>
+            </div>
+            ${pageFooter('تفاصيل الموقع ومنهجية المسح', '04')}
           </section>
 
           <section class="page major">
-            ${pageHeader('مؤشرات الخدمات وتوزيع التصنيفات')}
+            ${pageHeader('مؤشرات الخدمات')}
             <div class="stats">
               <div class="stat"><span>درجة الجاذبية</span><strong>${serviceScore}%</strong></div>
               <div class="stat"><span>تنوع الخدمات</span><strong>${diversityScore}%</strong></div>
@@ -863,23 +892,28 @@ export class FinancialService {
               <div class="stat"><span>داخل 1000م</span><strong>${within1000}</strong></div>
             </div>
             <div class="diagram keep">
-              <svg width="100%" height="220" viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg">
-                <rect width="640" height="220" fill="#f8fafc"/>
+              <svg width="100%" height="${scoreBarsHeight}" viewBox="0 0 640 ${scoreBarsHeight}" xmlns="http://www.w3.org/2000/svg">
+                <rect width="640" height="${scoreBarsHeight}" fill="#f8fafc"/>
                 ${scoreBars}
               </svg>
             </div>
             <h3 class="section-title" style="margin-top:16px">توزيع التصنيفات</h3>
             <div class="diagram keep">
-              <svg width="100%" height="280" viewBox="0 0 640 280" xmlns="http://www.w3.org/2000/svg">
-                <rect width="640" height="280" fill="#f8fafc"/>
+              <svg width="100%" height="${barChartHeight}" viewBox="0 0 640 ${barChartHeight}" xmlns="http://www.w3.org/2000/svg">
+                <rect width="640" height="${barChartHeight}" fill="#f8fafc"/>
                 ${barChart}
               </svg>
             </div>
+            ${pageFooter('مؤشرات الخدمات', '05')}
+          </section>
+
+          <section class="page major">
+            ${pageHeader('توزيع التصنيفات')}
             <table class="keep">
               <thead><tr><th>#</th><th>التصنيف</th><th>العدد</th><th>النسبة</th></tr></thead>
               <tbody>${topTypeRows}</tbody>
             </table>
-            ${pageFooter('مؤشرات الخدمات وتوزيع التصنيفات', '04')}
+            ${pageFooter('توزيع التصنيفات', '06')}
           </section>
 
           <section class="page major">
@@ -901,12 +935,12 @@ export class FinancialService {
               </div>
             </div>
             <hr class="divider" />
-            <h3 class="section-title">مشهد تحليلي ثلاثي الأبعاد</h3>
+            <h3 class="section-title" style="margin-bottom:8px">مشهد تحليلي ثلاثي الأبعاد</h3>
             <div class="diagram keep">${aerialVisual}</div>
-            <p class="muted" style="margin-top:8px">
+            <p class="muted" style="margin-top:6px; line-height:1.55; font-size:11.5px">
               ارتفاع الأعمدة يعبر عن قوة حضور الخدمات وقربها من المركز. الأعمدة الأطول تعني مواقع أقرب أو أكثر تأثيراً في قرار الموقع، بينما انخفاض الأعمدة يعني تأثيراً أقل أو بعداً نسبياً.
             </p>
-            ${pageFooter('الصورة التحليلية والمخطط المكاني', '05')}
+            ${pageFooter('الصورة التحليلية والمخطط المكاني', '07')}
           </section>
 
           <section class="page major">
@@ -929,7 +963,7 @@ export class FinancialService {
               <div class="metric"><span>نسبة داخل 1000م</span><strong>${total ? Math.round((within1000 / total) * 100) : 0}%</strong><p>${within1000} موقع ضمن نطاق وصول سريع.</p></div>
               <div class="metric"><span>خارج 2000م</span><strong>${outside2000}</strong><p>مواقع أبعد نسبياً وتؤثر أقل على سهولة الوصول.</p></div>
             </div>
-            ${pageFooter('النموذج ثلاثي الأبعاد ولوحة أرقام البحث', '06')}
+            ${pageFooter('النموذج ثلاثي الأبعاد ولوحة أرقام البحث', '08')}
           </section>
 
           <section class="page major">
@@ -945,7 +979,7 @@ export class FinancialService {
               <thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>المسافة</th><th>المدينة</th><th>الإحداثيات</th></tr></thead>
               <tbody>${nearestRows}</tbody>
             </table>
-            ${pageFooter('تحليل المسافات والوصول', '07')}
+            ${pageFooter('تحليل المسافات والوصول', '09')}
           </section>
 
           <section class="page major">
@@ -966,7 +1000,7 @@ export class FinancialService {
               <thead><tr><th>#</th><th>المجموعة</th><th>العدد</th><th>الأقرب</th><th>الدرجة</th><th>أثرها على القرار</th></tr></thead>
               <tbody>${serviceGroupRows}</tbody>
             </table>
-            ${pageFooter('لوحة قرار الاستثمار', '08')}
+            ${pageFooter('لوحة قرار الاستثمار', '10')}
           </section>
 
           <section class="page major">
@@ -997,7 +1031,7 @@ export class FinancialService {
                 </ul>
               </div>
             </div>
-            ${pageFooter('فجوات الخدمات والفرص', '09')}
+            ${pageFooter('فجوات الخدمات والفرص', '11')}
           </section>
 
           <section class="page major">
@@ -1025,7 +1059,7 @@ export class FinancialService {
                 </ul>
               </div>
             </div>
-            ${pageFooter('مصفوفة المخاطر وملاءمة الاستخدام', '10')}
+            ${pageFooter('مصفوفة المخاطر وملاءمة الاستخدام', '12')}
           </section>
 
           <section class="page major">
@@ -1051,7 +1085,7 @@ export class FinancialService {
                 </ul>
               </div>
             </div>
-            ${pageFooter('التوصية النهائية', '11')}
+            ${pageFooter('التوصية النهائية', '13')}
           </section>
 
           <section class="page major">
@@ -1060,7 +1094,7 @@ export class FinancialService {
               <thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>المسافة بالمتر</th><th>المدينة</th></tr></thead>
               <tbody>${appendixRows}</tbody>
             </table>
-            ${pageFooter('ملحق البيانات', '12')}
+            ${pageFooter('ملحق البيانات', '14')}
           </section>
 
           ${params.endImage ? `

@@ -306,12 +306,23 @@ async getOrCreateDirectChat(userId1: string, userId2: string) {
 
   // Get user's chat rooms
   async getUserRooms(userId: string) {
+    const roomsUserIsIn = await this.chatRoomRepository
+      .createQueryBuilder('room')
+      .innerJoin('room.participants', 'p')
+      .where('p.id = :userId', { userId })
+      .select('room.id')
+      .getMany();
+
+    if (roomsUserIsIn.length === 0) return [];
+
+    const roomIds = roomsUserIsIn.map(r => r.id);
+
     return this.chatRoomRepository
       .createQueryBuilder('room')
       .leftJoinAndSelect('room.participants', 'participant')
       .leftJoinAndSelect('room.messages', 'message')
       .leftJoinAndSelect('message.sender', 'sender')
-      .where('participant.id = :userId', { userId })
+      .where('room.id IN (:...roomIds)', { roomIds })
       .orderBy('message.createdAt', 'DESC')
       .getMany();
   }

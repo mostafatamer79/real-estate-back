@@ -602,17 +602,15 @@ export class FinancialService {
         : 'الموقع منخفض نسبياً في كثافة أو تنوع الخدمات ضمن النطاق الحالي، وينصح بتوسيع نطاق المقارنة أو مراجعة بدائل قريبة.';
 
     const pageHeader = (title: string) => `
-      <div class="header">
-        <div class="header-top">
-          <div class="header-meta">
-            <span class="header-date">${this.formatReportDate(params.generatedAt)}</span>
-            <span class="header-separator">•</span>
-            <span class="header-location">${escapedLocationName}</span>
-          </div>
-          ${params.logoBlackImage ? `<img src="${params.logoBlackImage}" alt="logo" />` : ''}
+      <div class="letterhead">
+        <div class="letterhead-meta">
+          <span>${this.formatReportDate(params.generatedAt)}</span>
+          <span class="letterhead-sep">•</span>
+          <span>${escapedLocationName}</span>
         </div>
-        <div class="header-title">${title}</div>
+        ${!params.coverImage && params.logoBlackImage ? `<img src="${params.logoBlackImage}" alt="logo" class="letterhead-logo" />` : ''}
       </div>
+      <h2 class="page-title">${title}</h2>
     `;
     const pageFooter = (label: string, page: string) => `
       <div class="footer">
@@ -631,12 +629,12 @@ export class FinancialService {
             @page { size: A4; margin: 0; }
             * { box-sizing: border-box; }
             body { margin: 0; font-family: 'Cairo', Arial, Tahoma, sans-serif; color: #0f172a; background: #fff; direction: rtl; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .page { width: 210mm; min-height: 297mm; padding: 36px 44px 64px; position: relative; background: #fff; }
+            .page { width: 210mm; min-height: 297mm; padding: 128px 44px 70px; position: relative; background: #fff; background-image: var(--page-bg, none); background-size: 100% 100%; background-repeat: no-repeat; }
             .page.major { break-before: page; }
             .page > * { position: relative; z-index: 1; }
             .keep { break-inside: avoid; }
 
-            .artwork-page { padding: 0; background: #0f172a; min-height: 297mm; }
+            .artwork-page { padding: 0; background: #0f172a; background-image: none; min-height: 297mm; }
             .artwork-img { width: 210mm; height: 297mm; object-fit: cover; display: block; }
             .artwork-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,.88) 0%, rgba(15,23,42,.75) 50%, rgba(30,41,59,.85) 100%); display: flex; align-items: center; justify-content: center; }
             .artwork-welcome { text-align: center; color: #fff; padding: 40px; }
@@ -647,6 +645,18 @@ export class FinancialService {
             .artwork-stat { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); border-radius: 14px; padding: 14px 24px; }
             .artwork-stat span { display: block; font-size: 11px; color: #94a3b8; margin-bottom: 4px; font-weight: 700; }
             .artwork-stat strong { font-size: 22px; font-weight: 800; }
+
+            .letterhead { position: absolute; top: 0; left: 0; right: 0; height: 106px; padding: 0 44px; display: flex; align-items: center; justify-content: space-between; }
+            .letterhead-meta { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #475569; font-weight: 700; }
+            .letterhead-sep { color: #cbd5e1; }
+            .letterhead-logo { height: 30px; object-fit: contain; }
+            .page-title { margin: 0 0 18px; font-size: 18px; font-weight: 800; color: #0f172a; }
+
+            .footer { position: absolute; bottom: 0; left: 44px; right: 44px; height: 52px; display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #64748b; font-weight: 600; }
+            .footer-right { font-weight: 700; color: #0f172a; }
+            .footer-center { font-size: 12px; font-weight: 800; color: #0f172a; }
+            .footer-left { display: flex; align-items: center; gap: 8px; }
+            .footer-left img { height: 14px; object-fit: contain; }
             .artwork-coords { font-family: monospace; font-size: 15px; color: #94a3b8; margin-bottom: 8px; }
             .artwork-date { font-size: 13px; color: #64748b; font-weight: 600; }
             .artwork-overlay-end { position: absolute; left: 0; right: 0; bottom: 40px; display: flex; justify-content: center; }
@@ -654,21 +664,6 @@ export class FinancialService {
             .artwork-end-title { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
             .artwork-end-location { font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; }
             .artwork-end-meta { font-size: 11px; color: #94a3b8; font-weight: 600; }
-
-            .header { margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0; }
-            .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-            .header-meta { display: flex; align-items: center; gap: 8px; }
-            .header-date { font-size: 11px; color: #64748b; font-weight: 600; }
-            .header-separator { color: #cbd5e1; }
-            .header-location { font-size: 11px; color: #64748b; font-weight: 600; }
-            .header-top img { height: 26px; object-fit: contain; }
-            .header-title { font-size: 17px; font-weight: 800; color: #0f172a; }
-
-            .footer { position: absolute; bottom: 24px; left: 44px; right: 44px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 10px; color: #64748b; font-weight: 600; }
-            .footer-right { font-weight: 700; color: #0f172a; }
-            .footer-center { font-size: 13px; font-weight: 800; color: #0f172a; background: #f8fafc; padding: 4px 12px; border-radius: 6px; border: 1px solid #e2e8f0; }
-            .footer-left { display: flex; align-items: center; gap: 8px; }
-            .footer-left img { height: 15px; object-fit: contain; }
 
             .section-title { font-size: 16px; font-weight: 800; color: #0f172a; margin: 0 0 12px; }
             .muted { color: #64748b; line-height: 1.7; font-size: 12px; }
@@ -757,7 +752,7 @@ export class FinancialService {
             .cover-footer { position: absolute; bottom: 0; left: 0; right: 0; z-index: 3; display: flex; justify-content: space-between; align-items: center; padding: 0 44px 28px; font-size: 10px; color: #94a3b8; font-weight: 700; }
           </style>
         </head>
-        <body>
+        <body style="${params.coverImage ? `--page-bg: url('${params.coverImage}')` : ''}">
           ${params.startImage ? `
           <section class="page artwork-page">
             <img class="artwork-img" src="${params.startImage}" alt="Intro artwork" />

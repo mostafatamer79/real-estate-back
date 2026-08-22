@@ -183,6 +183,7 @@ import { MailService } from '../mail/mail.service';
             departmentPermissions: user.departmentPermissions,
             isVerified: user.isVerified,
             isActive: user.isActive,
+            onboardingStatus: user.onboardingStatus,
           },
       
           token: tokens.accessToken,
@@ -214,6 +215,7 @@ import { MailService } from '../mail/mail.service';
                 departmentPermissions: user.departmentPermissions,
                 isVerified: user.isVerified,
                 isActive: user.isActive,
+                onboardingStatus: user.onboardingStatus,
               },
             };
           } else {
@@ -248,6 +250,7 @@ import { MailService } from '../mail/mail.service';
             departmentPermissions: targetUser.departmentPermissions,
             isVerified: targetUser.isVerified,
             isActive: targetUser.isActive,
+            onboardingStatus: targetUser.onboardingStatus,
           },
           token: tokens.accessToken,
           refreshToken: tokens.refreshToken,

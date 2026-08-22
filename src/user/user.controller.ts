@@ -1,10 +1,10 @@
 // src/user/user.controller.ts
-import { Controller, Get, Put, Post, Delete, Body, Param, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Put, Patch, Post, Delete, Body, Param, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileUploadService } from '../document/file-upload.service';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './create-user-dto';
-import { Department, Role, User, VerifyStatus } from './user-entity';
+import { Department, OnboardingStatus, Role, User, VerifyStatus } from './user-entity';
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
 import { EmployeeManagementGuard } from '../common/guards/employee-management.guard';
 import { SkipSubscriptionGuard } from '../common/decorators/skip-subscription.decorator';
@@ -61,6 +61,18 @@ export class UserController {
     @SkipSubscriptionGuard()
     async updateProfile(@Request() req, @Body() updateUserDto: UpdateUserDto) {
         return this.userService.updateUserDetails(req.user.id, updateUserDto);
+    }
+
+    @Patch('profile/onboarding')
+    @SkipSubscriptionGuard()
+    async updateOnboardingStatus(
+        @Request() req,
+        @Body('status') status: OnboardingStatus
+    ) {
+        if (!status || !Object.values(OnboardingStatus).includes(status)) {
+            throw new BadRequestException('Invalid onboarding status');
+        }
+        return this.userService.updateOnboardingStatus(req.user.id, status);
     }
 
     @Put(':id/verify')

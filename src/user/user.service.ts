@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { Department, Role, User, VerifyStatus } from './user-entity';
+import { Department, OnboardingStatus, Role, User, VerifyStatus } from './user-entity';
 import { CreateUserDto, UpdateUserDto } from './create-user-dto';
 import { PasswordService } from '../password/password.service';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -521,10 +521,10 @@ export class UserService {
                 'agentLicenseNumber', 'agentVerificationStatus', 
                 'address', 'city', 'country',
                 'profileImage', 'createAt',
-                'nationalId', 'postalCode', 'streetName', 'district', 'additionalNumber', 'unitNumber',
+                'nationalId',
                 'licenseIssueDate', 'brokerType', 'contracts',
                 'financialAgreementType', 'financialAgreementValue', 'departmentPermissions',
-                'departments'
+                'departments', 'onboardingStatus'
             ]
         });
         
@@ -587,5 +587,19 @@ export class UserService {
         user.role = role;
         user.updateAt = new Date();
         return await this.userRepository.save(user);
+    }
+
+    public async updateOnboardingStatus(
+        userId: string,
+        status: OnboardingStatus
+    ): Promise<{ onboardingStatus: OnboardingStatus }> {
+        const user = await this.findOne(userId);
+        if (!user) {
+            throw new NotFoundException('auth.user_not_found');
+        }
+        user.onboardingStatus = status;
+        user.updateAt = new Date();
+        await this.userRepository.save(user);
+        return { onboardingStatus: status };
     }
 }

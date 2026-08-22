@@ -755,18 +755,19 @@ export class FinancialService {
             .report-code { font-family: monospace; font-size: 12px; color: #94a3b8; font-weight: 700; letter-spacing: 1px; }
             .cover-footer { position: absolute; bottom: 0; left: 0; right: 0; z-index: 3; display: flex; justify-content: space-between; align-items: center; padding: 0 44px 28px; font-size: 10px; color: #94a3b8; font-weight: 700; }
 
-            .cover-light { background: #fff; color: #0f172a; padding: 128px 44px 70px; min-height: 297mm; display: flex; flex-direction: column; align-items: center; text-align: center; }
-            .cover-light-brand { font-size: 18px; font-weight: 900; letter-spacing: 1px; color: #64748b; margin-bottom: 60px; }
-            .cover-light-brand img { height: 44px; object-fit: contain; }
-            .cover-light-eyebrow { font-size: 12px; font-weight: 800; color: #2563eb; margin-bottom: 16px; letter-spacing: 1px; }
-            .cover-light-title { font-size: 46px; font-weight: 900; line-height: 1.15; margin: 0 0 14px; }
-            .cover-light-location { font-size: 22px; font-weight: 700; color: #334155; margin-bottom: 40px; }
-            .cover-light-stats { display: flex; justify-content: center; gap: 16px; margin-bottom: 40px; flex-wrap: wrap; }
-            .cover-light-stat { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px 28px; min-width: 130px; }
-            .cover-light-stat span { display: block; font-size: 11px; color: #64748b; margin-bottom: 6px; font-weight: 700; }
-            .cover-light-stat strong { display: block; font-size: 24px; font-weight: 800; color: #0f172a; }
-            .cover-light-coords { font-family: monospace; font-size: 15px; color: #64748b; margin-bottom: 10px; }
-            .cover-light-date { font-size: 13px; color: #94a3b8; font-weight: 600; }
+            .cover-dark { background: #0f172a; background-image: none !important; color: #fff; padding: 0; min-height: 297mm; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; overflow: hidden; }
+            .cover-dark-bg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+            .cover-dark-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; width: 100%; padding: 44px; }
+            .cover-dark-brand { font-size: 18px; font-weight: 800; letter-spacing: 1px; color: #f8fafc; margin-bottom: 50px; }
+            .cover-dark-brand img { height: 44px; object-fit: contain; }
+            .cover-dark-title { font-size: 48px; font-weight: 900; line-height: 1.2; margin: 0 0 16px; color: #fff; }
+            .cover-dark-location { font-size: 24px; font-weight: 700; color: #f8fafc; margin-bottom: 50px; }
+            .cover-dark-stats { display: flex; justify-content: center; gap: 24px; margin-bottom: 50px; flex-wrap: wrap; }
+            .cover-dark-stat { background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; border-radius: 16px; padding: 20px 32px; min-width: 140px; text-align: center; backdrop-filter: blur(4px); }
+            .cover-dark-stat span { display: block; font-size: 13px; color: #cbd5e1; margin-bottom: 8px; font-weight: 700; }
+            .cover-dark-stat strong { display: block; font-size: 28px; font-weight: 800; color: #fff; }
+            .cover-dark-coords { font-family: monospace; font-size: 16px; color: #94a3b8; margin-bottom: 12px; font-weight: 600; letter-spacing: 1px; }
+            .cover-dark-date { font-size: 14px; color: #64748b; font-weight: 600; }
           </style>
         </head>
         <body style="${params.coverImage ? `--page-bg: url('${params.coverImage}')` : ''}">
@@ -776,18 +777,34 @@ export class FinancialService {
           </section>
           ` : ''}
 
-          <section class="page cover-light" style="${params.coverImage ? `background-image: url('${params.coverImage}'); background-size: 100% 100%;` : ''}">
-            <div class="cover-light-brand">${params.logoBlackImage ? `<img src="${params.logoBlackImage}" alt="logo" />` : 'DigitalBrokerage'}</div>
-            <div class="cover-light-eyebrow">تقرير مسح مكاني</div>
-            <div class="cover-light-title">تقرير مسح المنطقة</div>
-            <div class="cover-light-location">${escapedLocationName}</div>
-            <div class="cover-light-stats">
-              <div class="cover-light-stat"><span>عدد المواقع</span><strong>${total}</strong></div>
-              <div class="cover-light-stat"><span>عدد التصنيفات</span><strong>${Object.keys(typeCounts).length}</strong></div>
-              <div class="cover-light-stat"><span>نطاق البحث</span><strong>${params.radius.toLocaleString()} م</strong></div>
+          <section class="page cover-dark">
+            <svg class="cover-dark-bg" viewBox="0 0 800 1122" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+              <g stroke="#334155" stroke-width="3" fill="none" opacity="0.6">
+                <!-- Left Buildings -->
+                <path d="M-20,350 L20,380 L20,1130" />
+                <path d="M20,380 L80,430 L80,1130" />
+                <path d="M80,430 L180,520 L180,1130" />
+                <path d="M50,490 L50,1130" />
+                <path d="M120,600 L120,1130" />
+                <!-- Right Buildings -->
+                <path d="M820,100 L730,100 L730,1130" />
+                <path d="M780,100 L780,1130" />
+                <path d="M730,450 L650,450 L650,1130" />
+                <path d="M690,450 L690,1130" />
+              </g>
+            </svg>
+            <div class="cover-dark-content">
+              <div class="cover-dark-brand">${params.logoWhiteImage ? `<img src="${params.logoWhiteImage}" alt="logo" />` : 'DigitalBrokerage'}</div>
+              <div class="cover-dark-title">تقرير مسح المنطقة</div>
+              <div class="cover-dark-location">${escapedLocationName}</div>
+              <div class="cover-dark-stats">
+                <div class="cover-dark-stat"><span>عدد المواقع</span><strong>${total}</strong></div>
+                <div class="cover-dark-stat"><span>عدد التصنيفات</span><strong>${Object.keys(typeCounts).length}</strong></div>
+                <div class="cover-dark-stat"><span>نطاق البحث</span><strong>${params.radius.toLocaleString()} م</strong></div>
+              </div>
+              <div class="cover-dark-coords">${params.latitude.toFixed(6)} , ${params.longitude.toFixed(6)}</div>
+              <div class="cover-dark-date">${this.formatReportDate(params.generatedAt)}</div>
             </div>
-            <div class="cover-light-coords">${params.latitude.toFixed(6)}, ${params.longitude.toFixed(6)}</div>
-            <div class="cover-light-date">${this.formatReportDate(params.generatedAt)}</div>
           </section>
 
           <section class="page major">

@@ -132,26 +132,6 @@ export class CreateUserDto{
     nationalId?: string;
 
     @IsOptional()
-    @IsString()
-    postalCode?: string;
-
-    @IsOptional()
-    @IsString()
-    streetName?: string;
-
-    @IsOptional()
-    @IsString()
-    district?: string;
-
-    @IsOptional()
-    @IsString()
-    additionalNumber?: string;
-
-    @IsOptional()
-    @IsString()
-    unitNumber?: string;
-
-    @IsOptional()
     @Transform(({ value }) => value === "" ? null : value)
     licenseIssueDate?: Date;
 

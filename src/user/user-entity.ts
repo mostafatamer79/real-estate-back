@@ -76,6 +76,12 @@ export enum VerifyStatus {
   REJECTED = 'rejected',
 }
 
+export enum OnboardingStatus {
+  PENDING = 'pending',
+  SKIPPED = 'skipped',
+  COMPLETED = 'completed',
+}
+
 // User Entity
 @Entity('users')
 export class User {
@@ -189,22 +195,6 @@ expireOtp: Date | null;
   @Column({ unique: true, nullable: true })
   nationalId?: string;
 
-  // National Address
-  @Column({ nullable: true })
-  postalCode?: string;
-
-  @Column({ nullable: true })
-  streetName?: string;
-
-  @Column({ nullable: true })
-  district?: string;
-
-  @Column({ nullable: true })
-  additionalNumber?: string;
-
-  @Column({ nullable: true })
-  unitNumber?: string;
-
   // Broker Details
   @Column({ nullable: true })
   licenseIssueDate?: Date;
@@ -232,6 +222,13 @@ expireOtp: Date | null;
 
   @Column({ nullable: true })
   lastSeen?: Date;
+
+  @Column({
+    type: 'enum',
+    enum: OnboardingStatus,
+    default: OnboardingStatus.PENDING,
+  })
+  onboardingStatus: OnboardingStatus;
 
   @Column({ type: 'simple-json', nullable: true })
   departmentPermissions: any;

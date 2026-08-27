@@ -1,8 +1,14 @@
 
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Setting } from './settings.entity';
+import {
+    DEFAULT_SERVICE_FORMS,
+    SERVICE_FORM_KEY_PREFIX,
+    ServiceFormDef,
+    validateServiceFormDef,
+} from './service-form.defaults';
 
 @Injectable()
 export class SettingsService implements OnModuleInit {
@@ -29,6 +35,9 @@ export class SettingsService implements OnModuleInit {
     }
 
     getCategoryAndSubcategory(key: string): { category: string; subcategory: string } {
+        if (key.startsWith('service_form_')) {
+            return { category: 'services', subcategory: 'forms' };
+        }
         if (key.startsWith('theme_')) {
             return { category: 'appearance', subcategory: 'theme' };
         }
@@ -82,6 +91,18 @@ export class SettingsService implements OnModuleInit {
     }
 
     async setSetting(key: string, value: string, description?: string): Promise<Setting> {
+        if (key.startsWith(SERVICE_FORM_KEY_PREFIX)) {
+            let parsed: unknown;
+            try {
+                parsed = JSON.parse(value);
+            } catch {
+                throw new BadRequestException(`Invalid JSON for service form "${key}"`);
+            }
+            const error = validateServiceFormDef(parsed);
+            if (error) {
+                throw new BadRequestException(`Invalid service form "${key}": ${error}`);
+            }
+        }
         let setting = await this.settingsRepository.findOne({ where: { key } });
         const { category, subcategory } = this.getCategoryAndSubcategory(key);
         if (setting) {
@@ -129,6 +150,7 @@ export class SettingsService implements OnModuleInit {
                 .orWhere('setting.key LIKE :detailsPart', { detailsPart: 'details_part_%' })
                 .orWhere('setting.key LIKE :login', { login: 'login_%' })
                 .orWhere('setting.key LIKE :ui', { ui: 'ui_%' })
+                .orWhere('setting.key LIKE :serviceForm', { serviceForm: 'service_form_%' })
                 .orWhere('setting.key IN (:...keys)', { keys: ['appointment_price', 'purchase_service_fee_percentage', 'tax_percentage'] });
         }
 
@@ -158,6 +180,22 @@ export class SettingsService implements OnModuleInit {
      * Accepts an array of { key, value, description? } objects.
      */
     async batchSave(entries: { key: string; value: string; description?: string }[]): Promise<Setting[]> {
+        // Validate dynamic service-form definitions before touching the DB
+        for (const { key, value } of entries) {
+            if (key.startsWith(SERVICE_FORM_KEY_PREFIX)) {
+                let parsed: unknown;
+                try {
+                    parsed = JSON.parse(value);
+                } catch {
+                    throw new BadRequestException(`Invalid JSON for service form "${key}"`);
+                }
+                const error = validateServiceFormDef(parsed);
+                if (error) {
+                    throw new BadRequestException(`Invalid service form "${key}": ${error}`);
+                }
+            }
+        }
+
         return this.dataSource.transaction(async (manager) => {
             const repo = manager.getRepository(Setting);
             const saved: Setting[] = [];
@@ -313,6 +351,23 @@ export class SettingsService implements OnModuleInit {
             }
         }
 
+        // Seed the dynamic service-form definitions (never overwrite admin edits)
+        for (const [category, def] of Object.entries(DEFAULT_SERVICE_FORMS)) {
+            const key = `${SERVICE_FORM_KEY_PREFIX}${category}`;
+            const existing = await this.settingsRepository.findOne({ where: { key } });
+            if (!existing) {
+                const { category: cat, subcategory } = this.getCategoryAndSubcategory(key);
+                const setting = this.settingsRepository.create({
+                    key,
+                    value: JSON.stringify(def),
+                    description: `نموذج طلب الخدمة: ${category}`,
+                    category: cat,
+                    subcategory,
+                });
+                await this.settingsRepository.save(setting);
+            }
+        }
+
         // Backfill any other existing settings that might not be in defaults
         const allSettings = await this.settingsRepository.find();
         for (const setting of allSettings) {
@@ -323,5 +378,67 @@ export class SettingsService implements OnModuleInit {
                 await this.settingsRepository.save(setting);
             }
         }
+    }
+
+    // ─── Dynamic service forms ───────────────────────────────────────────────
+
+    /** Resolve the effective form definition for a category (stored value, default fallback). */
+    async resolveServiceForm(category: string): Promise<ServiceFormDef> {
+        const fallback = DEFAULT_SERVICE_FORMS[category];
+        if (!fallback) {
+            throw new BadRequestException(`Unknown service form category: ${category}`);
+        }
+        const setting = await this.findOne(`${SERVICE_FORM_KEY_PREFIX}${category}`);
+        if (setting?.value) {
+            try {
+                const parsed = JSON.parse(setting.value);
+                // Fall back to the default when the stored value is corrupt
+                if (!validateServiceFormDef(parsed)) {
+                    return parsed as ServiceFormDef;
+                }
+            } catch {
+                // Corrupt JSON — fall through to the default
+            }
+        }
+        return fallback;
+    }
+
+    /** Resolve all known service-form definitions. */
+    async resolveAllServiceForms(): Promise<Record<string, ServiceFormDef>> {
+        const result: Record<string, ServiceFormDef> = {};
+        for (const category of Object.keys(DEFAULT_SERVICE_FORMS)) {
+            result[category] = await this.resolveServiceForm(category);
+        }
+        return result;
+    }
+
+    /** Validate and upsert one service-form definition. */
+    async saveServiceForm(category: string, def: unknown): Promise<Setting> {
+        if (!DEFAULT_SERVICE_FORMS[category]) {
+            throw new BadRequestException(`Unknown service form category: ${category}`);
+        }
+        const error = validateServiceFormDef(def);
+        if (error) {
+            throw new BadRequestException(`Invalid service form: ${error}`);
+        }
+        return this.setSetting(
+            `${SERVICE_FORM_KEY_PREFIX}${category}`,
+            JSON.stringify(def),
+            `نموذج طلب الخدمة: ${category}`,
+        );
+    }
+
+    /** Reset one service's form back to its seeded default. */
+    async resetServiceForm(category: string): Promise<ServiceFormDef> {
+        const fallback = DEFAULT_SERVICE_FORMS[category];
+        if (!fallback) {
+            throw new BadRequestException(`Unknown service form category: ${category}`);
+        }
+        await this.setSetting(
+            `${SERVICE_FORM_KEY_PREFIX}${category}`,
+            JSON.stringify(fallback),
+            `نموذج طلب الخدمة: ${category}`,
+        );
+        return fallback;
     }
 }

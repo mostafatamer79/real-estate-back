@@ -302,7 +302,7 @@ export class FinancialService {
       acc[type] = (acc[type] || 0) + 1;
       return acc;
     }, {});
-    const topTypes = Object.entries(typeCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const topTypes = Object.entries(typeCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
     const nearest = [...params.places].sort((a, b) => (a.distance || 0) - (b.distance || 0));
     const nearest30 = nearest.slice(0, 10);
     const avgDistance = total ? Math.round(nearest.reduce((sum, place) => sum + Number(place.distance || 0), 0) / total) : 0;
@@ -347,15 +347,13 @@ export class FinancialService {
       </tr>
     `).join('');
 
-    const barChartRowHeight = 34;
-    const barChartHeight = Math.max(280, 32 + topTypes.length * barChartRowHeight + 16);
     const barChart = topTypes.map(([type, count], index) => {
       const width = total ? Math.max(12, Math.round((count / Math.max(topTypes[0]?.[1] || 1, 1)) * 380)) : 0;
-      const y = 32 + index * barChartRowHeight;
+      const y = 28 + index * 22;
       return `
-        <text x="585" y="${y + 15}" font-size="12" fill="#334155" text-anchor="end">${this.escapeHtml(type)}</text>
-        <rect x="${190 + (380 - width)}" y="${y}" width="${width}" height="18" rx="8" fill="#0f172a"/>
-        <text x="175" y="${y + 14}" font-size="12" fill="#0f172a" font-weight="700">${count}</text>
+        <text x="585" y="${y + 13}" font-size="10" fill="#334155" text-anchor="end">${this.escapeHtml(type)}</text>
+        <rect x="${190 + (380 - width)}" y="${y}" width="${width}" height="14" rx="6" fill="#0f172a"/>
+        <text x="175" y="${y + 11}" font-size="10" fill="#0f172a" font-weight="700">${count}</text>
       `;
     }).join('');
     const ringChart = [
@@ -367,10 +365,10 @@ export class FinancialService {
       const width = total ? Math.max(6, Math.round((bucket.count / total) * 420)) : 0;
       const y = 44 + index * 54;
       return `
-        <text x="560" y="${y + 18}" font-size="14" fill="#334155" text-anchor="end">${bucket.label}</text>
+        <text x="560" y="${y + 18}" font-size="12" fill="#334155" text-anchor="end">${bucket.label}</text>
         <rect x="100" y="${y}" width="420" height="22" rx="11" fill="#e2e8f0"/>
         <rect x="${520 - width}" y="${y}" width="${width}" height="22" rx="11" fill="${bucket.color}"/>
-        <text x="72" y="${y + 17}" font-size="13" fill="#0f172a" font-weight="800">${bucket.count}</text>
+        <text x="72" y="${y + 17}" font-size="11" fill="#0f172a" font-weight="800">${bucket.count}</text>
       `;
     }).join('');
     const mapDots = nearest.slice(0, 120).map((place, index) => {
@@ -382,26 +380,26 @@ export class FinancialService {
       return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${index < 20 ? 4 : 2.6}" fill="${palette[index % palette.length]}" opacity=".78"/>`;
     }).join('');
     const mapVisual = params.mapImage
-      ? `<img src="${params.mapImage}" alt="Map Snapshot" style="width:100%; height:300px; object-fit:cover; display:block;" />`
-      : `<svg width="100%" height="300" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
-          <rect width="640" height="300" fill="#f8fafc"/>
-          <circle cx="300" cy="200" r="70" fill="none" stroke="#e2e8f0" stroke-width="2"/>
-          <circle cx="300" cy="200" r="140" fill="none" stroke="#e2e8f0" stroke-width="2"/>
-          <circle cx="300" cy="200" r="210" fill="none" stroke="#e2e8f0" stroke-width="2"/>
-          <line x1="300" y1="20" x2="300" y2="290" stroke="#e2e8f0" stroke-width="2"/>
-          <line x1="40" y1="200" x2="600" y2="200" stroke="#e2e8f0" stroke-width="2"/>
+      ? `<img src="${params.mapImage}" alt="Map Snapshot" style="width:100%; height:315px; object-fit:cover; display:block;" />`
+      : `<svg width="100%" height="315" viewBox="0 0 640 315" xmlns="http://www.w3.org/2000/svg">
+          <rect width="640" height="315" fill="#f8fafc"/>
+          <circle cx="300" cy="210" r="70" fill="none" stroke="#e2e8f0" stroke-width="2"/>
+          <circle cx="300" cy="210" r="140" fill="none" stroke="#e2e8f0" stroke-width="2"/>
+          <circle cx="300" cy="210" r="210" fill="none" stroke="#e2e8f0" stroke-width="2"/>
+          <line x1="300" y1="20" x2="300" y2="300" stroke="#e2e8f0" stroke-width="2"/>
+          <line x1="40" y1="210" x2="600" y2="210" stroke="#e2e8f0" stroke-width="2"/>
           ${mapDots}
-          <circle cx="300" cy="200" r="10" fill="#dc2626"/>
-          <text x="300" y="188" font-size="13" fill="#0f172a" text-anchor="middle" font-weight="900">الموقع</text>
-          <text x="300" y="290" font-size="12" fill="#64748b" text-anchor="middle">مخطط تمثيلي وليس صورة جوية حقيقية</text>
+          <circle cx="300" cy="210" r="10" fill="#dc2626"/>
+          <text x="300" y="198" font-size="12" fill="#0f172a" text-anchor="middle" font-weight="900">الموقع</text>
+          <text x="300" y="300" font-size="11" fill="#64748b" text-anchor="middle">مخطط تمثيلي وليس صورة جوية حقيقية</text>
         </svg>`;
     const localAerialBlocks = nearest.slice(0, 36).map((place, index) => {
       const col = index % 9;
       const row = Math.floor(index / 9);
       const baseX = 76 + col * 54 + row * 18;
-      const baseY = 92 + row * 34 + col * 8;
+      const baseY = 72 + row * 38 + col * 8;
       const distanceFactor = Math.max(0.25, 1 - Math.min(Number(place.distance || 0), params.radius) / Math.max(params.radius, 1));
-      const height = Math.round(16 + distanceFactor * 54 + (index < 8 ? 14 : 0));
+      const height = Math.round(18 + distanceFactor * 72 + (index < 8 ? 18 : 0));
       const palette = ['#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed', '#0f766e'];
       const color = palette[index % palette.length];
       return `
@@ -415,10 +413,10 @@ export class FinancialService {
       `;
     }).join('');
     const localAerialRoads = [0, 1, 2, 3, 4].map((row) => `
-      <path d="M${36 + row * 34} ${104 + row * 28} L${550 + row * 16} ${194 + row * 28}" stroke="#e2e8f0" stroke-width="10" stroke-linecap="round" opacity=".82"/>
-      <path d="M${42 + row * 34} ${104 + row * 28} L${556 + row * 16} ${194 + row * 28}" stroke="#f8fafc" stroke-width="2" stroke-dasharray="10 12" opacity=".9"/>
+      <path d="M${36 + row * 34} ${84 + row * 32} L${550 + row * 16} ${170 + row * 32}" stroke="#e2e8f0" stroke-width="10" stroke-linecap="round" opacity=".82"/>
+      <path d="M${42 + row * 34} ${84 + row * 32} L${556 + row * 16} ${170 + row * 32}" stroke="#f8fafc" stroke-width="2" stroke-dasharray="10 12" opacity=".9"/>
     `).join('');
-    const aerialVisual = `<svg width="100%" height="340" viewBox="0 -40 640 340" xmlns="http://www.w3.org/2000/svg">
+    const aerialVisual = `<svg width="100%" height="250" viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="aerialSky" x1="0" x2="1" y1="0" y2="1">
           <stop offset="0%" stop-color="#f8fafc"/>
@@ -426,34 +424,32 @@ export class FinancialService {
           <stop offset="100%" stop-color="#f8fafc"/>
         </linearGradient>
       </defs>
-      <rect width="640" height="340" fill="url(#aerialSky)" opacity="0"/>
-      <polygon points="24,228 300,72 620,208 338,270" fill="#e2e8f0" opacity=".72"/>
-      <polygon points="74,212 305,92 560,206 330,254" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+      <rect width="640" height="250" fill="url(#aerialSky)"/>
+      <polygon points="24,198 300,52 620,178 338,240" fill="#e2e8f0" opacity=".72"/>
+      <polygon points="74,182 305,72 560,176 330,224" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
       ${localAerialRoads}
       ${localAerialBlocks}
       <g>
-        <circle cx="312" cy="170" r="18" fill="#dc2626" opacity=".2"/>
-        <circle cx="312" cy="170" r="8" fill="#dc2626"/>
-        <text x="312" y="155" font-size="12" fill="#0f172a" text-anchor="middle" font-weight="900">المركز</text>
+        <circle cx="312" cy="150" r="18" fill="#dc2626" opacity=".2"/>
+        <circle cx="312" cy="150" r="8" fill="#dc2626"/>
+        <text x="312" y="135" font-size="12" fill="#0f172a" text-anchor="middle" font-weight="900">المركز</text>
       </g>
-      <text x="600" y="32" font-size="13" fill="#0f172a" text-anchor="end" font-weight="900">مشهد جوي 3D مولد محلياً</text>
-      <text x="600" y="52" font-size="10" fill="#64748b" text-anchor="end">ارتفاع المباني يعكس قرب وكثافة الخدمات المرصودة</text>
+      <text x="600" y="32" font-size="12" fill="#0f172a" text-anchor="end" font-weight="900">مشهد جوي 3D مولد محلياً</text>
+      <text x="600" y="52" font-size="9" fill="#64748b" text-anchor="end">ارتفاع المباني يعكس قرب وكثافة الخدمات المرصودة</text>
     </svg>`;
-    const scoreBarItems = [
+    const scoreBars = [
       ['درجة الجاذبية الخدمية', serviceScore],
       ['تنوع الخدمات', diversityScore],
       ['سهولة الوصول', accessibilityScore],
       ['كثافة الخدمات', Math.min(100, Math.round(density * 5))],
-    ];
-    const scoreBarsHeight = 56 + (scoreBarItems.length - 1) * 58 + 24 + 20;
-    const scoreBars = scoreBarItems.map(([label, value]: any, index) => {
-      const y = 56 + index * 58;
+    ].map(([label, value]: any, index) => {
+      const y = 34 + index * 32;
       const width = Math.round((Number(value) / 100) * 390);
       return `
-        <text x="560" y="${y + 18}" font-size="14" fill="#334155" text-anchor="end">${label}</text>
-        <rect x="120" y="${y}" width="390" height="24" rx="12" fill="#e2e8f0"/>
-        <rect x="${510 - width}" y="${y}" width="${width}" height="24" rx="12" fill="#0f172a"/>
-        <text x="82" y="${y + 18}" font-size="14" fill="#0f172a" font-weight="900">${value}%</text>
+        <text x="560" y="${y + 14}" font-size="11" fill="#334155" text-anchor="end">${label}</text>
+        <rect x="120" y="${y}" width="390" height="18" rx="9" fill="#e2e8f0"/>
+        <rect x="${510 - width}" y="${y}" width="${width}" height="18" rx="9" fill="#0f172a"/>
+        <text x="82" y="${y + 14}" font-size="11" fill="#0f172a" font-weight="900">${value}%</text>
       `;
     }).join('');
     const isoBars = topTypes.slice(0, 8).map(([type, count], index) => {
@@ -466,8 +462,8 @@ export class FinancialService {
         <polygon points="${x},${y - h} ${x + 46},${y - h - 22} ${x + 92},${y - h} ${x + 46},${y - h + 24}" fill="${color}"/>
         <polygon points="${x},${y} ${x},${y - h} ${x + 46},${y - h + 24} ${x + 46},${y + 24}" fill="${color}" opacity=".78"/>
         <polygon points="${x + 92},${y} ${x + 92},${y - h} ${x + 46},${y - h + 24} ${x + 46},${y + 24}" fill="${color}" opacity=".55"/>
-        <text x="${x + 46}" y="${y + 48}" font-size="10" fill="#334155" text-anchor="middle">${this.escapeHtml(type)}</text>
-        <text x="${x + 46}" y="${y - h - 30}" font-size="13" fill="#0f172a" text-anchor="middle" font-weight="900">${count}</text>
+        <text x="${x + 46}" y="${y + 48}" font-size="9" fill="#334155" text-anchor="middle">${this.escapeHtml(type)}</text>
+        <text x="${x + 46}" y="${y - h - 30}" font-size="11" fill="#0f172a" text-anchor="middle" font-weight="900">${count}</text>
       `;
     }).join('');
     const matchesKeywords = (place: ScanReportPlace, keywords: string[]) => {
@@ -633,7 +629,7 @@ export class FinancialService {
             @page { size: A4; margin: 0; }
             * { box-sizing: border-box; }
             body { margin: 0; font-family: 'Cairo', Arial, Tahoma, sans-serif; color: #0f172a; background: #fff; direction: rtl; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .page { width: 210mm; min-height: 297mm; padding: 128px 44px 70px; position: relative; background: #fff; background-image: var(--page-bg, none); background-size: 100% 100%; background-repeat: no-repeat; }
+            .page { width: 210mm; min-height: 297mm; padding: 128px 44px 64px; position: relative; background: #fff; background-image: var(--page-bg, none); background-size: 100% 100%; background-repeat: no-repeat; }
             .page.major { break-before: page; }
             .page > * { position: relative; z-index: 1; }
             .keep { break-inside: avoid; }
@@ -642,94 +638,94 @@ export class FinancialService {
             .artwork-img { width: 210mm; height: 297mm; object-fit: cover; display: block; }
             .artwork-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,.88) 0%, rgba(15,23,42,.75) 50%, rgba(30,41,59,.85) 100%); display: flex; align-items: center; justify-content: center; }
             .artwork-welcome { text-align: center; color: #fff; padding: 40px; }
-            .artwork-brand { font-size: 18px; font-weight: 900; letter-spacing: 1px; margin-bottom: 24px; opacity: .9; }
-            .artwork-title { font-size: 42px; font-weight: 900; margin-bottom: 12px; }
-            .artwork-location { font-size: 24px; font-weight: 700; color: #e2e8f0; margin-bottom: 28px; }
-            .artwork-stats { display: flex; justify-content: center; gap: 20px; margin-bottom: 24px; }
-            .artwork-stat { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); border-radius: 14px; padding: 14px 24px; }
-            .artwork-stat span { display: block; font-size: 11px; color: #94a3b8; margin-bottom: 4px; font-weight: 700; }
-            .artwork-stat strong { font-size: 22px; font-weight: 800; }
+            .artwork-brand { font-size: 12px; font-weight: 900; letter-spacing: 1px; margin-bottom: 14px; opacity: .9; }
+            .artwork-title { font-size: 28px; font-weight: 900; margin-bottom: 8px; }
+            .artwork-location { font-size: 16px; font-weight: 700; color: #e2e8f0; margin-bottom: 16px; }
+            .artwork-stats { display: flex; justify-content: center; gap: 14px; margin-bottom: 14px; }
+            .artwork-stat { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); border-radius: 14px; padding: 10px 16px; }
+            .artwork-stat span { display: block; font-size: 9px; color: #94a3b8; margin-bottom: 3px; font-weight: 700; }
+            .artwork-stat strong { font-size: 16px; font-weight: 800; }
 
-            .letterhead { position: absolute; top: 0; left: 0; right: 0; height: 106px; padding: 0 44px; display: flex; align-items: center; justify-content: space-between; }
-            .letterhead-meta { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #475569; font-weight: 700; }
+            .letterhead { position: absolute; top: 0; left: 0; right: 0; height: 92px; padding: 18px 44px 0; display: flex; align-items: flex-start; justify-content: space-between; }
+            .letterhead-meta { display: flex; align-items: center; gap: 8px; font-size: 10px; color: #475569; font-weight: 700; }
             .letterhead-sep { color: #cbd5e1; }
-            .letterhead-logo { height: 30px; object-fit: contain; }
-            .page-title { margin: 0 0 18px; font-size: 18px; font-weight: 800; color: #0f172a; }
+            .letterhead-logo { height: 26px; object-fit: contain; }
+            .page-title { margin: 0 0 10px; font-size: 14px; font-weight: 800; color: #0f172a; }
 
-            .footer { position: absolute; bottom: 0; left: 44px; right: 44px; height: 52px; display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #64748b; font-weight: 600; }
+            .footer { position: absolute; bottom: 10px; left: 44px; right: 44px; height: 42px; display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: #64748b; font-weight: 600; }
             .footer-right { font-weight: 700; color: #0f172a; }
-            .footer-center { font-size: 12px; font-weight: 800; color: #0f172a; }
+            .footer-center { font-size: 11px; font-weight: 800; color: #0f172a; }
             .footer-left { display: flex; align-items: center; gap: 8px; }
-            .footer-left img { height: 14px; object-fit: contain; }
-            .artwork-coords { font-family: monospace; font-size: 15px; color: #94a3b8; margin-bottom: 8px; }
-            .artwork-date { font-size: 13px; color: #64748b; font-weight: 600; }
-            .artwork-overlay-end { position: absolute; left: 0; right: 0; bottom: 40px; display: flex; justify-content: center; }
-            .artwork-end-minimal { text-align: center; color: #fff; background: rgba(15,23,42,.55); border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 18px 34px; }
-            .artwork-end-title { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
-            .artwork-end-location { font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; }
-            .artwork-end-meta { font-size: 11px; color: #94a3b8; font-weight: 600; }
+            .footer-left img { height: 12px; object-fit: contain; }
+            .artwork-coords { font-family: monospace; font-size: 12px; color: #94a3b8; margin-bottom: 6px; }
+            .artwork-date { font-size: 10px; color: #64748b; font-weight: 600; }
+            .artwork-overlay-end { position: absolute; left: 0; right: 0; top: 58%; display: flex; justify-content: center; }
+            .artwork-end-minimal { text-align: center; color: #fff; background: rgba(15,23,42,.96); border: 1px solid rgba(255,255,255,.25); border-radius: 20px; padding: 18px 40px; min-width: 300px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 12px 40px rgba(0,0,0,.4); }
+            .artwork-end-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+            .artwork-end-location { font-size: 11px; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; }
+            .artwork-end-meta { font-size: 10px; color: #94a3b8; font-weight: 600; }
 
-            .section-title { font-size: 16px; font-weight: 800; color: #0f172a; margin: 0 0 12px; }
-            .muted { color: #64748b; line-height: 1.7; font-size: 12px; }
-            .notice { background: #f8fafc; border: 1px solid #e2e8f0; border-right: 4px solid #0f172a; border-radius: 14px; padding: 14px; line-height: 1.8; color: #334155; font-size: 12px; }
-            .small-list { margin: 0; padding-right: 18px; color: #334155; line-height: 1.9; font-size: 12px; }
-            hr.divider { border: none; border-top: 1px solid #e2e8f0; margin: 18px 0; }
+            .section-title { font-size: 12px; font-weight: 800; color: #0f172a; margin: 0 0 8px; }
+            .muted { color: #64748b; line-height: 1.6; font-size: 10px; }
+            .notice { background: #f8fafc; border: 1px solid #e2e8f0; border-right: 4px solid #0f172a; border-radius: 14px; padding: 10px; line-height: 1.65; color: #334155; font-size: 10px; }
+            .small-list { margin: 0; padding-right: 18px; color: #334155; line-height: 1.75; font-size: 10px; }
+            hr.divider { border: none; border-top: 1px solid #e2e8f0; margin: 14px 0; }
 
-            .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
-            .stat { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; min-height: 86px; text-align: center; }
-            .stat span { display: block; color: #64748b; font-size: 10px; margin-bottom: 6px; font-weight: 700; }
-            .stat strong { display: block; font-size: 24px; color: #0f172a; font-weight: 800; }
-            .large-number { font-size: 30px; font-weight: 800; color: #0f172a; letter-spacing: -1px; }
-            .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-            .panel { border: 1px solid #e2e8f0; background: #fff; border-radius: 16px; padding: 16px; }
+            .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+            .stat { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 10px; min-height: 54px; text-align: center; }
+            .stat span { display: block; color: #64748b; font-size: 9px; margin-bottom: 4px; font-weight: 700; }
+            .stat strong { display: block; font-size: 16px; color: #0f172a; font-weight: 800; }
+            .large-number { font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -1px; }
+            .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+            .panel { border: 1px solid #e2e8f0; background: #fff; border-radius: 16px; padding: 12px; }
             .panel.dark { background: #0f172a; color: #fff; border-color: #0f172a; }
             .panel.dark .section-title { color: #fff !important; }
             .panel.dark .small-list { color: #e2e8f0; }
 
-            table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; margin-top: 10px; font-size: 10.5px; }
-            th { background: #0f172a; color: #fff; padding: 10px 12px; text-align: right; font-weight: 700; font-size: 10.5px; }
-            td { border-bottom: 1px solid #e2e8f0; padding: 9px 12px; color: #334155; font-size: 10.5px; }
+            table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; margin-top: 8px; font-size: 9px; }
+            th { background: #0f172a; color: #fff; padding: 7px 9px; text-align: right; font-weight: 700; font-size: 9px; }
+            td { border-bottom: 1px solid #e2e8f0; padding: 6px 9px; color: #334155; font-size: 9px; }
             tr:last-child td { border-bottom: none; }
             tr:nth-child(even) td { background: #f8fafc; }
             .agenda { border: none !important; border-radius: 0 !important; }
             .agenda tbody tr { border-bottom: 1px dashed #e2e8f0; }
             .agenda tbody tr:last-child { border-bottom: none; }
-            .agenda td { border: none !important; background: none !important; padding: 6px 0; font-size: 11.5px; font-weight: 600; color: #1e293b; }
-            .agenda td:first-child { color: #2563eb; width: 40px; font-weight: 800; }
+            .agenda td { border: none !important; background: none !important; padding: 4px 0; font-size: 10px; font-weight: 600; color: #1e293b; }
+            .agenda td:first-child { color: #2563eb; width: 36px; font-weight: 800; }
 
-            .diagram { width: 100%; border: 1px solid #e2e8f0; border-radius: 16px; background: #f8fafc; overflow: hidden; margin-top: 12px; }
-            .visual-caption { display: grid; grid-template-columns: 1.2fr .8fr; gap: 8px; margin-top: 10px; }
+            .diagram { width: 100%; border: 1px solid #e2e8f0; border-radius: 16px; background: #f8fafc; overflow: hidden; margin-top: 10px; }
+            .visual-caption { display: grid; grid-template-columns: 1.2fr .8fr; gap: 10px; margin-top: 10px; }
             .explain-card { border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; padding: 10px 12px; }
-            .explain-card h4 { margin: 0 0 4px; color: #0f172a; font-size: 13px; font-weight: 800; }
-            .explain-card p { margin: 0; color: #64748b; font-size: 10.5px; line-height: 1.55; }
-            .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-            .legend-item { display: flex; align-items: center; gap: 6px; color: #334155; font-size: 9.5px; font-weight: 700; }
+            .explain-card h4 { margin: 0 0 4px; color: #0f172a; font-size: 11px; font-weight: 800; }
+            .explain-card p { margin: 0; color: #64748b; font-size: 9.5px; line-height: 1.6; }
+            .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+            .legend-item { display: flex; align-items: center; gap: 5px; color: #334155; font-size: 9px; font-weight: 700; }
             .legend-dot { width: 8px; height: 8px; border-radius: 999px; display: inline-block; }
 
-            .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-            .metric { border: 1px solid #e2e8f0; border-top: 4px solid #2563eb; border-radius: 14px; padding: 14px; background: #fff; min-height: 104px; }
+            .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+            .metric { border: 1px solid #e2e8f0; border-top: 4px solid #2563eb; border-radius: 14px; padding: 10px; background: #fff; min-height: 82px; }
             .metric:nth-child(2) { border-top-color: #dc2626; }
             .metric:nth-child(3) { border-top-color: #16a34a; }
             .metric:nth-child(4) { border-top-color: #f59e0b; }
             .metric:nth-child(5) { border-top-color: #7c3aed; }
             .metric:nth-child(6) { border-top-color: #64748b; }
-            .metric span { display: block; color: #64748b; font-size: 10px; font-weight: 700; margin-bottom: 8px; }
-            .metric strong { display: block; color: #0f172a; font-size: 26px; font-weight: 800; }
-            .metric p { margin: 6px 0 0; color: #64748b; font-size: 10px; line-height: 1.5; font-weight: 600; }
+            .metric span { display: block; color: #64748b; font-size: 9px; font-weight: 700; margin-bottom: 5px; }
+            .metric strong { display: block; color: #0f172a; font-size: 18px; font-weight: 800; }
+            .metric p { margin: 5px 0 0; color: #64748b; font-size: 9px; line-height: 1.45; font-weight: 600; }
 
-            .decision-hero { display: grid; grid-template-columns: 180px 1fr; gap: 14px; align-items: stretch; margin-bottom: 16px; }
-            .decision-score { border-radius: 18px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #fff; padding: 20px; text-align: center; }
-            .decision-score span { display: block; color: #94a3b8; font-size: 11px; font-weight: 700; margin-bottom: 10px; }
-            .decision-score strong { display: block; font-size: 48px; font-weight: 800; line-height: 1; color: #2563eb; }
-            .decision-score p { margin: 10px 0 0; color: #e2e8f0; font-size: 12px; font-weight: 700; }
-            .score-note { border: 1px solid #e2e8f0; border-radius: 18px; padding: 18px; background: #f8fafc; line-height: 1.8; color: #334155; font-size: 12.5px; }
+            .decision-hero { display: grid; grid-template-columns: 140px 1fr; gap: 12px; align-items: stretch; margin-bottom: 14px; }
+            .decision-score { border-radius: 18px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #fff; padding: 14px; text-align: center; }
+            .decision-score span { display: block; color: #94a3b8; font-size: 9px; font-weight: 700; margin-bottom: 6px; }
+            .decision-score strong { display: block; font-size: 32px; font-weight: 800; line-height: 1; color: #2563eb; }
+            .decision-score p { margin: 6px 0 0; color: #e2e8f0; font-size: 10px; font-weight: 700; }
+            .score-note { border: 1px solid #e2e8f0; border-radius: 18px; padding: 14px; background: #f8fafc; line-height: 1.65; color: #334155; font-size: 10px; }
 
-            .risk-pill { display: inline-block; min-width: 62px; text-align: center; border-radius: 999px; padding: 4px 10px; font-size: 9px; font-weight: 700; border: 1px solid #e2e8f0; }
+            .risk-pill { display: inline-block; min-width: 56px; text-align: center; border-radius: 999px; padding: 3px 9px; font-size: 9px; font-weight: 700; border: 1px solid #e2e8f0; }
             .risk-low { color: #16a34a; background: #f8fafc; border-color: #16a34a; }
             .risk-mid { color: #f59e0b; background: #f8fafc; border-color: #f59e0b; }
             .risk-high { color: #dc2626; background: #f8fafc; border-color: #dc2626; }
 
-            .rec { font-size: 14px; line-height: 1.8; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0; border-right: 5px solid #2563eb; border-radius: 14px; padding: 20px; color: #0f172a; }
+            .rec { font-size: 11px; line-height: 1.65; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0; border-right: 5px solid #2563eb; border-radius: 14px; padding: 14px; color: #0f172a; }
 
             .cover { background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); color: #fff; padding: 0; display: flex; flex-direction: column; }
             .cover-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
@@ -738,112 +734,79 @@ export class FinancialService {
             .cover-content { position: relative; z-index: 3; padding: 36px 44px; flex: 1; display: flex; flex-direction: column; justify-content: flex-start; }
             .cover-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 40px; }
             .cover-logo { height: 40px; object-fit: contain; }
-            .cover-brand { font-size: 19px; font-weight: 900; letter-spacing: 1px; }
-            .ai-badge { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(22,163,74,.12); color: #16a34a; border: 1px solid rgba(22,163,74,.35); padding: 7px 13px; font-size: 11px; font-weight: 800; }
+            .cover-brand { font-size: 14px; font-weight: 900; letter-spacing: 1px; }
+            .ai-badge { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(22,163,74,.12); color: #16a34a; border: 1px solid rgba(22,163,74,.35); padding: 5px 10px; font-size: 9px; font-weight: 800; }
             .cover-hero { }
-            .cover .eyebrow { color: #94a3b8; font-size: 12px; font-weight: 800; margin-bottom: 8px; letter-spacing: 1px; }
-            .cover .title { font-size: 44px; line-height: 1.15; font-weight: 900; margin: 0 0 10px; }
-            .cover .subtitle { color: #e2e8f0; font-size: 16px; line-height: 1.6; max-width: 620px; margin: 0; }
-            .cover-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 28px; }
-            .cover-card { border: 1px solid rgba(255,255,255,.14); border-radius: 16px; padding: 14px; background: rgba(255,255,255,.06); }
-            .cover-card span { display: block; color: #94a3b8; font-size: 10px; margin-bottom: 5px; font-weight: 700; }
-            .cover-card strong { font-size: 16px; font-weight: 800; }
-            .cover-coords { margin-top: 14px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 12px 16px; background: rgba(255,255,255,.06); display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
-            .cover-coords span { color: #94a3b8; font-size: 11px; font-weight: 700; }
-            .cover-coords strong { color: #fff; font-size: 14px; font-weight: 700; font-family: monospace; }
+            .cover .eyebrow { color: #94a3b8; font-size: 10px; font-weight: 800; margin-bottom: 6px; letter-spacing: 1px; }
+            .cover .title { font-size: 30px; line-height: 1.15; font-weight: 900; margin: 0 0 8px; }
+            .cover .subtitle { color: #e2e8f0; font-size: 12px; line-height: 1.6; max-width: 620px; margin: 0; }
+            .cover-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px; }
+            .cover-card { border: 1px solid rgba(255,255,255,.14); border-radius: 16px; padding: 10px; background: rgba(255,255,255,.06); }
+            .cover-card span { display: block; color: #94a3b8; font-size: 9px; margin-bottom: 3px; font-weight: 700; }
+            .cover-card strong { font-size: 12px; font-weight: 800; }
+            .cover-coords { margin-top: 12px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 10px 14px; background: rgba(255,255,255,.06); display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+            .cover-coords span { color: #94a3b8; font-size: 10px; font-weight: 700; }
+            .cover-coords strong { color: #fff; font-size: 12px; font-weight: 700; font-family: monospace; }
             .cover-meta { margin-top: 12px; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
             .report-code { font-family: monospace; font-size: 12px; color: #94a3b8; font-weight: 700; letter-spacing: 1px; }
             .cover-footer { position: absolute; bottom: 0; left: 0; right: 0; z-index: 3; display: flex; justify-content: space-between; align-items: center; padding: 0 44px 28px; font-size: 10px; color: #94a3b8; font-weight: 700; }
-
-            .cover-dark { background: #0f172a; background-image: none !important; color: #fff; padding: 0; min-height: 297mm; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; overflow: hidden; }
-            .cover-dark-bg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
-            .cover-dark-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; width: 100%; padding: 44px; }
-            .cover-dark-brand { font-size: 18px; font-weight: 800; letter-spacing: 1px; color: #f8fafc; margin-bottom: 50px; }
-            .cover-dark-brand img { height: 44px; object-fit: contain; }
-            .cover-dark-title { font-size: 48px; font-weight: 900; line-height: 1.2; margin: 0 0 16px; color: #fff; }
-            .cover-dark-location { font-size: 24px; font-weight: 700; color: #f8fafc; margin-bottom: 50px; }
-            .cover-dark-stats { display: flex; justify-content: center; gap: 24px; margin-bottom: 50px; flex-wrap: wrap; }
-            .cover-dark-stat { background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; border-radius: 16px; padding: 20px 32px; min-width: 140px; text-align: center; backdrop-filter: blur(4px); }
-            .cover-dark-stat span { display: block; font-size: 13px; color: #cbd5e1; margin-bottom: 8px; font-weight: 700; }
-            .cover-dark-stat strong { display: block; font-size: 28px; font-weight: 800; color: #fff; }
-            .cover-dark-coords { font-family: monospace; font-size: 16px; color: #94a3b8; margin-bottom: 12px; font-weight: 600; letter-spacing: 1px; }
-            .cover-dark-date { font-size: 14px; color: #64748b; font-weight: 600; }
           </style>
         </head>
         <body style="${params.coverImage ? `--page-bg: url('${params.coverImage}')` : ''}">
           ${params.startImage ? `
           <section class="page artwork-page">
             <img class="artwork-img" src="${params.startImage}" alt="Intro artwork" />
-          </section>
-          ` : ''}
-
-          <section class="page cover-dark">
-            <svg class="cover-dark-bg" viewBox="0 0 800 1122" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-              <g stroke="#334155" stroke-width="3" fill="none" opacity="0.6">
-                <!-- Left Buildings -->
-                <path d="M-20,350 L20,380 L20,1130" />
-                <path d="M20,380 L80,430 L80,1130" />
-                <path d="M80,430 L180,520 L180,1130" />
-                <path d="M50,490 L50,1130" />
-                <path d="M120,600 L120,1130" />
-                <!-- Right Buildings -->
-                <path d="M820,100 L730,100 L730,1130" />
-                <path d="M780,100 L780,1130" />
-                <path d="M730,450 L650,450 L650,1130" />
-                <path d="M690,450 L690,1130" />
-              </g>
-            </svg>
-            <div class="cover-dark-content">
-              <div class="cover-dark-brand">${params.logoWhiteImage ? `<img src="${params.logoWhiteImage}" alt="logo" />` : 'DigitalBrokerage'}</div>
-              <div class="cover-dark-title">تقرير مسح المنطقة</div>
-              <div class="cover-dark-location">${escapedLocationName}</div>
-              <div class="cover-dark-stats">
-                <div class="cover-dark-stat"><span>عدد المواقع</span><strong>${total}</strong></div>
-                <div class="cover-dark-stat"><span>عدد التصنيفات</span><strong>${Object.keys(typeCounts).length}</strong></div>
-                <div class="cover-dark-stat"><span>نطاق البحث</span><strong>${params.radius.toLocaleString()} م</strong></div>
+            <div class="artwork-overlay">
+              <div class="artwork-welcome">
+                <div class="artwork-brand">${params.logoWhiteImage ? `<img src="${params.logoWhiteImage}" style="height: 44px; object-fit: contain; filter: brightness(0) invert(1);" />` : 'DigitalBrokerage'}</div>
+                <div class="artwork-title">تقرير مسح المنطقة</div>
+                <div class="artwork-location">${escapedLocationName}</div>
+                <div class="artwork-stats">
+                  <div class="artwork-stat"><span>عدد المواقع</span><strong>${total}</strong></div>
+                  <div class="artwork-stat"><span>عدد التصنيفات</span><strong>${Object.keys(typeCounts).length}</strong></div>
+                  <div class="artwork-stat"><span>نطاق البحث</span><strong>${params.radius.toLocaleString()} م</strong></div>
+                </div>
+                <div class="artwork-coords">${params.latitude.toFixed(6)}, ${params.longitude.toFixed(6)}</div>
+                <div class="artwork-date">${this.formatReportDate(params.generatedAt)}</div>
               </div>
-              <div class="cover-dark-coords">${params.latitude.toFixed(6)} , ${params.longitude.toFixed(6)}</div>
-              <div class="cover-dark-date">${this.formatReportDate(params.generatedAt)}</div>
             </div>
           </section>
+          ` : ''}
 
           <section class="page major">
             ${pageHeader('إخلاء المسؤولية وفهرس التقرير')}
             <h3 class="section-title">إخلاء مسؤولية</h3>
             <div class="notice keep">
-              <ul style="margin: 0; padding-right: 16px; list-style-type: square; font-size: 11px; line-height: 1.7;">
+              <ul style="margin: 0; padding-right: 16px; list-style-type: square; font-size: 10px; line-height: 1.65;">
                 <li style="margin-bottom: 8px;">تم تقديم المعلومات والبيانات في هذا التقرير بهدف تقديم المعلومات العامة فقط، على الرغم من أننا نسعى للحفاظ على دقة وموثوقية البيانات المقدمة، إلا أننا لا نقدم أي تصريحات أو ضمانات صريحة أو ضمنية بشأن اكتمال أو ملاءمة أو دقة هذه المعلومات.</li>
                 <li style="margin-bottom: 8px;">لا تتحمل المنصة أي مسؤولية أو التزام بأي خطأ أو نقص في محتوى التقرير، كما يُنصح المستخدمون بالتحقق بشكل مستقل من المعلومات المقدمة، وإذا لزم الأمر البحث عن استشارة مهنية قبل اتخاذ أي قرارات استناداً على البيانات المقدمة.</li>
                 <li style="margin-bottom: 8px;">قد يحتوي هذا التقرير على توقعات، تقديرات، أو بيانات توجيهية أخرى قابلة للتغيير بناءً على عوامل متنوعة، ولا تتحمل المنصة أي التزام بتحديث أو إعلام المستخدمين بأي تغييرات من هذا القبيل.</li>
                 <li style="margin-bottom: 8px;">تخلي المنصة نفسها من جميع المسؤوليات عن أي خسارة أو ضرر أو إزعاج ناتج عن استخدام أو الاعتماد على المعلومات المقدمة في هذا التقرير، ويقر المستخدمون ويوافقون على الالتزام بالشروط والأحكام المبينة هنا وفي سياسة حدود الاستخدام لمنصة الوساطة الرقمية.</li>
                 <li>لا تشكل محتويات هذا التقرير نصائح مالية أو مهنية، كما يُنصح المستخدمون باستشارة الخبراء العقاريين المؤهلين للحصول على نصائح شخصية مصممة وفقاً لظروفهم الفردية.</li>
               </ul>
-              <p style="margin: 10px 0 0; font-weight: bold; line-height: 1.4; color: #0f172a; font-size: 11px;">من خلال الوصول إلى هذا التقرير واستخدامه، يقر المستخدمون ويوافقون على الالتزام بالشروط والأحكام المبينة هنا وفي سياسة الاستخدام لمنصة الوساطة الرقمية.</p>
+              <p style="margin: 10px 0 0; font-weight: bold; line-height: 1.4; color: #0f172a; font-size: 10px;">من خلال الوصول إلى هذا التقرير واستخدامه، يقر المستخدمون ويوافقون على الالتزام بالشروط والأحكام المبينة هنا وفي سياسة حدود الاستخدام لمنصة الوساطة الرقمية.</p>
             </div>
 
             <hr class="divider" />
 
-            <h3 class="section-title" style="font-size: 14px;">فهرس التقرير</h3>
+            <h3 class="section-title">فهرس التقرير</h3>
             <table class="agenda keep">
               <tbody>
-                <tr><td>01</td><td>غلاف التقرير</td></tr>
-                <tr><td>02</td><td>غلاف التقرير والبيانات الأساسية</td></tr>
-                <tr><td>03</td><td>إخلاء المسؤولية وفهرس التقرير</td></tr>
-                <tr><td>04</td><td>تفاصيل الموقع ومنهجية المسح</td></tr>
-                <tr><td>05</td><td>مؤشرات الخدمات</td></tr>
-                <tr><td>06</td><td>توزيع التصنيفات</td></tr>
-                <tr><td>07</td><td>الصورة التحليلية والمخطط المكاني</td></tr>
-                <tr><td>08</td><td>النموذج ثلاثي الأبعاد ولوحة أرقام البحث</td></tr>
-                <tr><td>09</td><td>تحليل المسافات والوصول</td></tr>
-                <tr><td>10</td><td>لوحة قرار الاستثمار</td></tr>
-                <tr><td>11</td><td>فجوات الخدمات والفرص</td></tr>
-                <tr><td>12</td><td>مصفوفة المخاطر وملاءمة الاستخدام</td></tr>
-                <tr><td>13</td><td>التوصية النهائية</td></tr>
-                <tr><td>14</td><td>ملحق البيانات</td></tr>
-                <tr><td>15</td><td>نهاية التقرير</td></tr>
+                <tr><td>01</td><td>غلاف التقرير والبيانات الأساسية</td></tr>
+                <tr><td>02</td><td>إخلاء المسؤولية وفهرس التقرير</td></tr>
+                <tr><td>03</td><td>تفاصيل الموقع ومنهجية المسح</td></tr>
+                <tr><td>04</td><td>مؤشرات الخدمات وتوزيع التصنيفات</td></tr>
+                <tr><td>05</td><td>الصورة التحليلية والمخطط المكاني</td></tr>
+                <tr><td>06</td><td>النموذج ثلاثي الأبعاد ولوحة أرقام البحث</td></tr>
+                <tr><td>07</td><td>تحليل المسافات والوصول</td></tr>
+                <tr><td>08</td><td>لوحة قرار الاستثمار</td></tr>
+                <tr><td>09</td><td>فجوات الخدمات والفرص</td></tr>
+                <tr><td>10</td><td>مصفوفة المخاطر وملاءمة الاستخدام</td></tr>
+                <tr><td>11</td><td>التوصية النهائية</td></tr>
+                <tr><td>12</td><td>ملحق البيانات</td></tr>
               </tbody>
             </table>
-            ${pageFooter('إخلاء المسؤولية وفهرس التقرير', '03')}
+            ${pageFooter('إخلاء المسؤولية وفهرس التقرير', '02')}
           </section>
 
           <section class="page major">
@@ -857,8 +820,8 @@ export class FinancialService {
             <div class="two-col keep" style="margin-bottom:16px">
               <div class="panel">
                 <h3 class="section-title">إحداثيات المركز</h3>
-                <div class="large-number" style="font-size:22px">${params.latitude.toFixed(6)}</div>
-                <div class="large-number" style="font-size:22px">${params.longitude.toFixed(6)}</div>
+                <div class="large-number" style="font-size:20px">${params.latitude.toFixed(6)}</div>
+                <div class="large-number" style="font-size:20px">${params.longitude.toFixed(6)}</div>
                 <p class="muted">تم حساب المسافات من نقطة المركز المختارة في الخريطة.</p>
               </div>
               <div class="panel">
@@ -884,24 +847,15 @@ export class FinancialService {
                 </ul>
               </div>
               <div class="panel">
-                <h3 class="section-title">التحليل</h3>
+                <h3 class="section-title">حدود التحليل</h3>
                 <p class="muted">التقرير يقيس القرب المكاني وليس جودة الخدمة أو الازدحام أو ساعات العمل. لذلك يعتبر أداة بحث أولية قوية وليست بديلاً عن التحقق الميداني.</p>
               </div>
             </div>
-            <div class="panel keep" style="margin-top:14px">
-              <h3 class="section-title">أبرز النتائج</h3>
-              <div class="stats" style="margin-bottom:0">
-                <div class="stat"><span>أقرب موقع</span><strong>${nearest[0] ? Math.round(nearest[0].distance || 0) : 0}م</strong></div>
-                <div class="stat"><span>متوسط المسافة</span><strong>${avgDistance}م</strong></div>
-                <div class="stat"><span>المواقع ضمن 1000م</span><strong>${within1000}</strong></div>
-                <div class="stat"><span>أكبر تصنيف</span><strong>${this.escapeHtml(topTypes[0]?.[0] || 'غير محدد')}</strong></div>
-              </div>
-            </div>
-            ${pageFooter('تفاصيل الموقع ومنهجية المسح', '04')}
+            ${pageFooter('تفاصيل الموقع ومنهجية المسح', '03')}
           </section>
 
           <section class="page major">
-            ${pageHeader('مؤشرات الخدمات')}
+            ${pageHeader('مؤشرات الخدمات وتوزيع التصنيفات')}
             <div class="stats">
               <div class="stat"><span>درجة الجاذبية</span><strong>${serviceScore}%</strong></div>
               <div class="stat"><span>تنوع الخدمات</span><strong>${diversityScore}%</strong></div>
@@ -909,28 +863,23 @@ export class FinancialService {
               <div class="stat"><span>داخل 1000م</span><strong>${within1000}</strong></div>
             </div>
             <div class="diagram keep">
-              <svg width="100%" height="${scoreBarsHeight}" viewBox="0 0 640 ${scoreBarsHeight}" xmlns="http://www.w3.org/2000/svg">
-                <rect width="640" height="${scoreBarsHeight}" fill="#f8fafc"/>
+              <svg width="100%" height="160" viewBox="0 0 640 160" xmlns="http://www.w3.org/2000/svg">
+                <rect width="640" height="160" fill="#f8fafc"/>
                 ${scoreBars}
               </svg>
             </div>
-            <h3 class="section-title" style="margin-top:16px">توزيع التصنيفات</h3>
+            <h3 class="section-title" style="margin-top:12px">توزيع التصنيفات</h3>
             <div class="diagram keep">
-              <svg width="100%" height="${barChartHeight}" viewBox="0 0 640 ${barChartHeight}" xmlns="http://www.w3.org/2000/svg">
-                <rect width="640" height="${barChartHeight}" fill="#f8fafc"/>
+              <svg width="100%" height="220" viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg">
+                <rect width="640" height="220" fill="#f8fafc"/>
                 ${barChart}
               </svg>
             </div>
-            ${pageFooter('مؤشرات الخدمات', '05')}
-          </section>
-
-          <section class="page major">
-            ${pageHeader('توزيع التصنيفات')}
             <table class="keep">
               <thead><tr><th>#</th><th>التصنيف</th><th>العدد</th><th>النسبة</th></tr></thead>
               <tbody>${topTypeRows}</tbody>
             </table>
-            ${pageFooter('توزيع التصنيفات', '06')}
+            ${pageFooter('مؤشرات الخدمات وتوزيع التصنيفات', '04')}
           </section>
 
           <section class="page major">
@@ -952,12 +901,12 @@ export class FinancialService {
               </div>
             </div>
             <hr class="divider" />
-            <h3 class="section-title" style="margin-bottom:8px">مشهد تحليلي ثلاثي الأبعاد</h3>
+            <h3 class="section-title">مشهد تحليلي ثلاثي الأبعاد</h3>
             <div class="diagram keep">${aerialVisual}</div>
-            <p class="muted" style="margin-top:6px; line-height:1.55; font-size:11.5px">
+            <p class="muted" style="margin-top:8px">
               ارتفاع الأعمدة يعبر عن قوة حضور الخدمات وقربها من المركز. الأعمدة الأطول تعني مواقع أقرب أو أكثر تأثيراً في قرار الموقع، بينما انخفاض الأعمدة يعني تأثيراً أقل أو بعداً نسبياً.
             </p>
-            ${pageFooter('الصورة التحليلية والمخطط المكاني', '07')}
+            ${pageFooter('الصورة التحليلية والمخطط المكاني', '05')}
           </section>
 
           <section class="page major">
@@ -965,8 +914,8 @@ export class FinancialService {
             <div class="diagram keep">
               <svg width="100%" height="380" viewBox="0 0 640 380" xmlns="http://www.w3.org/2000/svg">
                 <rect width="640" height="380" fill="#f8fafc"/>
-                <text x="320" y="32" font-size="16" fill="#0f172a" text-anchor="middle" font-weight="900">نموذج 3D لكثافة الخدمات حسب التصنيف</text>
-                <text x="320" y="54" font-size="10.5" fill="#64748b" text-anchor="middle">ارتفاع كل عمود يمثل قوة حضور التصنيف داخل نطاق المسح</text>
+                <text x="320" y="32" font-size="14" fill="#0f172a" text-anchor="middle" font-weight="900">نموذج 3D لكثافة الخدمات حسب التصنيف</text>
+                <text x="320" y="54" font-size="9.5" fill="#64748b" text-anchor="middle">ارتفاع كل عمود يمثل قوة حضور التصنيف داخل نطاق المسح</text>
                 ${isoBars}
               </svg>
             </div>
@@ -980,7 +929,7 @@ export class FinancialService {
               <div class="metric"><span>نسبة داخل 1000م</span><strong>${total ? Math.round((within1000 / total) * 100) : 0}%</strong><p>${within1000} موقع ضمن نطاق وصول سريع.</p></div>
               <div class="metric"><span>خارج 2000م</span><strong>${outside2000}</strong><p>مواقع أبعد نسبياً وتؤثر أقل على سهولة الوصول.</p></div>
             </div>
-            ${pageFooter('النموذج ثلاثي الأبعاد ولوحة أرقام البحث', '08')}
+            ${pageFooter('النموذج ثلاثي الأبعاد ولوحة أرقام البحث', '06')}
           </section>
 
           <section class="page major">
@@ -996,7 +945,7 @@ export class FinancialService {
               <thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>المسافة</th><th>المدينة</th><th>الإحداثيات</th></tr></thead>
               <tbody>${nearestRows}</tbody>
             </table>
-            ${pageFooter('تحليل المسافات والوصول', '09')}
+            ${pageFooter('تحليل المسافات والوصول', '07')}
           </section>
 
           <section class="page major">
@@ -1017,7 +966,7 @@ export class FinancialService {
               <thead><tr><th>#</th><th>المجموعة</th><th>العدد</th><th>الأقرب</th><th>الدرجة</th><th>أثرها على القرار</th></tr></thead>
               <tbody>${serviceGroupRows}</tbody>
             </table>
-            ${pageFooter('لوحة قرار الاستثمار', '10')}
+            ${pageFooter('لوحة قرار الاستثمار', '08')}
           </section>
 
           <section class="page major">
@@ -1048,7 +997,7 @@ export class FinancialService {
                 </ul>
               </div>
             </div>
-            ${pageFooter('فجوات الخدمات والفرص', '11')}
+            ${pageFooter('فجوات الخدمات والفرص', '09')}
           </section>
 
           <section class="page major">
@@ -1061,7 +1010,7 @@ export class FinancialService {
               <div class="panel dark">
                 <h3 class="section-title">قراءة القرار المختصرة</h3>
                 <p style="line-height:1.9;color:#e2e8f0">
-                  الدرجة الحالية: <strong style="color:#fff;font-size:22px">${decisionScore}%</strong><br/>
+                  الدرجة الحالية: <strong style="color:#fff;font-size:18px">${decisionScore}%</strong><br/>
                   الحكم: ${decisionBand}<br/>
                   أكبر تصنيف: ${this.escapeHtml(topTypes[0]?.[0] || 'غير محدد')} (${concentrationShare}%).
                 </p>
@@ -1076,7 +1025,7 @@ export class FinancialService {
                 </ul>
               </div>
             </div>
-            ${pageFooter('مصفوفة المخاطر وملاءمة الاستخدام', '12')}
+            ${pageFooter('مصفوفة المخاطر وملاءمة الاستخدام', '10')}
           </section>
 
           <section class="page major">
@@ -1102,7 +1051,7 @@ export class FinancialService {
                 </ul>
               </div>
             </div>
-            ${pageFooter('التوصية النهائية', '13')}
+            ${pageFooter('التوصية النهائية', '11')}
           </section>
 
           <section class="page major">
@@ -1111,7 +1060,7 @@ export class FinancialService {
               <thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>المسافة بالمتر</th><th>المدينة</th></tr></thead>
               <tbody>${appendixRows}</tbody>
             </table>
-            ${pageFooter('ملحق البيانات', '14')}
+            ${pageFooter('ملحق البيانات', '12')}
           </section>
 
           ${params.endImage ? `

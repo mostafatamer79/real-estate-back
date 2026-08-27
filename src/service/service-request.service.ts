@@ -1,6 +1,11 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { User, Role, Department } from '../user/user-entity';
 import { SettingsService } from '../settings/settings.service';
+import {
+  DEFAULT_SERVICE_FORMS,
+  ServiceFormDef,
+  VisibleWhen,
+} from '../settings/service-form.defaults';
 import { MailService } from '../mail/mail.service';
 import { NotificationService } from '../notification/notification.service';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -131,6 +136,9 @@ export class ServiceRequestService {
   }
 
   async create(createDto: CreateServiceRequestDto, user: User) {
+    // Server-side required-field validation driven by the dynamic form definitions
+    await this.validateAgainstServiceForm(createDto, user);
+
     const targetDepartment = createDto.targetDepartment || this.resolveTargetDepartment(createDto.category);
     const calculatedPrice = await this.calculateDefaultPrice(createDto.category, createDto.serviceType);
     const requestedPrice = typeof (createDto as any).price === 'number' ? (createDto as any).price : undefined;
@@ -488,6 +496,131 @@ export class ServiceRequestService {
       default:
         return TargetDepartment.REAL_ESTATE; // Default fallback for other if not specified
     }
+  }
+
+  // ─── Dynamic service-form validation ────────────────────────────────────────
+
+  /**
+   * Roles whose tools (admin panel quick-create, building management) predate the
+   * dynamic forms. Their submissions populate the same fixed columns but not the
+   * form-specific metadata targets, so they bypass form-definition validation.
+   */
+  private static readonly FORM_VALIDATION_EXEMPT_ROLES: Role[] = [
+    Role.ADMIN,
+    Role.AGENT,
+    Role.MANGER,
+    Role.EMPLOYEE,
+    Role.MARKETING,
+    Role.MARKETING_ADMIN,
+    Role.LEGAL,
+    Role.LEGAL_ADMIN,
+    Role.FINANCE,
+    Role.FINANCE_ADMIN,
+  ];
+
+  /**
+   * Validates the submission against the resolved form definition for its category:
+   * every `required` field must have a non-empty value at its target (fixed DTO column
+   * or dotted path into metadata/firstParty/secondParty). Fields that are hidden by
+   * their visibleWhen condition are skipped, as are divider/file/terms fields.
+   * Unknown categories or unresolvable definitions never block a request.
+   */
+  private async validateAgainstServiceForm(createDto: CreateServiceRequestDto, user: User): Promise<void> {
+    const category = createDto.category as string;
+    if (!category) return;
+    if (user && ServiceRequestService.FORM_VALIDATION_EXEMPT_ROLES.includes(user.role)) return;
+
+    let formKey: string | null = null;
+    if (category === 'legal') {
+      formKey = this.resolveLegalFormKey(createDto);
+    } else if (DEFAULT_SERVICE_FORMS[category]) {
+      formKey = category;
+    }
+    if (!formKey) return; // unknown/ambiguous category → skip validation
+
+    let def: ServiceFormDef;
+    try {
+      def = await this.settingsService.resolveServiceForm(formKey);
+    } catch {
+      return; // never block a request because of a form-definition problem
+    }
+
+    const values: Record<string, any> = {};
+    for (const field of def.fields) {
+      values[field.id] = this.getTargetValue(createDto, field.target);
+    }
+
+    const missing: string[] = [];
+    for (const field of def.fields) {
+      if (!field.required) continue;
+      if (field.type === 'divider' || field.type === 'file' || field.type === 'terms') continue;
+      if (!this.isFieldVisible(field.visibleWhen, values)) continue;
+      const value = values[field.id];
+      if (value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) {
+        missing.push(field.label);
+      }
+    }
+
+    if (missing.length > 0) {
+      throw new BadRequestException(`الحقول التالية مطلوبة: ${missing.join('، ')}`);
+    }
+  }
+
+  /**
+   * Maps a legal submission to its sub-form key using serviceType prefixes and
+   * metadata markers (LegalRequestFlow compositions and legacy buildingmanagement
+   * service types). Returns null when ambiguous — validation is skipped then.
+   */
+  private resolveLegalFormKey(createDto: CreateServiceRequestDto): string | null {
+    const serviceType = (createDto.serviceType || '').trim();
+    const metadata = (createDto.metadata || {}) as Record<string, any>;
+
+    if (
+      serviceType.includes('منازعة') || serviceType.includes('نزاع') ||
+      ['dispute', 'deedUpdate'].includes(serviceType) || metadata.disputeType
+    ) {
+      return 'legal_disputes';
+    }
+    if (
+      serviceType.includes('توثيق') || ['notary', 'notarization'].includes(serviceType) ||
+      metadata.deedInfo || metadata.saleAmount
+    ) {
+      return 'legal_documentation';
+    }
+    if (
+      serviceType.startsWith('عقد') || serviceType === 'مراجعة عقد' || serviceType === 'contracts' ||
+      metadata.contractDetails || metadata.applicantRole
+    ) {
+      return 'legal_contracts';
+    }
+    if (
+      serviceType.startsWith('خدمة قانونية') || serviceType === 'consultation' ||
+      serviceType.includes('استشار') || serviceType.includes('تقرير') || metadata.topic
+    ) {
+      return 'legal_other';
+    }
+    return null;
+  }
+
+  private getTargetValue(dto: CreateServiceRequestDto, target: string): any {
+    if (!target) return undefined;
+    let current: any = dto;
+    for (const part of target.split('.')) {
+      if (current === undefined || current === null || typeof current !== 'object') return undefined;
+      current = current[part];
+    }
+    return current;
+  }
+
+  private isFieldVisible(visibleWhen: VisibleWhen | undefined, values: Record<string, any>): boolean {
+    if (!visibleWhen) return true;
+    const actual = values[visibleWhen.field];
+    const toList = (v?: string | string[]): string[] => (v === undefined ? [] : Array.isArray(v) ? v : [v]);
+    const equals = toList(visibleWhen.equals);
+    if (equals.length > 0 && !equals.includes(actual)) return false;
+    const notEquals = toList(visibleWhen.notEquals);
+    if (notEquals.length > 0 && notEquals.includes(actual)) return false;
+    return true;
   }
 
   async findAll(user: User, page: number = 1, limit: number = 10, onlyMine: boolean = false) {

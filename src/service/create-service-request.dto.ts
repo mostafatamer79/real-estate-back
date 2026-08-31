@@ -1,12 +1,12 @@
 // src/service-request/create-service-request.dto.ts
 import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
-import { ServiceCategory, TargetDepartment } from './service-request.entity';
+import { TargetDepartment } from './service-request.entity';
 import { ServiceStatus } from './service-request.entity';
 
 export class CreateServiceRequestDto {
-  @IsEnum(ServiceCategory)
+  @IsString()
   @IsOptional()
-  category: ServiceCategory;
+  category: string;
 
   @IsString()
   @IsOptional()

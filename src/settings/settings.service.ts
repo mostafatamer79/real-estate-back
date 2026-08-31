@@ -64,6 +64,9 @@ export class SettingsService implements OnModuleInit {
         if (key.startsWith('service_price_')) {
             return { category: 'pricing', subcategory: 'services' };
         }
+        if (key === 'custom_service_catalog' || key === 'custom_service_categories') {
+            return { category: 'services', subcategory: 'catalog' };
+        }
         if (['appointment_price', 'purchase_service_fee_percentage', 'tax_percentage'].includes(key)) {
             return { category: 'pricing', subcategory: 'pricing' };
         }
@@ -150,8 +153,9 @@ export class SettingsService implements OnModuleInit {
                 .orWhere('setting.key LIKE :detailsPart', { detailsPart: 'details_part_%' })
                 .orWhere('setting.key LIKE :login', { login: 'login_%' })
                 .orWhere('setting.key LIKE :ui', { ui: 'ui_%' })
+                .orWhere('setting.key LIKE :servicePrice', { servicePrice: 'service_price_%' })
                 .orWhere('setting.key LIKE :serviceForm', { serviceForm: 'service_form_%' })
-                .orWhere('setting.key IN (:...keys)', { keys: ['appointment_price', 'purchase_service_fee_percentage', 'tax_percentage'] });
+                .orWhere('setting.key IN (:...keys)', { keys: ['appointment_price', 'purchase_service_fee_percentage', 'tax_percentage', 'custom_service_catalog', 'custom_service_categories'] });
         }
 
         const settings = await query.getMany();

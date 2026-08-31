@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, OnModuleInit } from '@nestjs/common';
 import { User, Role, Department } from '../user/user-entity';
 import { SettingsService } from '../settings/settings.service';
 import {
@@ -16,7 +16,7 @@ import { NotificationType } from '../notification/notification.entity';
 import { Invoice, InvoiceStatus } from '../financial/entities/invoice.entity';
 
 @Injectable()
-export class ServiceRequestService {
+export class ServiceRequestService implements OnModuleInit {
   constructor(
     @InjectRepository(ServiceRequest)
     private readonly serviceRequestRepository: Repository<ServiceRequest>,
@@ -28,6 +28,18 @@ export class ServiceRequestService {
     private readonly mailService: MailService,
     private readonly notificationService: NotificationService,
   ) {}
+
+  async onModuleInit() {
+    try {
+      await this.serviceRequestRepository.query(`
+        ALTER TABLE "service_requests"
+        ALTER COLUMN "category" TYPE character varying
+        USING "category"::text
+      `);
+    } catch (error) {
+      console.error('Failed to normalize service request category column:', error);
+    }
+  }
 
   private async getOwnerIds(ownerId: string): Promise<string[]> {
     const user = await this.userRepository.findOne({ where: { id: ownerId } });
@@ -718,6 +730,9 @@ export class ServiceRequestService {
       where: {
         userId,
         paymentStatus: PaidStatus.UNPAID,
+        adminAccepted: true,
+        invoiceSent: true,
+        clientDecision: ClientDecision.ACCEPTED,
       },
       order: {
         createdAt: 'DESC',
@@ -732,6 +747,9 @@ export class ServiceRequestService {
       .select('SUM(service.price * service.quantity)', 'total')
       .where('service.userId = :userId', { userId })
       .andWhere('service.paymentStatus = :status', { status: PaidStatus.UNPAID })
+      .andWhere('service.adminAccepted = true')
+      .andWhere('service.invoiceSent = true')
+      .andWhere('service.clientDecision = :decision', { decision: ClientDecision.ACCEPTED })
       .getRawOne();
 
     return parseFloat(result.total) || 0;
@@ -907,12 +925,12 @@ export class ServiceRequestService {
 
     // Determine which department this user belongs to
     const userDepts = user.departments || [];
-    if (user.role !== Role.ADMIN && userDepts.length === 0) {
+    if (user.role !== Role.ADMIN && user.role !== Role.AGENT && userDepts.length === 0) {
       throw new ForbiddenException('You must belong to a department to add a price');
     }
 
-    // Use the explicit dept slug from the request, or fallback to user's first department or target department.
-    const deptSlug = explicitDeptSlug || (userDepts.length > 0 ? userDepts[0] : targetDeptSlug);
+    // Use the explicit dept slug from the request, or fallback to user's first department, agent, or target department.
+    const deptSlug = explicitDeptSlug || (userDepts.length > 0 ? userDepts[0] : user.role === Role.AGENT ? 'agent' : targetDeptSlug);
 
     // Lock pricing once invoice is sent / client decided / paid.
     if (serviceRequest.invoiceSent || serviceRequest.clientDecision === ClientDecision.ACCEPTED || serviceRequest.paymentStatus === PaidStatus.PAID) {
@@ -940,17 +958,6 @@ export class ServiceRequestService {
     serviceRequest.price = price;
 
     const saved = await this.serviceRequestRepository.save(serviceRequest);
-
-    // Notify the client if they are registered
-    if (serviceRequest.userId) {
-      await this.notificationService.create(
-        serviceRequest.userId,
-        NotificationType.SERVICE_REQUEST,
-        'تم تحديث سعر الخدمة',
-        `تم تحديث عرض السعر لقسم ${deptSlug}: ${price} ريال`,
-        { serviceRequestId: saved.id },
-      ).catch(err => console.error('Failed to notify client of price update:', err));
-    }
 
     return saved;
   }
@@ -1024,16 +1031,20 @@ export class ServiceRequestService {
   }
 
   /**
-   * Client accepts a specific department offer.
-   * This sets the chosen price and can trigger further workflow steps.
+   * Admin confirms a department/agent price offer. The confirmed request becomes
+   * payable in the user's wallet via an unpaid Invoice entity.
    */
   async acceptDepartmentOffer(id: string, deptSlug: string, user: User): Promise<ServiceRequest> {
+    if (user.role !== Role.ADMIN) {
+      throw new ForbiddenException('Only admins can confirm service request prices');
+    }
+
     const serviceRequest = await this.serviceRequestRepository.findOne({
-      where: { id, userId: user.id },
+      where: { id },
       relations: ['user'],
     });
 
-    if (!serviceRequest) throw new NotFoundException('Service request not found or access denied');
+    if (!serviceRequest) throw new NotFoundException('Service request not found');
 
     const offers = serviceRequest.departmentPrices || {};
     const chosenOffer = offers[deptSlug];
@@ -1041,23 +1052,51 @@ export class ServiceRequestService {
     if (!chosenOffer) throw new BadRequestException(`No offer found for department: ${deptSlug}`);
 
     serviceRequest.price = chosenOffer.price;
+    serviceRequest.invoicePrice = chosenOffer.price;
+    serviceRequest.invoiceSent = true;
+    serviceRequest.clientDecision = ClientDecision.ACCEPTED;
+    serviceRequest.adminAccepted = true;
     serviceRequest.metadata = {
       ...(serviceRequest.metadata || {}),
-      acceptedOffer: { dept: deptSlug, ...chosenOffer }
+      acceptedOffer: { dept: deptSlug, ...chosenOffer, confirmedBy: user.id, confirmedAt: new Date().toISOString() }
     };
-    serviceRequest.clientDecision = ClientDecision.ACCEPTED;
 
-    // If it's a category that requires an invoice, update the invoice if it exists
-    const invoice = await this.invoiceRepository.findOne({
+    let invoice = await this.invoiceRepository.findOne({
       where: { referenceId: serviceRequest.id, referenceType: 'ServiceRequest' }
     });
+
     if (invoice) {
       invoice.amount = chosenOffer.price;
       invoice.total = chosenOffer.price;
-      await this.invoiceRepository.save(invoice);
+      invoice.status = invoice.status || InvoiceStatus.UNPAID;
+    } else if (serviceRequest.userId) {
+      invoice = this.invoiceRepository.create({
+        amount: chosenOffer.price,
+        total: chosenOffer.price,
+        status: InvoiceStatus.UNPAID,
+        description: `فاتورة خدمة: ${serviceRequest.serviceType}`,
+        referenceType: 'ServiceRequest',
+        referenceId: serviceRequest.id,
+        userId: serviceRequest.userId,
+        user: serviceRequest.user,
+      });
     }
 
-    return await this.serviceRequestRepository.save(serviceRequest);
+    if (invoice) await this.invoiceRepository.save(invoice);
+
+    const saved = await this.serviceRequestRepository.save(serviceRequest);
+
+    if (serviceRequest.userId) {
+      await this.notificationService.create(
+        serviceRequest.userId,
+        NotificationType.SERVICE_REQUEST,
+        'تم اعتماد سعر الخدمة',
+        `تم اعتماد سعر طلب ${saved.serviceType}. يمكنك الآن عرض الفاتورة من المحفظة.`,
+        { serviceRequestId: saved.id },
+      ).catch(err => console.error('Failed to notify client of admin confirmation:', err));
+    }
+
+    return saved;
   }
 
   /**

@@ -50,11 +50,8 @@ import {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({
-      type: 'enum',
-      enum: ServiceCategory
-    })
-    category: ServiceCategory;
+    @Column({ type: 'varchar' })
+    category: string;
 
     @Column()
     serviceType: string; // Specific service like "الغاز", "نقل وتركيب الأثاث"

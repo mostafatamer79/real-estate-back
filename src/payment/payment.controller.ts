@@ -1,15 +1,47 @@
-import { Controller, Post, UseGuards, Body, Req, Res, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Get, UseGuards, Body, Req, Res, BadRequestException, Query } from '@nestjs/common';
+import { Public } from '../common/decorators/public.decorator';
 import { PaymentService } from './payment.service';
+import { PaylinkService } from './paylink.service';
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
 
 @Controller('payment')
 export class PaymentController {
-  constructor(private readonly paymentService: PaymentService) {}
+  constructor(private readonly paymentService: PaymentService, private readonly paylinkService: PaylinkService) {}
 
   @Post('intent')
   @UseGuards(JwtAuthGuard)
   async createPaymentIntent(@Body() body: { bookingId?: string; invoiceId?: string }, @Req() req) {
     return this.paymentService.createPaymentIntent(body, req.user);
+  }
+
+  @Post('paylink/invoice')
+  @UseGuards(JwtAuthGuard)
+  createPaylinkInvoice(@Body() body: { bookingId?: string; invoiceId?: string; products?: Array<{ title: string; price: number; qty: number; description?: string; isDigital?: boolean; imageSrc?: string; specificVat?: number; productCost?: number }> }, @Req() req) {
+    return this.paylinkService.createInvoice(body, req.user);
+  }
+
+  @Post('paylink/cancel')
+  @UseGuards(JwtAuthGuard)
+  cancelInvoice(@Body() body: { transactionNo: string }) {
+    return this.paylinkService.cancelInvoice(body.transactionNo);
+  }
+
+  @Post('paylink/digital-product')
+  @UseGuards(JwtAuthGuard)
+  sendDigitalProduct(@Body() body: { orderNumber: string; message: string }) {
+    return this.paylinkService.sendDigitalProduct(body.orderNumber, body.message);
+  }
+
+  @Get('paylink/callback')
+  @Public()
+  callback(@Query('orderNumber') orderNumber: string, @Query('transactionNo') transactionNo: string) {
+    return this.paylinkService.callback(orderNumber, transactionNo);
+  }
+
+  @Get('paylink/cancel')
+  @Public()
+  cancel(@Query('orderNumber') orderNumber: string, @Query('transactionNo') transactionNo: string) {
+    return this.paylinkService.callback(orderNumber, transactionNo, true);
   }
 
   @Post('webhook')

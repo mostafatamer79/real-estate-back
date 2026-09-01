@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, OnModuleInit } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { User, Role, Department } from '../user/user-entity';
 import { SettingsService } from '../settings/settings.service';
 import {
@@ -16,7 +16,7 @@ import { NotificationType } from '../notification/notification.entity';
 import { Invoice, InvoiceStatus } from '../financial/entities/invoice.entity';
 
 @Injectable()
-export class ServiceRequestService implements OnModuleInit {
+export class ServiceRequestService {
   constructor(
     @InjectRepository(ServiceRequest)
     private readonly serviceRequestRepository: Repository<ServiceRequest>,
@@ -28,18 +28,6 @@ export class ServiceRequestService implements OnModuleInit {
     private readonly mailService: MailService,
     private readonly notificationService: NotificationService,
   ) {}
-
-  async onModuleInit() {
-    try {
-      await this.serviceRequestRepository.query(`
-        ALTER TABLE "service_requests"
-        ALTER COLUMN "category" TYPE character varying
-        USING "category"::text
-      `);
-    } catch (error) {
-      console.error('Failed to normalize service request category column:', error);
-    }
-  }
 
   private async getOwnerIds(ownerId: string): Promise<string[]> {
     const user = await this.userRepository.findOne({ where: { id: ownerId } });
@@ -151,26 +139,28 @@ export class ServiceRequestService implements OnModuleInit {
     // Server-side required-field validation driven by the dynamic form definitions
     await this.validateAgainstServiceForm(createDto, user);
 
-    const targetDepartment = createDto.targetDepartment || this.resolveTargetDepartment(createDto.category);
-    const calculatedPrice = await this.calculateDefaultPrice(createDto.category, createDto.serviceType);
+    const category = createDto.category || 'other';
+    createDto.category = category;
+    const targetDepartment = createDto.targetDepartment || this.resolveTargetDepartment(category);
+    const calculatedPrice = await this.calculateDefaultPrice(category, createDto.serviceType);
     const requestedPrice = typeof (createDto as any).price === 'number' ? (createDto as any).price : undefined;
 
     // Workflow Logic: Construction and Legal are auto-approved (will flip on payment)
     // Post-Purchase and Other require manual admin approval
-    const requiresManualApproval = ['postPurchase', 'other'].includes(createDto.category);
+    const requiresManualApproval = ['postPurchase', 'other'].includes(category);
 
     // Differentiated Invoice Flow:
     // Legal and Marketing require manual admin pricing and client accept/reject.
     // All other categories skip the accept/reject flow and instantly generate an unpaid invoice.
-    const requiresManualPricing = ['legal', 'marketing'].includes(createDto.category);
+    const requiresManualPricing = ['legal', 'marketing'].includes(category);
 
     // Upsert behavior: user can only have one active request per (category + serviceType).
     // If an active request exists, allow updating the editable fields instead of creating duplicates.
-    if (user?.id && createDto.category && createDto.serviceType) {
+    if (user?.id && category && createDto.serviceType) {
       const existing = await this.serviceRequestRepository.findOne({
         where: {
           userId: user.id,
-          category: createDto.category as any,
+          category: category as any,
           serviceType: createDto.serviceType as any,
         } as any,
         order: { createdAt: 'DESC' } as any,
@@ -761,7 +751,7 @@ export class ServiceRequestService implements OnModuleInit {
     serviceRequest.paymentStatus = PaidStatus.PAID;
 
     // Auto-approve Construction and Legal on payment
-    if (['construction', 'legal'].includes(serviceRequest.category)) {
+    if (['construction', 'legal'].includes(serviceRequest.category || 'other')) {
         serviceRequest.adminAccepted = true;
     }
 

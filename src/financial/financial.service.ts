@@ -1708,7 +1708,7 @@ export class FinancialService {
       if (serviceRequest) {
         serviceRequest.paymentStatus = PaidStatus.PAID;
         // Auto-approve Construction and Legal on payment
-        if (['construction', 'legal'].includes(serviceRequest.category)) {
+        if (['construction', 'legal'].includes(serviceRequest.category || 'other')) {
             serviceRequest.adminAccepted = true;
         }
         await this.serviceRequestRepository.save(serviceRequest);

@@ -329,6 +329,45 @@ export class ServiceRequestService {
   }
 
 
+  /**
+   * Make sure a service request has exactly one wallet invoice.
+   * The invoice is created when an admin sends or approves a price.
+   */
+  private async upsertServiceRequestInvoice(
+    serviceRequest: ServiceRequest,
+    amount: number,
+  ): Promise<Invoice | null> {
+    if (!serviceRequest.userId) return null;
+
+    let invoice = await this.invoiceRepository.findOne({
+      where: { referenceType: 'ServiceRequest', referenceId: serviceRequest.id },
+    });
+
+    if (invoice?.status === InvoiceStatus.PAID) {
+      throw new BadRequestException('This service invoice has already been paid');
+    }
+
+    if (invoice) {
+      invoice.amount = amount;
+      invoice.total = amount;
+      invoice.status = InvoiceStatus.UNPAID;
+      invoice.description = `فاتورة خدمة: ${serviceRequest.serviceType}`;
+    } else {
+      invoice = this.invoiceRepository.create({
+        amount,
+        total: amount,
+        status: InvoiceStatus.UNPAID,
+        description: `فاتورة خدمة: ${serviceRequest.serviceType}`,
+        referenceType: 'ServiceRequest',
+        referenceId: serviceRequest.id,
+        userId: serviceRequest.userId,
+        user: serviceRequest.user,
+      });
+    }
+
+    return this.invoiceRepository.save(invoice);
+  }
+
   /** Admin: Set price and send invoice to the client */
   async sendInvoice(id: string, price: number, user: User): Promise<ServiceRequest> {
     const allowedRoles = [Role.ADMIN, Role.LEGAL, Role.LEGAL_ADMIN, Role.MARKETING, Role.MARKETING_ADMIN, Role.FINANCE, Role.FINANCE_ADMIN];
@@ -376,7 +415,7 @@ export class ServiceRequestService {
     serviceRequest.clientDecision = ClientDecision.PENDING;
 
     const saved = await this.serviceRequestRepository.save(serviceRequest);
-
+    await this.upsertServiceRequestInvoice(saved, price);
     // Notify client via email and in-app notification
     if (serviceRequest.user?.email) {
       if (serviceRequest.category === 'legal') {
@@ -417,22 +456,13 @@ export class ServiceRequestService {
     serviceRequest.clientDecision = decision === 'accepted' ? ClientDecision.ACCEPTED : ClientDecision.REJECTED;
     const saved = await this.serviceRequestRepository.save(serviceRequest);
 
-    // Create actual Invoice entity if accepted
+    // The invoice is normally created when the admin sends the price.
+    // Keep this fallback for older requests and reuse the existing invoice.
     if (decision === 'accepted') {
       try {
-        const invoice = this.invoiceRepository.create({
-          amount: serviceRequest.invoicePrice || 0,
-          total: serviceRequest.invoicePrice || 0,
-          status: InvoiceStatus.UNPAID,
-          description: `فاتورة مبدئية لخدمة: ${serviceRequest.serviceType}`,
-          referenceType: 'ServiceRequest',
-          referenceId: serviceRequest.id,
-          userId: user.id,
-          user: user,
-        });
-        await this.invoiceRepository.save(invoice);
+        await this.upsertServiceRequestInvoice(saved, serviceRequest.invoicePrice || 0);
       } catch (err) {
-        console.error('Failed to create invoice entity for accepted legal request:', err);
+        console.error('Failed to create invoice entity for accepted service request:', err);
       }
     }
 
@@ -1072,7 +1102,17 @@ export class ServiceRequestService {
       });
     }
 
-    if (invoice) await this.invoiceRepository.save(invoice);
+    if (invoice) {
+      if (invoice.status === InvoiceStatus.PAID) {
+        throw new BadRequestException('This service invoice has already been paid');
+      }
+      invoice.amount = chosenOffer.price;
+      invoice.total = chosenOffer.price;
+      invoice.status = InvoiceStatus.UNPAID;
+      await this.invoiceRepository.save(invoice);
+    } else {
+      await this.upsertServiceRequestInvoice(serviceRequest, chosenOffer.price);
+    }
 
     const saved = await this.serviceRequestRepository.save(serviceRequest);
 

@@ -16,7 +16,7 @@ export class PaymentController {
 
   @Post('paylink/invoice')
   @UseGuards(JwtAuthGuard)
-  createPaylinkInvoice(@Body() body: { bookingId?: string; invoiceId?: string; products?: Array<{ title: string; price: number; qty: number; description?: string; isDigital?: boolean; imageSrc?: string; specificVat?: number; productCost?: number }> }, @Req() req) {
+  createPaylinkInvoice(@Body() body: { bookingId?: string; invoiceId?: string; customerMobile?: string; products?: Array<{ title: string; price: number; qty: number; description?: string; isDigital?: boolean; imageSrc?: string; specificVat?: number; productCost?: number }> }, @Req() req) {
     return this.paylinkService.createInvoice(body, req.user);
   }
 

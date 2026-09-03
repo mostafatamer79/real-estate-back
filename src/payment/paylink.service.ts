@@ -36,7 +36,7 @@ export class PaylinkService {
     const body = await response.json().catch(() => ({}));
     if (!response.ok) throw new BadRequestException(body.detail || body.message || 'Paylink request failed'); return body as T;
   }
-  async createInvoice(params: { bookingId?: string; invoiceId?: string; products?: Array<{ title: string; price: number; qty: number; description?: string; isDigital?: boolean; imageSrc?: string; specificVat?: number; productCost?: number }> }, user: User) {
+  async createInvoice(params: { bookingId?: string; invoiceId?: string; customerMobile?: string; products?: Array<{ title: string; price: number; qty: number; description?: string; isDigital?: boolean; imageSrc?: string; specificVat?: number; productCost?: number }> }, user: User) {
     let amount = 0; let orderNumber = ''; let note = ''; let customer = user;
     if (params.bookingId) {
       const booking = await this.bookingService.findOne(params.bookingId, user);
@@ -47,8 +47,10 @@ export class PaylinkService {
       if (!invoice) throw new BadRequestException('Invoice not found'); if (invoice.status === InvoiceStatus.PAID) throw new BadRequestException('Invoice already paid');
       amount = Number(invoice.total); orderNumber = 'invoice-' + invoice.id; note = invoice.description || 'Invoice ' + invoice.id; customer = await this.users.findOne({ where: { id: invoice.userId } }) || user;
     } else throw new BadRequestException('Either bookingId or invoiceId is required');
-    if (!Number.isFinite(amount) || amount <= 0) throw new BadRequestException('Invalid payment amount'); if (!customer.phone) throw new BadRequestException('A customer mobile number is required for Paylink');
-    const result = await this.request<PaylinkInvoice>('/api/addInvoice', { method: 'POST', body: JSON.stringify({ orderNumber, amount: Number(amount.toFixed(2)), callBackUrl: this.callbackUrl('callback'), cancelUrl: this.callbackUrl('cancel'), clientName: ((customer.firstName || '') + ' ' + (customer.lastName || '')).trim() || 'Customer', clientEmail: customer.email || undefined, clientMobile: customer.phone, currency: 'SAR', note, products: params.products }) });
+    if (!Number.isFinite(amount) || amount <= 0) throw new BadRequestException('Invalid payment amount');
+    const customerMobile = (params.customerMobile || customer.phone || '').trim();
+    if (!customerMobile) throw new BadRequestException('A customer mobile number is required for Paylink');
+    const result = await this.request<PaylinkInvoice>('/api/addInvoice', { method: 'POST', body: JSON.stringify({ orderNumber, amount: Number(amount.toFixed(2)), callBackUrl: this.callbackUrl('callback'), cancelUrl: this.callbackUrl('cancel'), clientName: ((customer.firstName || '') + ' ' + (customer.lastName || '')).trim() || 'Customer', clientEmail: customer.email || undefined, clientMobile: customerMobile, currency: 'SAR', note, products: params.products }) });
     if (!result.success || !result.url || !result.transactionNo) throw new BadRequestException(result.paymentErrors || 'Paylink did not create the invoice'); return { paymentUrl: result.url, transactionNo: result.transactionNo, orderNumber, amount: result.amount };
   }
   async cancelInvoice(transactionNo: string) {

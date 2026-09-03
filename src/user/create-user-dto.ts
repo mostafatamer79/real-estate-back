@@ -1,7 +1,7 @@
 import { IsArray, IsDate, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Length, MinLength } from "class-validator"
 import { IsSaudiPhoneNumber } from "../validator/IsSaudiNumber"
 import { Transform } from "class-transformer"
-import { Role, FinancialAgreementType } from "./user-entity"
+import { Role, FinancialAgreementType, VerifyStatus } from "./user-entity"
 import { Department } from "./department.enum"
 
 export class CreateUserDto{
@@ -79,6 +79,10 @@ export class CreateUserDto{
     @IsOptional()
     @IsString()
     agentLicenseNumber?: string;
+
+    @IsOptional()
+    @IsEnum(VerifyStatus)
+    agentVerificationStatus?: VerifyStatus;
   
     @IsOptional()
     @IsString()

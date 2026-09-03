@@ -444,6 +444,10 @@ export class UserService {
             throw new BadRequestException('Cannot set role to admin');
         }
 
+        if (updateUserDto.role && [Role.AGENT, Role.BROKER].includes(updateUserDto.role) && user.agentVerificationStatus !== VerifyStatus.VERIFIED) {
+            throw new BadRequestException('FAL license must be verified before selecting an agent or broker role');
+        }
+
         // Handle verification status reset if critical info changes
         if (updateUserDto.falLicenseNumber) {
             // Logic to verify Fal license could go here or trigger a job

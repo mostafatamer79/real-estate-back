@@ -450,6 +450,12 @@ export class UserService {
              user.agentVerificationStatus = VerifyStatus.PENDING; 
         }
 
+        // Accept the old admin field from cached clients, but keep FAL verification
+        // separate from Nafath identity verification.
+        if (updateUserDto.licenseVerificationStatus) {
+            updateUserDto.agentVerificationStatus = updateUserDto.licenseVerificationStatus;
+        }
+
         // Standardize verify flag based on profile completion (simplified logic)
         if(updateUserDto.firstName || updateUserDto.lastName ){
             user.isVerified = true

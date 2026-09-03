@@ -83,6 +83,11 @@ export class CreateUserDto{
     @IsOptional()
     @IsEnum(VerifyStatus)
     agentVerificationStatus?: VerifyStatus;
+
+    // Compatibility for cached admin clients; mapped to agentVerificationStatus by the service.
+    @IsOptional()
+    @IsEnum(VerifyStatus)
+    licenseVerificationStatus?: VerifyStatus;
   
     @IsOptional()
     @IsString()

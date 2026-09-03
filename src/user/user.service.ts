@@ -518,7 +518,7 @@ export class UserService {
                 'id', 'firstName', 'lastName', 'email', 'phone', 'role', 'roleOtherDescription',
                 'isVerified', 'isActive', 'hasFreeTrial',
                 'falLicenseNumber', 'falLicenseExpiry', 'lawLicenseNumber', 'commercialRegistrationNumber',
-                'agentLicenseNumber', 'agentVerificationStatus', 
+                'agentLicenseNumber', 'agentVerificationStatus', 'licenseDocument',
                 'address', 'city', 'country',
                 'profileImage', 'createAt',
                 'nationalId',

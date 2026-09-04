@@ -3,7 +3,7 @@ import { Controller, Get, Put, Patch, Post, Delete, Body, Param, UseGuards, Requ
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileUploadService } from '../document/file-upload.service';
 import { UserService } from './user.service';
-import { UpdateUserDto } from './create-user-dto';
+import { LicenseApplicationDto, UpdateUserDto } from './create-user-dto';
 import { Department, OnboardingStatus, Role, User, VerifyStatus } from './user-entity';
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
 import { EmployeeManagementGuard } from '../common/guards/employee-management.guard';
@@ -60,7 +60,16 @@ export class UserController {
     @Put('profile')
     @SkipSubscriptionGuard()
     async updateProfile(@Request() req, @Body() updateUserDto: UpdateUserDto) {
-        return this.userService.updateUserDetails(req.user.id, updateUserDto);
+        // License-review fields are server controlled. A user must use the
+        // dedicated application endpoint instead of self-verifying a role.
+        const { agentVerificationStatus, licenseVerificationStatus, requestedRole, ...profileUpdate } = updateUserDto;
+        return this.userService.updateUserDetails(req.user.id, profileUpdate);
+    }
+
+    @Post('profile/license-application')
+    @SkipSubscriptionGuard()
+    async submitLicenseApplication(@Request() req, @Body() application: LicenseApplicationDto) {
+        return this.userService.submitLicenseApplication(req.user.id, application);
     }
 
     @Patch('profile/onboarding')
@@ -75,13 +84,16 @@ export class UserController {
         return this.userService.updateOnboardingStatus(req.user.id, status);
     }
 
-    @Put(':id/verify')
+    @Post(':id/license-review')
     @UseGuards(EmployeeManagementGuard)
-    async updateVerificationStatus(
+    async reviewLicenseApplication(
         @Param('id') userId: string,
         @Body('status') status: VerifyStatus
     ) {
-        return this.userService.updateVerificationStatus(userId, status);
+        if (status !== VerifyStatus.VERIFIED && status !== VerifyStatus.REJECTED) {
+            throw new BadRequestException('Invalid license review status');
+        }
+        return this.userService.reviewLicenseApplication(userId, status);
     }
 
 
@@ -154,7 +166,8 @@ export class UserController {
         @Param('id') userId: string,
         @Body() updateUserDto: UpdateUserDto
     ) {
-        return this.userService.updateUserDetails(userId, updateUserDto);
+        const { agentVerificationStatus, licenseVerificationStatus, requestedRole, ...adminUpdate } = updateUserDto;
+        return this.userService.updateUserDetails(userId, adminUpdate);
     }
 
     @Put(':id/role')

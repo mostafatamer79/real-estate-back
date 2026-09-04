@@ -155,6 +155,15 @@ expireOtp: Date | null;
   })
   agentVerificationStatus: VerifyStatus; // Agent-specific verification
 
+  // The professional role a user has applied for. It is promoted to `role`
+  // only after an administrator approves the license review.
+  @Column({
+    nullable: true,
+    type: 'enum',
+    enum: Role,
+  })
+  requestedRole?: Role | null;
+
   @Column({ nullable: true })
   address?: string;
 

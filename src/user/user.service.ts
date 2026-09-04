@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Department, OnboardingStatus, Role, User, VerifyStatus } from './user-entity';
-import { CreateUserDto, UpdateUserDto } from './create-user-dto';
+import { CreateUserDto, LicenseApplicationDto, UpdateUserDto } from './create-user-dto';
 import { PasswordService } from '../password/password.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Offer } from '../offer/offer-entity';
@@ -445,7 +445,7 @@ export class UserService {
         }
 
         if (updateUserDto.role && [Role.AGENT, Role.BROKER].includes(updateUserDto.role) && user.agentVerificationStatus !== VerifyStatus.VERIFIED) {
-            throw new BadRequestException('FAL license must be verified before selecting an agent or broker role');
+            throw new BadRequestException('Submit a license application and wait for approval before selecting an agent or broker role');
         }
 
         // Handle verification status reset if critical info changes
@@ -520,6 +520,32 @@ export class UserService {
         return await this.userRepository.save(user);
     }
 
+    public async submitLicenseApplication(userId: string, application: LicenseApplicationDto): Promise<User> {
+        const user = await this.findOne(userId);
+        if (!user) {
+            throw new NotFoundException('auth.user_not_found');
+        }
+
+        if (![Role.AGENT, Role.BROKER].includes(application.requestedRole)) {
+            throw new BadRequestException('Only agent and broker license applications are supported');
+        }
+
+        const licenseNumber = application.falLicenseNumber?.trim() || application.agentLicenseNumber?.trim();
+        if (!licenseNumber) {
+            throw new BadRequestException('A license number is required to submit an application');
+        }
+
+        // Do not change `role` here. Agent and broker roles grant additional
+        // access, so the existing low-privilege role remains in force until
+        // an administrator completes the review.
+        user.requestedRole = application.requestedRole;
+        user.falLicenseNumber = application.falLicenseNumber?.trim() || user.falLicenseNumber || licenseNumber;
+        user.agentLicenseNumber = application.agentLicenseNumber?.trim() || user.agentLicenseNumber || licenseNumber;
+        user.agentVerificationStatus = VerifyStatus.PENDING;
+
+        return await this.userRepository.save(user);
+    }
+
     public async getUserProfile(userId: string): Promise<User> {
         const user = await this.userRepository.findOne({
             where: { id: userId },
@@ -528,7 +554,7 @@ export class UserService {
                 'id', 'firstName', 'lastName', 'email', 'phone', 'role', 'roleOtherDescription',
                 'isVerified', 'isActive', 'hasFreeTrial',
                 'falLicenseNumber', 'falLicenseExpiry', 'lawLicenseNumber', 'commercialRegistrationNumber',
-                'agentLicenseNumber', 'agentVerificationStatus', 'licenseDocument',
+                'agentLicenseNumber', 'agentVerificationStatus', 'requestedRole', 'licenseDocument',
                 'address', 'city', 'country',
                 'profileImage', 'createAt',
                 'nationalId',
@@ -555,19 +581,32 @@ export class UserService {
             .getMany();
     }
 
-    public async updateVerificationStatus(userId: string, status: VerifyStatus): Promise<User> {
+    public async reviewLicenseApplication(userId: string, status: VerifyStatus): Promise<User> {
         const user = await this.findOne(userId);
         
         if (!user) {
             throw new NotFoundException('User not found');
         }
 
+        if (!user.requestedRole || ![Role.AGENT, Role.BROKER].includes(user.requestedRole)) {
+            throw new BadRequestException('This user has no pending professional role application');
+        }
+
         user.agentVerificationStatus = status;
         if (status === VerifyStatus.VERIFIED) {
-            user.isVerified = true;
+            // A single save writes both fields together, preventing a verified
+            // application from being left with the old low-privilege role.
+            user.role = user.requestedRole;
+            user.requestedRole = null;
         }
         
         return await this.userRepository.save(user);
+    }
+
+    // Compatibility for callers that only update the status. New review flows
+    // should use `reviewLicenseApplication`, which also promotes the role.
+    public async updateVerificationStatus(userId: string, status: VerifyStatus): Promise<User> {
+        return this.reviewLicenseApplication(userId, status);
     }
 
     public async verifyNafath(userId: string, nationalId: string): Promise<User> {

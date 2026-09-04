@@ -63,6 +63,19 @@ export class CreateUserDto{
     otp: string;
   }
 
+export class LicenseApplicationDto {
+  @IsEnum(Role)
+  requestedRole: Role;
+
+  @IsOptional()
+  @IsString()
+  falLicenseNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  agentLicenseNumber?: string;
+}
+
   export class UpdateUserDto {
     @IsOptional()
     @IsString()
@@ -83,6 +96,10 @@ export class CreateUserDto{
     @IsOptional()
     @IsEnum(VerifyStatus)
     agentVerificationStatus?: VerifyStatus;
+
+    @IsOptional()
+    @IsEnum(Role)
+    requestedRole?: Role;
 
     // Compatibility for cached admin clients; mapped to agentVerificationStatus by the service.
     @IsOptional()

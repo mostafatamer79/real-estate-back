@@ -655,16 +655,63 @@ export class ServiceRequestService {
     return true;
   }
 
-  async findAll(user: User, page: number = 1, limit: number = 10, onlyMine: boolean = false) {
+  async findAll(
+    user: User,
+    page: number = 1,
+    limit: number = 10,
+    onlyMine: boolean = false,
+    department?: string,
+    category?: string,
+  ) {
     const skip = (page - 1) * limit;
     const queryBuilder = this.serviceRequestRepository
       .createQueryBuilder('service')
       .leftJoinAndSelect('service.user', 'user');
 
+    const slugToTargetMap: Record<string, TargetDepartment> = {
+      marketing: TargetDepartment.MARKETING,
+      finance: TargetDepartment.FINANCE,
+      legal: TargetDepartment.LEGAL,
+      properties: TargetDepartment.REAL_ESTATE,
+      real_estate: TargetDepartment.REAL_ESTATE,
+      employees: TargetDepartment.EMPLOYEES,
+    };
+
+    // If a specific department is requested via query param
+    if (department) {
+      const targetDept = slugToTargetMap[department] || (department as TargetDepartment);
+      queryBuilder.andWhere('service.targetDepartment = :targetDept', { targetDept });
+    }
+
+    // If a specific category is requested via query param
+    if (category) {
+      queryBuilder.andWhere('service.category = :category', { category });
+    }
+
     if ((user.role === Role.ADMIN || user.role === Role.AGENT) && !onlyMine) {
-      // Admins and Agents see everything unless they request only theirs
+      // General list (مركز الطلبات): legal and marketing requests only belong in their departments and must not go here.
+      if (!department && !category) {
+        queryBuilder.andWhere(
+          '(service.category IS NULL OR service.category NOT IN (:...deptOnlyCategories))',
+          { deptOnlyCategories: ['legal', 'marketing'] },
+        );
+        queryBuilder.andWhere(
+          'service.targetDepartment NOT IN (:...deptOnlyTargets)',
+          { deptOnlyTargets: [TargetDepartment.LEGAL, TargetDepartment.MARKETING] },
+        );
+      }
     } else if (user.role === Role.USER || user.role === Role.VIEWER || onlyMine) {
       queryBuilder.andWhere('service.userId = :userId', { userId: user.id });
+      if (!department && !category) {
+        queryBuilder.andWhere(
+          '(service.category IS NULL OR service.category NOT IN (:...deptOnlyCategories))',
+          { deptOnlyCategories: ['legal', 'marketing'] },
+        );
+        queryBuilder.andWhere(
+          'service.targetDepartment NOT IN (:...deptOnlyTargets)',
+          { deptOnlyTargets: [TargetDepartment.LEGAL, TargetDepartment.MARKETING] },
+        );
+      }
     } else {
       const ownerIds = await this.getOwnerIds(user.id);
       const userDeptsRaw = Array.isArray(user.departments) ? user.departments : [];
@@ -673,21 +720,16 @@ export class ServiceRequestService {
         .filter(([, v]) => v === true || v === 'manage' || v === 'view')
         .map(([k]) => String(k));
       const userDepts = Array.from(new Set([...userDeptsRaw, ...deptSlugsFromPerms]));
-      const slugToTargetMap: Record<string, TargetDepartment> = {
-        marketing: TargetDepartment.MARKETING,
-        finance: TargetDepartment.FINANCE,
-        legal: TargetDepartment.LEGAL,
-        properties: TargetDepartment.REAL_ESTATE,
-        employees: TargetDepartment.EMPLOYEES,
-      };
 
       const targetDepts = userDepts.map(slug => slugToTargetMap[slug]).filter(Boolean);
 
-      // Filter by department
-      if (targetDepts.length > 0) {
-        queryBuilder.andWhere('service.targetDepartment IN (:...targetDepts)', { targetDepts });
-      } else {
-        queryBuilder.andWhere('service.userId IN (:...ownerIds)', { ownerIds });
+      // Filter by department if not already explicitly specified
+      if (!department) {
+        if (targetDepts.length > 0) {
+          queryBuilder.andWhere('service.targetDepartment IN (:...targetDepts)', { targetDepts });
+        } else {
+          queryBuilder.andWhere('service.userId IN (:...ownerIds)', { ownerIds });
+        }
       }
     }
 

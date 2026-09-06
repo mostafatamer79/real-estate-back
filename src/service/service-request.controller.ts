@@ -40,9 +40,18 @@ import { SkipSubscriptionGuard } from '../common/decorators/skip-subscription.de
       @Request() req,
       @Query('page') page: string = '1',
       @Query('limit') limit: string = '10',
-      @Query('mine') mine: string = 'false'
+      @Query('mine') mine: string = 'false',
+      @Query('department') department?: string,
+      @Query('category') category?: string,
     ) {
-      return this.serviceRequestService.findAll(req.user, parseInt(page), parseInt(limit), mine === 'true');
+      return this.serviceRequestService.findAll(
+        req.user,
+        parseInt(page),
+        parseInt(limit),
+        mine === 'true',
+        department,
+        category,
+      );
     }
 
     @Get('category/:category')

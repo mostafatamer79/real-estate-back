@@ -311,7 +311,7 @@ export class ServiceRequestService {
           NotificationType.SERVICE_REQUEST,
           request.category === 'legal' ? 'طلب خدمة قانونية جديد' : 'طلب خدمة جديد لقسمك',
           `تم استلام طلب جديد: ${request.serviceType}. يمكنك مراجعته وتقديم عرض الآن.`,
-          { serviceRequestId: request.id },
+          { serviceRequestId: request.id, department: deptSlug },
         );
       } catch (err) {
         console.error(`Failed to notify dept member ${recipient.id}:`, err);
@@ -985,14 +985,41 @@ export class ServiceRequestService {
     };
     const targetDeptSlug = targetToSlugMap[serviceRequest.targetDepartment] || 'properties';
 
-    // Determine which department this user belongs to
-    const userDepts = user.departments || [];
-    if (user.role !== Role.ADMIN && user.role !== Role.AGENT && userDepts.length === 0) {
-      throw new ForbiddenException('You must belong to a department to add a price');
+    if (!Number.isFinite(price) || price <= 0) {
+      throw new BadRequestException('Price must be greater than zero');
     }
 
-    // Use the explicit dept slug from the request, or fallback to user's first department, agent, or target department.
-    const deptSlug = explicitDeptSlug || (userDepts.length > 0 ? userDepts[0] : user.role === Role.AGENT ? 'agent' : targetDeptSlug);
+    // Pricing must come from the department that owns the request. The explicit
+    // slug is kept for backwards-compatible clients, but it can never override
+    // the request's target department.
+    const userDepts = Array.isArray(user.departments) ? user.departments : [];
+    const departmentPermissions = user.departmentPermissions || {};
+    const roleToDepartment: Partial<Record<Role, string>> = {
+      [Role.MARKETING]: 'marketing',
+      [Role.MARKETING_ADMIN]: 'marketing',
+      [Role.LEGAL]: 'legal',
+      [Role.LEGAL_ADMIN]: 'legal',
+      [Role.FINANCE]: 'finance',
+      [Role.FINANCE_ADMIN]: 'finance',
+    };
+    const roleDepartment = roleToDepartment[user.role];
+    const hasTargetDepartmentAccess =
+      user.role === Role.ADMIN ||
+      roleDepartment === targetDeptSlug ||
+      userDepts.includes(targetDeptSlug as Department) ||
+      departmentPermissions[targetDeptSlug] === true ||
+      departmentPermissions[targetDeptSlug] === 'manage' ||
+      departmentPermissions[targetDeptSlug] === 'view';
+
+    if (!hasTargetDepartmentAccess) {
+      throw new ForbiddenException('You do not have access to price this department request');
+    }
+
+    if (explicitDeptSlug && explicitDeptSlug !== targetDeptSlug) {
+      throw new BadRequestException('The price department must match the request department');
+    }
+
+    const deptSlug = targetDeptSlug;
 
     // Lock pricing once invoice is sent / client decided / paid.
     if (serviceRequest.invoiceSent || serviceRequest.clientDecision === ClientDecision.ACCEPTED || serviceRequest.paymentStatus === PaidStatus.PAID) {
@@ -1018,8 +1045,23 @@ export class ServiceRequestService {
 
     // Recalculate total price as sum of all department contributions
     serviceRequest.price = price;
+    serviceRequest.invoicePrice = price;
+    serviceRequest.invoiceSent = true;
+    serviceRequest.clientDecision = ClientDecision.ACCEPTED;
+    serviceRequest.adminAccepted = true;
 
     const saved = await this.serviceRequestRepository.save(serviceRequest);
+    await this.upsertServiceRequestInvoice(saved, price);
+
+    if (saved.userId) {
+      await this.notificationService.create(
+        saved.userId,
+        NotificationType.SERVICE_REQUEST,
+        'تم تسعير طلب الخدمة',
+        `تم تحديد سعر طلب ${saved.serviceType} بمبلغ ${price} ريال. يمكنك الدفع من المحفظة.`,
+        { serviceRequestId: saved.id, wallet: true },
+      ).catch(err => console.error('Failed to notify client about service price:', err));
+    }
 
     return saved;
   }

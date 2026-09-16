@@ -1,6 +1,12 @@
 import { NafathService } from './nafath.service';
+import { JwtService } from '@nestjs/jwt';
 
 describe('NafathService', () => {
+  it('declares JwtService as an injectable dependency', () => {
+    const dependencies = Reflect.getMetadata('design:paramtypes', NafathService);
+    expect(dependencies[3]).toBe(JwtService);
+  });
+
   it('creates a server-side Nafath request and persists the matching number', async () => {
     const repository = {
       create: jest.fn((value) => value),

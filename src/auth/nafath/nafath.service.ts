@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { createHash, createPublicKey, createVerify, randomUUID } from 'crypto';
 import { Repository } from 'typeorm';
+import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../../user/user.service';
 import { NafathTransaction } from './nafath-transaction.entity';
 
@@ -24,7 +25,7 @@ export class NafathService {
     private readonly transactionRepository: Repository<NafathTransaction>,
     private readonly configService: ConfigService,
     private readonly userService: UserService,
-    private readonly jwtService: any,
+    private readonly jwtService: JwtService,
   ) {}
 
   async startAuthentication(nationalId: string, endUserIp: string, locale: 'ar' | 'en') {

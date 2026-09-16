@@ -103,13 +103,34 @@ export class UserService {
         }
         return user;
       }
-      public async findOneByEmail(email: string): Promise<User | null> {
+    public async findOneByEmail(email: string): Promise<User | null> {
         const normalizedEmail = this.normalizeEmail(email);
         const user = await this.userRepository.findOne({ where: { email: normalizedEmail } });
         if (!user) {
           return null
         }
         return user;
+      }
+      public async findOneByNationalId(nationalId: string): Promise<User | null> {
+        return await this.userRepository.findOne({ where: { nationalId } });
+      }
+
+      public async findOrCreateNafathUser(identity: { nationalId: string; firstName?: string; lastName?: string }): Promise<User> {
+        const existingUser = await this.findOneByNationalId(identity.nationalId);
+        if (existingUser) {
+          existingUser.isActive = true;
+          existingUser.isVerified = true;
+          return this.userRepository.save(existingUser);
+        }
+
+        return this.userRepository.save(this.userRepository.create({
+          nationalId: identity.nationalId,
+          firstName: identity.firstName,
+          lastName: identity.lastName,
+          isActive: true,
+          isVerified: true,
+          role: Role.VIEWER,
+        }));
       }
       public async createUserByphone(createUserDto: CreateUserDto,otp:string): Promise<User> {
         const existingUser = await this.findOneByPhone(createUserDto.phone);

@@ -12,12 +12,14 @@ import { AuthController } from './auth.controller';
 import { authConfig } from '../config/auth.config';
 import { JwtStrategy } from '../common/guards/jwt.strategy';
 import { ActivityModule } from '../activity/activity.module';
+import { NafathTransaction } from './nafath/nafath-transaction.entity';
+import { NafathService } from './nafath/nafath.service';
 
 @Module({
   imports: [
     forwardRef(() => UserModule),
     ActivityModule,
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, NafathTransaction]),
     ConfigModule.forFeature(authConfig),
     PassportModule.register({ defaultStrategy: 'jwt' }), // Register passport module
     JwtModule.registerAsync({
@@ -37,7 +39,8 @@ import { ActivityModule } from '../activity/activity.module';
   providers: [
     AuthService,
     JwtStrategy, // Add JwtStrategy here
+    NafathService,
   ],
-  exports: [AuthService, JwtModule],
+  exports: [AuthService, JwtModule, NafathService],
 })
 export class AuthModule {}

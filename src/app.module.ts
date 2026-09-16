@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { typeOrmConfig } from './config/database.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { authConfig, AuthConfig } from './config/auth.config';
+import { nafathConfig } from './config/nafath.config';
 import { AuthService } from './auth/auth.service';
 import { PasswordService } from './password/password.service';
 import { AuthModule } from './auth/auth.module';
@@ -53,7 +54,7 @@ import { DebugInterceptor } from './common/interceptors/debug.interceptor';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ load: [typeOrmConfig, authConfig], isGlobal: true }),
+    ConfigModule.forRoot({ load: [typeOrmConfig, authConfig, nafathConfig], isGlobal: true }),
     TypeOrmModule.forRoot(typeOrmConfig()),
     TypeOrmModule.forFeature([User, Permission, Activity, Property, FinancialTransaction]),
     AuthModule, UserModule, ServiceRequestModule, DocumentModule, CommissionModule,

@@ -1,13 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SubscriptionService } from './subscription.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Subscription, SubscriptionType, PaymentMethod } from './subscription.entity';
+import { Subscription, SubscriptionStatus, SubscriptionType, PaymentMethod } from './subscription.entity';
 import { User } from '../user/user-entity';
 import { Property } from '../property/entities/property.entity';
 import { Unit } from '../property/entities/unit.entity';
 import { ManagementPackageService } from './management-package/management-package.service';
 import { ManagementPackage } from './management-package/management-package.entity';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
+import { SettingsService } from '../settings/settings.service';
 
 describe('SubscriptionService', () => {
   let service: SubscriptionService;
@@ -18,7 +19,10 @@ describe('SubscriptionService', () => {
     save: jest.fn().mockImplementation((sub) => Promise.resolve({ id: 'sub-id', ...sub })),
   };
 
-  const mockUserRepository = {};
+  const mockUserRepository = {
+    findOne: jest.fn().mockResolvedValue({ id: 'user-id', departments: [], departmentPermissions: {} }),
+    save: jest.fn().mockImplementation(async (user) => user),
+  };
   const mockPropertyRepository = {
     findOne: jest.fn().mockResolvedValue({ id: 'prop-id' }),
   };
@@ -28,6 +32,10 @@ describe('SubscriptionService', () => {
 
   const mockPackageService = {
     findOne: jest.fn(),
+  };
+
+  const mockSettingsService = {
+    findOne: jest.fn().mockResolvedValue(null),
   };
 
   beforeEach(async () => {
@@ -53,6 +61,10 @@ describe('SubscriptionService', () => {
         {
           provide: ManagementPackageService,
           useValue: mockPackageService,
+        },
+        {
+          provide: SettingsService,
+          useValue: mockSettingsService,
         },
       ],
     }).compile();
@@ -139,7 +151,33 @@ describe('SubscriptionService', () => {
   
         const result = await service.create('user-id', dto);
   
-        expect(result.amount).toBe(1000);
-      });
+      expect(result.amount).toBe(1000);
+    });
+
+    it('activates a free package immediately without leaving it pending for payment', async () => {
+      mockPackageService.findOne.mockResolvedValue({
+        id: 'free-pkg-id',
+        yearlyPrice: 0,
+        monthlyPrice: 0,
+        discount: 0,
+        administrations: ['admin.dept.real_estate'],
+      } as ManagementPackage);
+
+      const dto: CreateSubscriptionDto = {
+        subscriptionType: SubscriptionType.MONTHLY,
+        packageId: 'free-pkg-id',
+        paymentMethod: PaymentMethod.MADA,
+        startDate: new Date('2026-09-15'),
+        amount: 0,
+      };
+
+      const result = await service.create('user-id', dto);
+
+      expect(result.status).toBe(SubscriptionStatus.ACTIVE);
+      expect(result.paidAt).toBeInstanceOf(Date);
+      expect(mockUserRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+        departments: expect.arrayContaining(['properties']),
+      }));
+    });
   });
 });

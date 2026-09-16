@@ -140,21 +140,22 @@ export class SubscriptionService {
       ? createSubscriptionDto.selectedDepartments.filter(Boolean)
       : [];
     let employeeSeats = Number(createSubscriptionDto.employeeSeats || 0);
+    let selectedPackage: Awaited<ReturnType<ManagementPackageService['findOne']>> | undefined;
 
     if (createSubscriptionDto.packageId) {
-      const pkg = await this.managementPackageService.findOne(createSubscriptionDto.packageId);
+      selectedPackage = await this.managementPackageService.findOne(createSubscriptionDto.packageId);
       selectedDepartments = [];
       employeeSeats = 0;
 
       let basePrice = 0;
       if (createSubscriptionDto.subscriptionType === SubscriptionType.YEARLY) {
-        basePrice = Number(pkg.yearlyPrice);
+        basePrice = Number(selectedPackage.yearlyPrice);
       } else if (createSubscriptionDto.subscriptionType === SubscriptionType.MONTHLY) {
-        basePrice = Number(pkg.monthlyPrice);
+        basePrice = Number(selectedPackage.monthlyPrice);
       }
 
       if (basePrice > 0) {
-        const discountAmount = basePrice * (Number(pkg.discount) / 100);
+        const discountAmount = basePrice * (Number(selectedPackage.discount) / 100);
         createSubscriptionDto.amount = basePrice - discountAmount;
       } else {
         createSubscriptionDto.amount = 0;
@@ -205,6 +206,7 @@ export class SubscriptionService {
         break;
     }
 
+    const isFreeSubscription = Number(createSubscriptionDto.amount || 0) <= 0;
     const subscription = this.subscriptionRepository.create({
       userId,
       propertyId: createSubscriptionDto.propertyId,
@@ -213,6 +215,7 @@ export class SubscriptionService {
       selectedDepartments,
       employeeSeats,
       packageId: createSubscriptionDto.packageId,
+      managementPackage: selectedPackage,
       subscriptionType: createSubscriptionDto.subscriptionType,
       customPeriodMonths: createSubscriptionDto.customPeriodMonths,
       amount: createSubscriptionDto.amount,
@@ -221,11 +224,18 @@ export class SubscriptionService {
       paymentMethod: createSubscriptionDto.paymentMethod,
       notes: createSubscriptionDto.notes,
       paymentReference: createSubscriptionDto.paymentReference,
-      status: (createSubscriptionDto.status as SubscriptionStatus) || SubscriptionStatus.PENDING,
+      status: isFreeSubscription
+        ? SubscriptionStatus.ACTIVE
+        : (createSubscriptionDto.status as SubscriptionStatus) || SubscriptionStatus.PENDING,
+      paidAt: isFreeSubscription ? new Date() : undefined,
       noExpiry: createSubscriptionDto.noExpiry || false,
     });
 
-    return await this.subscriptionRepository.save(subscription);
+    const savedSubscription = await this.subscriptionRepository.save(subscription);
+    if (isFreeSubscription) {
+      await this.applyPackageDepartmentsToUser(savedSubscription);
+    }
+    return savedSubscription;
   }
 
   async findAll(userId?: string): Promise<Subscription[]> {

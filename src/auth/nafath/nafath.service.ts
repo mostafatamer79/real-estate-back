@@ -41,6 +41,8 @@ export class NafathService {
       headers: {
         'APP-ID': config.appId,
         'APP-KEY': config.appKey,
+        app_id: config.appId,
+        app_key: config.appKey,
         'X-Forwarded-For': `${endUserIp},${config.clientIp || '127.0.0.1'}`,
         'Content-Type': 'application/json',
       },
@@ -127,7 +129,15 @@ export class NafathService {
     if (header.alg !== 'RS256' || !header.kid || claims.exp <= Math.floor(Date.now() / 1000) || claims.iss !== config.issuer || claims.aud !== config.audience) {
       throw new UnauthorizedException('Invalid Nafath token claims');
     }
-    const jwkResponse = await fetch(`${config.baseUrl.replace(/\/$/, '')}/api/v1/mfa/jwk`, { headers: { 'APP-ID': config.appId, 'APP-KEY': config.appKey, 'Content-Type': 'application/json' } });
+    const jwkResponse = await fetch(`${config.baseUrl.replace(/\/$/, '')}/api/v1/mfa/jwk`, {
+      headers: {
+        'APP-ID': config.appId,
+        'APP-KEY': config.appKey,
+        app_id: config.appId,
+        app_key: config.appKey,
+        'Content-Type': 'application/json',
+      },
+    });
     if (!jwkResponse.ok) throw new ServiceUnavailableException('Unable to retrieve Nafath signing key');
     const jwks = await jwkResponse.json() as { keys: Array<{ kid?: string; kty?: string; [key: string]: string | undefined }> };
     const jwk = jwks.keys.find((key) => key.kid === header.kid && key.kty === 'RSA');

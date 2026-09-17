@@ -39,6 +39,8 @@ describe('NafathService', () => {
         headers: expect.objectContaining({
           'APP-ID': 'server-app-id',
           'APP-KEY': 'server-app-key',
+          app_id: 'server-app-id',
+          app_key: 'server-app-key',
           'X-Forwarded-For': expect.stringContaining('198.51.100.10'),
         }),
       }),

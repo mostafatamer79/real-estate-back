@@ -10,6 +10,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import * as qs from 'qs';
 import * as dotenv from 'dotenv';
 import helmet from 'helmet';
+import { createCorsOptions } from './config/cors.config';
 
 // Load environment variables
 dotenv.config();
@@ -20,30 +21,20 @@ async function configureApp(app: NestExpressApplication) {
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
+  if (process.env.NODE_ENV === 'production' && corsOrigins.length === 0) {
+    throw new Error('CORS_ORIGIN must be configured in production');
+  }
 
-  app.useStaticAssets(uploadDir, {
-    prefix: '/uploads/',
+  // Only profile images are public. Documents, signatures, and reports stay private.
+  app.useStaticAssets(join(uploadDir, 'profile-images'), {
+    prefix: '/uploads/profile-images/',
   });
   app.use(helmet());
 
-  app.enableCors({
-    origin: (origin, callback) => {
-      if (!origin) {
-        callback(null, true);
-        return;
-      }
+  app.enableCors(createCorsOptions(corsOrigins));
 
-      if (corsOrigins.length === 0 || corsOrigins.includes(origin)) {
-        callback(null, true);
-        return;
-      }
-
-      callback(new Error('Not allowed by CORS'));
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-lang', 'lang',],
-  });
+  // Set only to the actual trusted proxy IP/subnet so req.ip is the end user's IP.
+  if (process.env.TRUST_PROXY) app.set('trust proxy', process.env.TRUST_PROXY);
 
   app.setGlobalPrefix('api');
 

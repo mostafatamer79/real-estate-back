@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -22,16 +22,20 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: any) {
     const user = await this.userRepository.findOne({ where: { id: payload.sub } });
+    if (!user || user.isActive === false) {
+      throw new UnauthorizedException('User is no longer active');
+    }
     return { 
       id: payload.sub, 
       userId: payload.sub, 
-      email: user?.email || payload.email, 
-      role: user?.role || payload.role, 
-      isActive: user?.isActive ?? payload.isActive, 
-      verifyStatus: user?.agentVerificationStatus ?? payload.verifyStatus, 
-      phone: user?.phone || payload.phone,
-      departments: Array.isArray(user?.departments) ? user?.departments : payload.departments,
-      departmentPermissions: user?.departmentPermissions || payload.departmentPermissions || {},
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      nafathVerifiedAt: user.nafathVerifiedAt,
+      verifyStatus: user.agentVerificationStatus,
+      phone: user.phone,
+      departments: Array.isArray(user.departments) ? user.departments : [],
+      departmentPermissions: user.departmentPermissions || {},
     };
   }
 }

@@ -6,13 +6,13 @@ import { BookingStatus } from './entities/booking.entity';
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
 import { Departments } from '../common/decorators/departments.decorators';
 import { DepartmentsGuard } from '../common/guards/departments.guard';
-// import { Roles } from '../common/decorators/roles.decorator';
-// import { Role } from '../common/enums/role.enum';
+import { Roles } from '../common/decorators/roles.decorators';
+import { Role } from '../user/user-entity';
 
 @Controller('admin/bookings')
 @UseGuards(JwtAuthGuard, DepartmentsGuard)
 @Departments('properties', 'orders')
-// @Roles(Role.ADMIN) // Uncomment if Roles guard is set up
+@Roles([Role.ADMIN])
 export class AdminBookingController {
   constructor(private readonly bookingService: BookingService) {}
 

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Property } from './entities/property.entity';
@@ -57,7 +57,9 @@ export class PropertyService {
 
     // Property Methods
     async createProperty(createPropertyDto: CreatePropertyDto, user: any): Promise<Property> {
-        const ownerId = (createPropertyDto as any).ownerId || user?.userId || user?.id;
+        const ownerId = user?.role === Role.ADMIN
+            ? (createPropertyDto as any).ownerId || user?.userId || user?.id
+            : user?.userId || user?.id;
         const property = this.propertyRepository.create({ ...(createPropertyDto as any), ownerId } as any);
         const saved = await this.propertyRepository.save(property as any);
         const savedProperty = Array.isArray(saved) ? saved[0] : saved;
@@ -144,7 +146,10 @@ export class PropertyService {
         return unit;
     }
     
-    async removeUnit(id: string): Promise<void> {
+    async removeUnit(id: string, user: any): Promise<void> {
+        const unit = await this.unitRepository.findOne({ where: { id } });
+        if (!unit) throw new NotFoundException('Unit not found');
+        await this.findOneProperty(unit.propertyId, user);
         await this.unitRepository.delete(id);
     }
 
@@ -177,8 +182,11 @@ export class PropertyService {
         if (leaseUnitIds.length) {
             const units = await this.unitRepository.find({ where: leaseUnitIds.map((unitId) => ({ id: unitId })) as any });
             const propertyIds = Array.from(new Set(units.map((u) => u.propertyId)));
-            // If any property is accessible, allow delete
-            await Promise.all(propertyIds.map((pid) => this.findOneProperty(pid, user).catch(() => null)));
+            for (const propertyId of propertyIds) {
+                await this.findOneProperty(propertyId, user);
+            }
+        } else if (!leaseUnitIds.length) {
+            throw new ForbiddenException('Tenant is not associated with an accessible property');
         }
         const result = await this.tenantRepository.delete(id);
         if (result.affected === 0) throw new NotFoundException(`Tenant with ID ${id} not found`);
@@ -204,7 +212,8 @@ export class PropertyService {
     async createLease(createLeaseDto: CreateLeaseDto, user: any): Promise<Lease> {
         // Ensure lease is created under a unit the user can access
         const unit = await this.unitRepository.findOne({ where: { id: (createLeaseDto as any).unitId } });
-        if (unit) await this.findOneProperty(unit.propertyId, user);
+        if (!unit) throw new NotFoundException('Unit not found');
+        await this.findOneProperty(unit.propertyId, user);
         const lease = this.leaseRepository.create(createLeaseDto);
         const savedLease = await this.leaseRepository.save(lease);
         
@@ -244,7 +253,8 @@ export class PropertyService {
         const lease = await this.leaseRepository.findOne({ where: { id } });
         if (!lease) throw new NotFoundException(`Lease with ID ${id} not found`);
         const unit = await this.unitRepository.findOne({ where: { id: (dto as any).unitId || lease.unitId } });
-        if (unit) await this.findOneProperty(unit.propertyId, user);
+        if (!unit) throw new NotFoundException('Unit not found');
+        await this.findOneProperty(unit.propertyId, user);
         await this.leaseRepository.update(id, dto as any);
         const updated = await this.leaseRepository.findOne({ where: { id }, relations: ['unit', 'tenant'] });
         if (!updated) throw new NotFoundException(`Lease with ID ${id} not found`);
@@ -255,7 +265,8 @@ export class PropertyService {
         const lease = await this.leaseRepository.findOne({ where: { id } });
         if (!lease) throw new NotFoundException(`Lease with ID ${id} not found`);
         const unit = await this.unitRepository.findOne({ where: { id: lease.unitId } });
-        if (unit) await this.findOneProperty(unit.propertyId, user);
+        if (!unit) throw new NotFoundException('Unit not found');
+        await this.findOneProperty(unit.propertyId, user);
         const result = await this.leaseRepository.delete(id);
         if (result.affected === 0) throw new NotFoundException(`Lease with ID ${id} not found`);
     }
@@ -264,10 +275,10 @@ export class PropertyService {
     async createPayment(createPaymentDto: CreatePaymentDto, user: any): Promise<any> {
         // Ensure payment belongs to a lease/unit/property user can access
         const lease = await this.leaseRepository.findOne({ where: { id: (createPaymentDto as any).leaseId } });
-        if (lease) {
-            const unit = await this.unitRepository.findOne({ where: { id: (lease as any).unitId } });
-            if (unit) await this.findOneProperty(unit.propertyId, user);
-        }
+        if (!lease) throw new NotFoundException('Lease not found');
+        const unit = await this.unitRepository.findOne({ where: { id: (lease as any).unitId } });
+        if (!unit) throw new NotFoundException('Unit not found');
+        await this.findOneProperty(unit.propertyId, user);
         const payment = this.paymentRepository.create(createPaymentDto as any);
         const savedPayment = await this.paymentRepository.save(payment);
         

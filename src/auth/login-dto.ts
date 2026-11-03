@@ -1,5 +1,5 @@
 // src/auth/dto/reset-otp.dto.ts
-import { IsString, IsEmail, ValidateIf, IsOptional, IsNotEmpty, IsIn, Length } from 'class-validator';
+import { IsString, IsEmail, ValidateIf, IsOptional, IsNotEmpty, IsIn, Length, IsUUID } from 'class-validator';
 import { IsSaudiPhoneNumber } from '../validator/IsSaudiNumber';
 
 export class LoginDto{
@@ -15,40 +15,41 @@ export class LoginDto{
 export class ResetOtpDto {
   @IsOptional()
   @IsEmail()
-  @ValidateIf(o => !o.phone) // Validate email if phone is not provided
+  @ValidateIf((o: ResetOtpDto) => !o.phone) // Validate email if phone is not provided
   email?: string;
 
   @IsOptional()
   @IsSaudiPhoneNumber()
-  @ValidateIf(o => !o.email) // Validate phone if email is not provided
+  @ValidateIf((o: ResetOtpDto) => !o.email) // Validate phone if email is not provided
   phone?: string;
 }
 
 export class StartNafathDto {
-  @IsString()
-  @Length(8, 20)
-  nationalId: string;
-
   @IsOptional()
   @IsIn(['ar', 'en'])
   locale?: 'ar' | 'en';
 }
 
 export class NafathStatusDto {
-  @IsString()
+  @IsUUID()
   requestId: string;
 
-  @IsString()
+  @IsUUID()
   clientSecret: string;
 }
 
 export class NafathCallbackDto {
   @IsString()
-  token: string;
+  @Length(1, 4096)
+  state: string;
 
+  @IsOptional()
   @IsString()
-  requestId: string;
+  requestId?: string;
+}
 
+export class CompleteNafathDto extends NafathStatusDto {
   @IsString()
-  transId: string;
+  @Length(1, 4096)
+  state: string;
 }

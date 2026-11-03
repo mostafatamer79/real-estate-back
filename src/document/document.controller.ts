@@ -32,7 +32,7 @@ export class DocumentController {
   ) {}
 
   @Post('upload')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
   async uploadDocument(
     @UploadedFile() file: Express.Multer.File
 ,
@@ -102,7 +102,7 @@ export class DocumentController {
   }
 
   @Post(':id/sign')
-  @UseInterceptors(FileInterceptor('signature'))
+  @UseInterceptors(FileInterceptor('signature', { limits: { fileSize: 2 * 1024 * 1024 } }))
   async signDocument(
     @Param('id', ParseUUIDPipe) id: string,
     @UploadedFile() signatureFile:  Express.Multer.File ,

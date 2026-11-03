@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order } from './entities/order.entity';
@@ -79,30 +79,38 @@ export class OrderService {
     return query.getMany();
   }
  
-  async findOne(id: string): Promise<Order | null> {
-    return this.orderRepository.findOne({
+  private async findAuthorized(id: string, user: any): Promise<Order> {
+    const order = await this.orderRepository.findOne({
       where: { id },
       relations: ['user', 'assignedTo'],
     });
+    if (!order) throw new NotFoundException('Order not found');
+    const userId = user?.id || user?.userId;
+    if (user?.role !== Role.ADMIN && order.user?.id !== userId && order.assignedTo?.id !== userId) {
+      throw new ForbiddenException('You do not have permission to access this order');
+    }
+    return order;
   }
 
-  async update(id: string, updateOrderDto: any): Promise<Order> {
-    const order = await this.orderRepository.findOne({ where: { id } });
-    if (!order) throw new NotFoundException('Order not found');
+  async findOne(id: string, user: any): Promise<Order> {
+    return this.findAuthorized(id, user);
+  }
+
+  async update(id: string, updateOrderDto: any, user: any): Promise<Order> {
+    const order = await this.findAuthorized(id, user);
     Object.assign(order, updateOrderDto);
     return this.orderRepository.save(order);
   }
 
-  async updateStatus(id: string, status: string): Promise<Order> {
-    const order = await this.orderRepository.findOne({ where: { id } });
-    if (!order) throw new NotFoundException('Order not found');
+  async updateStatus(id: string, status: string, user: any): Promise<Order> {
+    const order = await this.findAuthorized(id, user);
     order.status = status;
     return this.orderRepository.save(order);
   }
 
-  async assignOrder(id: string, assignedToId: string | null): Promise<Order> {
-    const order = await this.orderRepository.findOne({ where: { id } });
-    if (!order) throw new NotFoundException('Order not found');
+  async assignOrder(id: string, assignedToId: string | null, user: any): Promise<Order> {
+    if (user?.role !== Role.ADMIN) throw new ForbiddenException('Only administrators can assign orders');
+    const order = await this.findAuthorized(id, user);
     order.assignedToId = assignedToId;
     return this.orderRepository.save(order);
   }
@@ -115,7 +123,8 @@ export class OrderService {
     });
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, user: any): Promise<void> {
+    await this.findAuthorized(id, user);
     await this.orderRepository.delete(id);
   }
 }

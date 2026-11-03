@@ -14,7 +14,9 @@ export class DebugInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const req = context.switchToHttp().getRequest();
-    const { method, url } = req;
+    const { method } = req;
+    // Nafath status/callback queries carry transaction secrets or single-use state.
+    const url = req.url.includes('/auth/nafath/') ? req.url.split('?')[0] : req.url;
     const now = Date.now();
 
     return next.handle().pipe(

@@ -5,8 +5,8 @@ export const nafathConfig = registerAs('nafath', () => ({
   appId: process.env.NAFATH_APP_ID || '',
   appKey: process.env.NAFATH_APP_KEY || '',
   audience: process.env.NAFATH_AUDIENCE || '',
-  callbackSecret: process.env.NAFATH_CALLBACK_SECRET || '',
-  service: process.env.NAFATH_SERVICE || 'Login',
+  jwkPath: process.env.NAFATH_JWK_PATH || '/api/v2/oidc/jwk',
+  returnUrl: process.env.NAFATH_RETURN_URL || '',
   clientIp: process.env.NAFATH_CLIENT_IP || '',
-  issuer: process.env.NAFATH_ISSUER || 'Nafath App',
+  issuer: process.env.NAFATH_ISSUER || 'https://www.iam.gov.sa/userauth',
 }));

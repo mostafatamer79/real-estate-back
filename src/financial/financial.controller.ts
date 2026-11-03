@@ -15,14 +15,14 @@ export class FinancialController {
 
   @Post('transaction')
   @Departments('finance')
-  create(@Body() createDto: CreateTransactionDto) {
-    return this.financialService.createTransaction(createDto);
+  create(@Body() createDto: CreateTransactionDto, @Request() req) {
+    return this.financialService.createTransaction(createDto, req.user);
   }
 
   @Post('expense')
   @Departments('finance')
-  createExpense(@Body() createDto: CreateTransactionDto) {
-    return this.financialService.createExpense(createDto);
+  createExpense(@Body() createDto: CreateTransactionDto, @Request() req) {
+    return this.financialService.createExpense(createDto, req.user);
   }
 
   @Post('withdraw')
@@ -50,14 +50,14 @@ export class FinancialController {
 
   @Put('transactions/:id')
   @Departments('finance')
-  updateTransaction(@Param('id', ParseUUIDPipe) id: string, @Body() body: Partial<CreateTransactionDto>) {
-    return this.financialService.updateTransaction(id, body);
+  updateTransaction(@Param('id', ParseUUIDPipe) id: string, @Body() body: Partial<CreateTransactionDto>, @Request() req) {
+    return this.financialService.updateTransaction(id, body, req.user);
   }
 
   @Delete('transactions/:id')
   @Departments('finance')
-  async deleteTransaction(@Param('id', ParseUUIDPipe) id: string) {
-    await this.financialService.deleteTransaction(id);
+  async deleteTransaction(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
+    await this.financialService.deleteTransaction(id, req.user);
     return { success: true };
   }
 
@@ -147,14 +147,15 @@ export class FinancialController {
   async updateInvoice(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: { amount?: number; description?: string; status?: string; documentUrl?: string | null },
+    @Request() req,
   ) {
-    return this.financialService.updateInvoice(id, body);
+    return this.financialService.updateInvoice(id, body, req.user);
   }
 
   @Delete('invoices/:id')
   @Departments('finance')
-  async deleteInvoice(@Param('id', ParseUUIDPipe) id: string) {
-    await this.financialService.deleteInvoice(id);
+  async deleteInvoice(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
+    await this.financialService.deleteInvoice(id, req.user);
     return { success: true };
   }
 

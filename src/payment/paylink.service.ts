@@ -7,8 +7,9 @@ import { BookingService } from '../booking/booking.service';
 import { FinancialService } from '../financial/financial.service';
 import { InvoiceStatus } from '../financial/entities/invoice.entity';
 import { User } from '../user/user-entity';
+import { checkoutHandoff } from './legacy-checkout';
 
-type PaylinkInvoice = { amount?: number; transactionNo?: string; orderStatus?: string; url?: string; success?: boolean; paymentErrors?: string | null };
+type PaylinkInvoice = { amount?: number; transactionNo?: string; orderNumber?: string; orderStatus?: string; url?: string; success?: boolean; paymentErrors?: string | null };
 
 @Injectable()
 export class PaylinkService {
@@ -36,14 +37,17 @@ export class PaylinkService {
     const body = await response.json().catch(() => ({}));
     if (!response.ok) throw new BadRequestException(body.detail || body.message || 'Paylink request failed'); return body as T;
   }
-  async createInvoice(params: { bookingId?: string; invoiceId?: string; customerMobile?: string; products?: Array<{ title: string; price: number; qty: number; description?: string; isDigital?: boolean; imageSrc?: string; specificVat?: number; productCost?: number }> }, user: User) {
+  async createInvoice(params: { bookingId?: string; invoiceId?: string; subscriptionId?: string; customerMobile?: string; products?: Array<{ title: string; price: number; qty: number; description?: string; isDigital?: boolean; imageSrc?: string; specificVat?: number; productCost?: number }> }, user: User) {
+    if (this.config.get<string>('GEIDEA_ENABLED') === 'true') {
+      return checkoutHandoff(params, user, this.config.get<string>('GEIDEA_RETURN_URL'));
+    }
     let amount = 0; let orderNumber = ''; let note = ''; let customer = user;
     if (params.bookingId) {
       const booking = await this.bookingService.findOne(params.bookingId, user);
       if (booking.status === BookingStatus.PAID) throw new BadRequestException('Booking already paid');
       amount = Number(booking.price); orderNumber = 'booking-' + booking.id; note = 'Booking ' + booking.id; customer = booking.user || user;
     } else if (params.invoiceId) {
-      const invoice = await this.financialService.findInvoiceById(params.invoiceId);
+      const invoice = await this.financialService.findInvoiceById(params.invoiceId, user);
       if (!invoice) throw new BadRequestException('Invoice not found'); if (invoice.status === InvoiceStatus.PAID) throw new BadRequestException('Invoice already paid');
       amount = Number(invoice.total); orderNumber = 'invoice-' + invoice.id; note = invoice.description || 'Invoice ' + invoice.id; customer = await this.users.findOne({ where: { id: invoice.userId } }) || user;
     } else throw new BadRequestException('Either bookingId or invoiceId is required');
@@ -53,21 +57,43 @@ export class PaylinkService {
     const result = await this.request<PaylinkInvoice>('/api/addInvoice', { method: 'POST', body: JSON.stringify({ orderNumber, amount: Number(amount.toFixed(2)), callBackUrl: this.callbackUrl('callback'), cancelUrl: this.callbackUrl('cancel'), clientName: ((customer.firstName || '') + ' ' + (customer.lastName || '')).trim() || 'Customer', clientEmail: customer.email || undefined, clientMobile: customerMobile, currency: 'SAR', note, products: params.products }) });
     if (!result.success || !result.url || !result.transactionNo) throw new BadRequestException(result.paymentErrors || 'Paylink did not create the invoice'); return { paymentUrl: result.url, transactionNo: result.transactionNo, orderNumber, amount: result.amount };
   }
-  async cancelInvoice(transactionNo: string) {
+  private async assertOrderAccess(orderNumber: string, user: User) {
+    if (user?.role === 'admin') return;
+    if (orderNumber.startsWith('booking-')) {
+      await this.bookingService.findOne(orderNumber.slice('booking-'.length), user);
+      return;
+    }
+    if (orderNumber.startsWith('invoice-')) {
+      const invoice = await this.financialService.findInvoiceById(orderNumber.slice('invoice-'.length), user);
+      if (!invoice) throw new BadRequestException('Order not found');
+      return;
+    }
+    throw new BadRequestException('Invalid Paylink order number');
+  }
+
+  async cancelInvoice(transactionNo: string, orderNumber?: string, user?: User) {
     if (!transactionNo) throw new BadRequestException('transactionNo is required');
+    if (user && orderNumber) await this.assertOrderAccess(orderNumber, user);
     return this.request('/api/cancelInvoice', { method: 'POST', body: JSON.stringify({ transactionNo }) });
   }
 
-  async sendDigitalProduct(orderNumber: string, message: string) {
+  async sendDigitalProduct(orderNumber: string, message: string, user?: User) {
     if (!orderNumber || !message) throw new BadRequestException('orderNumber and message are required');
+    if (user) await this.assertOrderAccess(orderNumber, user);
     return this.request('/api/sendDigitalProduct', { method: 'POST', body: JSON.stringify({ orderNumber, message }) });
   }
 
-  async callback(orderNumber: string, transactionNo: string, cancelled = false) {
+  async callback(orderNumber: string, transactionNo: string, cancelled = false, user?: User) {
     if (!orderNumber || !transactionNo) throw new BadRequestException('Missing Paylink callback parameters');
+    if (user) await this.assertOrderAccess(orderNumber, user);
+    const remote = await this.request<PaylinkInvoice>('/api/getInvoice/' + encodeURIComponent(transactionNo));
+    if (!remote.orderNumber || remote.orderNumber !== orderNumber) {
+      throw new BadRequestException('Paylink transaction does not match the requested order');
+    }
     if (cancelled) await this.cancelInvoice(transactionNo);
-    const remote = await this.request<PaylinkInvoice>('/api/getInvoice/' + encodeURIComponent(transactionNo)); const isBooking = orderNumber.startsWith('booking-'); const id = orderNumber.slice(8);
+    const isBooking = orderNumber.startsWith('booking-'); const id = orderNumber.slice(8);
     const expected = isBooking ? Number((await this.bookings.findOne({ where: { id } }))?.price) : Number((await this.financialService.findInvoiceById(id))?.total);
+    if (!Number.isFinite(expected) || expected <= 0) throw new BadRequestException('Paylink order not found');
     const paid = !cancelled && remote.orderStatus?.toUpperCase() === 'PAID' && Number(remote.amount) === expected;
     if (isBooking && paid) await this.bookingService.updateStatus(id, BookingStatus.PAID, { id: 'system', role: 'system' }); else if (!isBooking && orderNumber.startsWith('invoice-') && paid) await this.financialService.updateInvoiceStatus(id, InvoiceStatus.PAID); else if (!isBooking && !orderNumber.startsWith('invoice-')) throw new BadRequestException('Invalid Paylink order number');
     return { paid, orderNumber, transactionNo, status: remote.orderStatus };

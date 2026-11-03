@@ -22,14 +22,14 @@ export class PaymentController {
 
   @Post('paylink/cancel')
   @UseGuards(JwtAuthGuard)
-  cancelInvoice(@Body() body: { transactionNo: string }) {
-    return this.paylinkService.cancelInvoice(body.transactionNo);
+  cancelInvoice(@Body() body: { transactionNo: string; orderNumber: string }, @Req() req) {
+    return this.paylinkService.callback(body.orderNumber, body.transactionNo, true, req.user);
   }
 
   @Post('paylink/digital-product')
   @UseGuards(JwtAuthGuard)
-  sendDigitalProduct(@Body() body: { orderNumber: string; message: string }) {
-    return this.paylinkService.sendDigitalProduct(body.orderNumber, body.message);
+  sendDigitalProduct(@Body() body: { orderNumber: string; message: string }, @Req() req) {
+    return this.paylinkService.sendDigitalProduct(body.orderNumber, body.message, req.user);
   }
 
   @Get('paylink/callback')
@@ -45,6 +45,7 @@ export class PaymentController {
   }
 
   @Post('webhook')
+  @Public()
   async handleWebhook(@Req() req:any, @Res() res: any) {
       const sig = req.headers['stripe-signature'];
       if (!sig) {

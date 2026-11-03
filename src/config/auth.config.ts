@@ -11,12 +11,12 @@ export interface AuthConfig {
 export const authConfig = registerAs(
   'auth',
   (): AuthConfig => {
-    const isProduction = process.env.NODE_ENV === 'production';
-    const accessSecret = process.env.ACCESS_TOKEN_SECRET || 'dev-access-secret';
-    const refreshSecret = process.env.REFRESH_TOKEN_SECRET || 'dev-refresh-secret';
+    const accessSecret = process.env.ACCESS_TOKEN_SECRET;
+    const refreshSecret = process.env.REFRESH_TOKEN_SECRET;
 
     if (
-      isProduction &&
+      process.env.NODE_ENV !== 'test' &&
+      process.env.ALLOW_INSECURE_DEFAULTS !== 'true' &&
       (!process.env.ACCESS_TOKEN_SECRET || !process.env.REFRESH_TOKEN_SECRET)
     ) {
       throw new Error(
@@ -25,8 +25,8 @@ export const authConfig = registerAs(
     }
 
     return {
-      secret: accessSecret,
-      refreshSecret,
+      secret: accessSecret || 'test-only-access-secret',
+      refreshSecret: refreshSecret || 'test-only-refresh-secret',
       expiresIn: '7d',
       refreshExpiresIn: '7d',
     };

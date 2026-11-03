@@ -3,30 +3,11 @@ import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
-import { SettingsService } from '../../settings/settings.service';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-  // Cache the free-trial flag for 30 s to avoid a DB hit on every request
-  private freeTrialCache: { value: boolean; expiresAt: number } | null = null;
-  private readonly CACHE_TTL_MS = 30_000;
-
-  constructor(
-    private reflector: Reflector,
-    private settingsService: SettingsService,
-  ) {
+  constructor(private reflector: Reflector) {
     super();
-  }
-
-  private async getGlobalFreeTrial(): Promise<boolean> {
-    const now = Date.now();
-    if (this.freeTrialCache && now < this.freeTrialCache.expiresAt) {
-      return this.freeTrialCache.value;
-    }
-    const setting = await this.settingsService.findOne('ui_enable_global_free_trial');
-    const value = setting?.value === 'true';
-    this.freeTrialCache = { value, expiresAt: now + this.CACHE_TTL_MS };
-    return value;
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -36,12 +17,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     ]);
     const req = context.switchToHttp().getRequest();
 
-    // When global free trial is active every route behaves like @Public()
-    const isGlobalFreeTrial = await this.getGlobalFreeTrial();
+    req.__isPublicRoute = isPublic;
 
-    req.__isPublicRoute = isPublic || isGlobalFreeTrial;
-
-    if (isPublic || isGlobalFreeTrial) {
+    if (isPublic) {
       const hasBearerToken =
         typeof req.headers?.authorization === 'string' &&
         req.headers.authorization.startsWith('Bearer ');

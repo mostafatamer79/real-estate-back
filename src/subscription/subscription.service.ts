@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { Subscription, SubscriptionStatus, SubscriptionType } from './subscription.entity';
 import { User } from '../user/user-entity';
 import { Department } from '../user/department.enum';
@@ -116,6 +116,7 @@ export class SubscriptionService {
   async create(
     userId: string,
     createSubscriptionDto: CreateSubscriptionDto,
+    isAdmin = false,
   ): Promise<Subscription> {
     // Validate property or unit exists if provided
     if (createSubscriptionDto.propertyId) {
@@ -155,7 +156,7 @@ export class SubscriptionService {
       }
 
       if (basePrice > 0) {
-        const discountAmount = basePrice * (Number(selectedPackage.discount) / 100);
+        const discountAmount = basePrice * (Number(selectedPackage.discount || 0) / 100);
         createSubscriptionDto.amount = basePrice - discountAmount;
       } else {
         createSubscriptionDto.amount = 0;
@@ -206,7 +207,10 @@ export class SubscriptionService {
         break;
     }
 
-    const isFreeSubscription = Number(createSubscriptionDto.amount || 0) <= 0;
+    if (!Number.isFinite(Number(createSubscriptionDto.amount)) || Number(createSubscriptionDto.amount) < 0) {
+      throw new BadRequestException('Invalid subscription amount');
+    }
+    const isFreeSubscription = Number(createSubscriptionDto.amount) === 0;
     const subscription = this.subscriptionRepository.create({
       userId,
       propertyId: createSubscriptionDto.propertyId,
@@ -220,15 +224,15 @@ export class SubscriptionService {
       customPeriodMonths: createSubscriptionDto.customPeriodMonths,
       amount: createSubscriptionDto.amount,
       startDate,
-      endDate: createSubscriptionDto.endDate ? new Date(createSubscriptionDto.endDate) : endDate,
+      endDate: isAdmin && createSubscriptionDto.endDate ? new Date(createSubscriptionDto.endDate) : endDate,
       paymentMethod: createSubscriptionDto.paymentMethod,
       notes: createSubscriptionDto.notes,
       paymentReference: createSubscriptionDto.paymentReference,
       status: isFreeSubscription
         ? SubscriptionStatus.ACTIVE
-        : (createSubscriptionDto.status as SubscriptionStatus) || SubscriptionStatus.PENDING,
+        : (isAdmin ? createSubscriptionDto.status as SubscriptionStatus : undefined) || SubscriptionStatus.PENDING,
       paidAt: isFreeSubscription ? new Date() : undefined,
-      noExpiry: createSubscriptionDto.noExpiry || false,
+      noExpiry: isAdmin && Boolean(createSubscriptionDto.noExpiry),
     });
 
     const savedSubscription = await this.subscriptionRepository.save(subscription);
@@ -262,7 +266,14 @@ export class SubscriptionService {
     if (!subscription) {
       throw new NotFoundException('Subscription not found');
     }
+    return subscription;
+  }
 
+  async findOneForUser(id: string, user: any): Promise<Subscription> {
+    const subscription = await this.findOne(id);
+    if (user?.role !== 'admin' && subscription.userId !== (user?.userId || user?.id)) {
+      throw new ForbiddenException('You do not have permission to view this subscription');
+    }
     return subscription;
   }
 
@@ -295,6 +306,10 @@ export class SubscriptionService {
 
     if (!isAdmin && subscription.userId !== userId) {
       throw new ForbiddenException('You can only update your own subscription');
+    }
+
+    if (!isAdmin && Object.keys(updateSubscriptionDto).some(key => !['notes', 'autoRenew'].includes(key))) {
+      throw new ForbiddenException('Billing and access changes require an administrator');
     }
 
     if (subscription.status === SubscriptionStatus.CANCELLED) {
@@ -343,6 +358,10 @@ export class SubscriptionService {
       throw new BadRequestException('Subscription is already active');
     }
 
+    if (!isAdmin && Number(subscription.amount) > 0) {
+      throw new BadRequestException('Paid subscriptions must be confirmed by the payment gateway');
+    }
+
     subscription.status = SubscriptionStatus.ACTIVE;
     subscription.paidAt = new Date();
     if (paymentMethod) {
@@ -354,10 +373,36 @@ export class SubscriptionService {
     return savedSubscription;
   }
 
-  private async applyPackageDepartmentsToUser(subscription: Subscription): Promise<void> {
+  async activateVerifiedPayment(id: string, userId: string, orderId: string, paymentMethod: PaymentMethod, manager: EntityManager): Promise<Subscription> {
+    const subscription = await manager.findOne(Subscription, { where: { id }, relations: ['managementPackage'] });
+    if (!subscription || subscription.userId !== userId || subscription.status !== SubscriptionStatus.PENDING) {
+      throw new BadRequestException('Subscription is not payable');
+    }
+    subscription.status = SubscriptionStatus.ACTIVE;
+    subscription.paidAt = new Date();
+    subscription.paymentMethod = paymentMethod;
+    subscription.paymentReference = 'geidea:' + orderId;
+    const today = new Date();
+    if (new Date(subscription.startDate) <= today) {
+      subscription.startDate = today;
+      if (!subscription.noExpiry) {
+        const months = subscription.subscriptionType === SubscriptionType.YEARLY ? 12
+          : subscription.subscriptionType === SubscriptionType.CUSTOM ? Number(subscription.customPeriodMonths || 1) : 1;
+        const end = new Date(today);
+        end.setMonth(end.getMonth() + months);
+        subscription.endDate = end;
+      }
+    }
+    const saved = await manager.save(Subscription, subscription);
+    await this.applyPackageDepartmentsToUser(saved, manager);
+    return saved;
+  }
+
+  private async applyPackageDepartmentsToUser(subscription: Subscription, manager?: EntityManager): Promise<void> {
     if (!subscription.userId) return;
 
-    const user = await this.userRepository.findOne({ where: { id: subscription.userId } });
+    const user = manager ? await manager.findOne(User, { where: { id: subscription.userId }, lock: { mode: 'pessimistic_write' } })
+      : await this.userRepository.findOne({ where: { id: subscription.userId } });
     if (!user) return;
 
     const packageAdministrations = Array.isArray(subscription.managementPackage?.administrations)
@@ -384,7 +429,7 @@ export class SubscriptionService {
     }
     user.departmentPermissions = nextPermissions;
 
-    await this.userRepository.save(user);
+    if (manager) await manager.save(User, user); else await this.userRepository.save(user);
   }
 
   async checkExpiredSubscriptions(): Promise<void> {
@@ -405,20 +450,22 @@ export class SubscriptionService {
     }
   }
 
-  async getSubscriptionsByProperty(propertyId: string): Promise<Subscription[]> {
-    return await this.subscriptionRepository.find({
+  async getSubscriptionsByProperty(propertyId: string, user?: any): Promise<Subscription[]> {
+    const subscriptions = await this.subscriptionRepository.find({
       where: { propertyId },
       relations: ['user', 'unit'],
       order: { createdAt: 'DESC' },
     });
+    return user?.role === 'admin' ? subscriptions : subscriptions.filter((s) => s.userId === (user?.userId || user?.id));
   }
 
-  async getSubscriptionsByUnit(unitId: string): Promise<Subscription[]> {
-    return await this.subscriptionRepository.find({
+  async getSubscriptionsByUnit(unitId: string, user?: any): Promise<Subscription[]> {
+    const subscriptions = await this.subscriptionRepository.find({
       where: { unitId },
       relations: ['user', 'property'],
       order: { createdAt: 'DESC' },
     });
+    return user?.role === 'admin' ? subscriptions : subscriptions.filter((s) => s.userId === (user?.userId || user?.id));
   }
 
   async hardDelete(id: string, isAdmin: boolean = false): Promise<void> {

@@ -12,6 +12,7 @@
     import { CreateUserDto } from '../user/create-user-dto';
     import { LoginDto } from './login-dto';
     import * as bcrypt from 'bcrypt';
+    import { randomInt } from 'crypto';
     import { Role, User } from '../user/user-entity';
     import { ConfigService } from '@nestjs/config';
 import { ActivityService } from '../activity/activity.service';
@@ -21,6 +22,8 @@ import { MailService } from '../mail/mail.service';
     
     @Injectable()
     export class AuthService {
+      private readonly otpAttempts = new Map<string, { count: number; expiresAt: number }>();
+      private readonly otpResends = new Map<string, number>();
       constructor(
         
         private readonly userService: UserService,
@@ -58,7 +61,16 @@ import { MailService } from '../mail/mail.service';
         return { accessToken, refreshToken };
       }
     
-      async register(createUserDto: CreateUserDto) {
+      async register(input: CreateUserDto) {
+        // Registration also starts returning-user OTP login. Only accept contact
+        // and display-name fields; identities and privileged roles are server-owned.
+        const createUserDto = {
+          firstName: input.firstName,
+          lastName: input.lastName,
+          email: input.email,
+          phone: input.phone,
+          role: Role.VIEWER,
+        } as CreateUserDto;
         if (createUserDto.email) {
           createUserDto.email = this.normalizeIdentifier(createUserDto.email);
         }
@@ -106,44 +118,40 @@ import { MailService } from '../mail/mail.service';
 
       
       async verifyOtp(identifier: string, otp: string) {
-        console.log(`[verifyOtp] Start verification for identifier: ${identifier}, otp: ${otp}`);
-        
         const normalizedIdentifier = this.normalizeIdentifier(identifier);
+        const now = Date.now();
+        const attempt = this.otpAttempts.get(normalizedIdentifier);
+        if (attempt && attempt.expiresAt > now && attempt.count >= 5) {
+          throw new UnauthorizedException('auth.otp_rate_limited');
+        }
         // identifier can be email OR phone
         const user =
           await this.userService.findOneByEmail(normalizedIdentifier) ||
           await this.userService.findOneByPhone(identifier);
       
         if (!user) {
-          console.log(`[verifyOtp] User not found for identifier: ${normalizedIdentifier}`);
           throw new NotFoundException('auth.user_not_found');
         }
       
         if (!user.otp || !user.expireOtp) {
-          console.log(`[verifyOtp] OTP or expireOtp is not set for user: ${user.id}`);
           throw new UnauthorizedException('auth.otp_not_set');
         }
         
         const otpString = String(otp).trim();
-        if (user.otp !== otpString) {
-          console.log(`[verifyOtp] OTP mismatch. Expected: '${user.otp}', Received: '${otpString}'`);
-          throw new UnauthorizedException('auth.otp_invalid');
-        }
-        
-        // Handle timezone mismatches gracefully by allowing a 24-hour window, 
-        // or by comparing the raw timestamp ignoring TZ shifts. 
-        // We will just do a relaxed check since the OTP itself must match perfectly.
-        const now = new Date().getTime();
         const expireTime = new Date(user.expireOtp).getTime();
-        
-        console.log(`[verifyOtp] now: ${now} (${new Date().toISOString()}), expireTime: ${expireTime} (${new Date(user.expireOtp).toISOString()})`);
-        
-        // If the timezone shifted the time backwards by 3 hours (e.g. UTC to KSA),
-        // the difference could be large. We'll give it a 24 hour buffer just in case.
-        if (now > expireTime + (24 * 60 * 60 * 1000)) {
-          console.log(`[verifyOtp] OTP expired!`);
+        if (now >= expireTime) {
           throw new UnauthorizedException('auth.otp_expired');
         }
+        if (user.otp !== otpString) {
+          this.otpAttempts.set(
+            normalizedIdentifier,
+            attempt && attempt.expiresAt > now
+              ? { count: attempt.count + 1, expiresAt: attempt.expiresAt }
+              : { count: 1, expiresAt: now + 15 * 60 * 1000 },
+          );
+          throw new UnauthorizedException('auth.otp_invalid');
+        }
+        this.otpAttempts.delete(normalizedIdentifier);
       
         // Activate user
         user.isActive = true;
@@ -182,6 +190,7 @@ import { MailService } from '../mail/mail.service';
             departments: user.departments,
             departmentPermissions: user.departmentPermissions,
             isVerified: user.isVerified,
+            nafathVerifiedAt: user.nafathVerifiedAt,
             isActive: user.isActive,
             onboardingStatus: user.onboardingStatus,
           },
@@ -214,6 +223,7 @@ import { MailService } from '../mail/mail.service';
                 departments: user.departments,
                 departmentPermissions: user.departmentPermissions,
                 isVerified: user.isVerified,
+                nafathVerifiedAt: user.nafathVerifiedAt,
                 isActive: user.isActive,
                 onboardingStatus: user.onboardingStatus,
               },
@@ -249,6 +259,7 @@ import { MailService } from '../mail/mail.service';
             departments: targetUser.departments,
             departmentPermissions: targetUser.departmentPermissions,
             isVerified: targetUser.isVerified,
+            nafathVerifiedAt: targetUser.nafathVerifiedAt,
             isActive: targetUser.isActive,
             onboardingStatus: targetUser.onboardingStatus,
           },
@@ -265,28 +276,24 @@ import { MailService } from '../mail/mail.service';
       }
 
       public async generateOtp(length = 6): Promise<string> {
-        let otp = '';
-        const digits = '0123456789';
-      
-        for (let i = 0; i < length; i++) {
-          otp += digits[Math.floor(Math.random() * 10)];
-        }
-        return otp;
+        return Array.from({ length }, () => randomInt(0, 10)).join('');
       }
       async logout(userId: string): Promise<{ message: string }> {
-        
         const user = await this.userService.findOne(userId);
         if (!user) {
           throw new NotFoundException('auth.user_not_found');
         }
-        user.isActive = false;
-        await this.userService.updateUser(user);
-        
+        // Logout must not deactivate the account. Token revocation is handled by
+        // the client clearing its token; account activation is an administrative state.
         return { message: 'auth.logout_success' };
       }
 
       async resetOtp(identifier: string): Promise<{ message: string }> {
         const normalizedIdentifier = this.normalizeIdentifier(identifier);
+        const lastResend = this.otpResends.get(normalizedIdentifier) || 0;
+        if (Date.now() - lastResend < 60_000) {
+          throw new UnauthorizedException('auth.otp_resend_rate_limited');
+        }
         // Find user by email or phone
         const user =
           (await this.userService.findOneByEmail(normalizedIdentifier)) ||
@@ -305,6 +312,7 @@ import { MailService } from '../mail/mail.service';
     
         // Generate new OTP
         const newOtp = await this.generateOtp();
+        this.otpResends.set(normalizedIdentifier, Date.now());
         const expireOtp = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
     
         // Update user with new OTP

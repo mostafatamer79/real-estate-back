@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder, In, ObjectLiteral } from 'typeorm';
 import { execFile } from 'child_process';
@@ -19,6 +19,8 @@ import { Booking, BookingStatus } from '../booking/entities/booking.entity';
 import { ServiceRequest, PaidStatus } from '../service/service-request.entity';
 import { PlacesService } from '../place/place.service';
 import { SettingsService } from '../settings/settings.service';
+import { walletBalance } from './wallet-ledger';
+import { invoiceServiceRequest } from './invoice-service-request';
 
 const execFileAsync = promisify(execFile);
 
@@ -1286,44 +1288,64 @@ export class FinancialService {
     };
   }
 
-  async createTransaction(createDto: CreateTransactionDto): Promise<FinancialTransaction> {
+  async createTransaction(createDto: CreateTransactionDto, user?: any): Promise<FinancialTransaction> {
+    if (user && !this.isAdmin(user)) {
+      const scopedIds = await this.getScopedUserIds(user);
+      if ([createDto.fromUserId, createDto.toUserId].some((id) => id && !scopedIds.includes(id))) {
+        throw new ForbiddenException('You do not have permission to create this transaction');
+      }
+    }
     const transaction = this.transactionRepository.create(createDto);
     return this.transactionRepository.save(transaction);
   }
 
-  async updateTransaction(id: string, dto: Partial<CreateTransactionDto>): Promise<FinancialTransaction> {
+  async updateTransaction(id: string, dto: Partial<CreateTransactionDto>, user?: any): Promise<FinancialTransaction> {
     const transaction = await this.transactionRepository.findOne({ where: { id } });
     if (!transaction) throw new Error('Transaction not found');
+    if (user && !this.isAdmin(user)) {
+      const scopedIds = await this.getScopedUserIds(user);
+      if ([transaction.fromUserId, transaction.toUserId, dto.fromUserId, dto.toUserId].some((id) => id && !scopedIds.includes(id))) {
+        throw new ForbiddenException('You do not have permission to update this transaction');
+      }
+    }
     Object.assign(transaction, dto);
     return this.transactionRepository.save(transaction);
   }
 
-  async deleteTransaction(id: string): Promise<void> {
+  async deleteTransaction(id: string, user?: any): Promise<void> {
     const transaction = await this.transactionRepository.findOne({ where: { id } });
     if (!transaction) throw new Error('Transaction not found');
+    if (user && !this.isAdmin(user)) {
+      const scopedIds = await this.getScopedUserIds(user);
+      if ([transaction.fromUserId, transaction.toUserId].some((id) => id && !scopedIds.includes(id))) {
+        throw new ForbiddenException('You do not have permission to delete this transaction');
+      }
+    }
     await this.transactionRepository.remove(transaction);
   }
 
-  async createExpense(createDto: CreateTransactionDto): Promise<FinancialTransaction> {
+  async createExpense(createDto: CreateTransactionDto, user?: any): Promise<FinancialTransaction> {
     createDto.type = TransactionType.EXPENSE;
     createDto.status = TransactionStatus.COMPLETED; // Expenses are usually recorded as completed
-    return this.createTransaction(createDto);
+    return this.createTransaction(createDto, user);
   }
 
   async requestWithdrawal(userId: string, amount: number): Promise<FinancialTransaction> {
-    const balance = await this.getUserBalance(userId);
-    if (balance < amount) {
-      throw new Error('Insufficient balance');
+    if (!userId) throw new UnauthorizedException('Authentication required');
+    if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0
+      || Math.abs(amount * 100 - Math.round(amount * 100)) > 0.000001) {
+      throw new BadRequestException('Invalid withdrawal amount');
     }
-
-    const transaction = this.transactionRepository.create({
-      type: TransactionType.WITHDRAWAL,
-      amount: amount,
-      fromUserId: userId,
-      status: TransactionStatus.PENDING,
-      description: 'Withdrawal request',
+    return this.transactionRepository.manager.transaction(async manager => {
+      const owner = await manager.findOne(User, { where: { id: userId }, lock: { mode: 'pessimistic_write' } });
+      if (!owner) throw new BadRequestException('Wallet owner not found');
+      const entries = await manager.find(FinancialTransaction, { where: [{ fromUserId: userId }, { toUserId: userId }] });
+      if (walletBalance(entries, userId) < amount) throw new BadRequestException('Insufficient balance');
+      return manager.save(FinancialTransaction, {
+        type: TransactionType.WITHDRAWAL, amount, fromUserId: userId,
+        status: TransactionStatus.PENDING, description: 'Withdrawal request',
+      });
     });
-    return this.transactionRepository.save(transaction);
   }
 
   async findAll(user: any): Promise<FinancialTransaction[]> {
@@ -1441,23 +1463,7 @@ export class FinancialService {
 
   // Calculate User Balance (In - Out)
   async getUserBalance(userId: string): Promise<number> {
-    const transactions = await this.getUserTransactions(userId);
-    let balance = 0.0;
-
-    for (const tx of transactions) {
-      if (tx.status === TransactionStatus.FAILED || tx.status === TransactionStatus.CANCELLED) continue;
-
-      // Income
-      if (tx.toUserId === userId && tx.status === TransactionStatus.COMPLETED) {
-        balance += Number(tx.amount);
-      }
-
-      // Outgoing (including pending withdrawals to freeze amount)
-      if (tx.fromUserId === userId && (tx.status === TransactionStatus.COMPLETED || tx.type === TransactionType.WITHDRAWAL)) {
-        balance -= Number(tx.amount);
-      }
-    }
-    return balance;
+    return walletBalance(await this.getUserTransactions(userId), userId);
   }
 
   // Dashboard Stats (Admin view usually, or general stats)
@@ -1566,7 +1572,7 @@ export class FinancialService {
     referenceId?: string;
     description?: string;
     documentUrl?: string;
-  }): Promise<Invoice> {
+  }, user?: any): Promise<Invoice> {
     const serviceFee = 0;
     const tax = dto.amount * 0.15;
     const total = dto.amount + serviceFee + tax;
@@ -1601,13 +1607,21 @@ export class FinancialService {
     return query.getMany();
   }
 
-  async findInvoiceById(id: string): Promise<Invoice | null> {
-    return this.invoiceRepository.findOne({ where: { id } });
+  async findInvoiceById(id: string, user?: any): Promise<Invoice | null> {
+    const invoice = await this.invoiceRepository.findOne({ where: { id } });
+    if (!invoice || !user) return invoice;
+    if (this.isAdmin(user)) return invoice;
+    const scopedIds = await this.getScopedUserIds(user);
+    return scopedIds.includes(invoice.userId) ? invoice : null;
   }
 
-  async updateInvoiceStatus(id: string, status: InvoiceStatus): Promise<Invoice> {
+  async updateInvoiceStatus(id: string, status: InvoiceStatus, user?: any): Promise<Invoice> {
     const invoice = await this.invoiceRepository.findOne({ where: { id } });
     if (!invoice) throw new Error('Invoice not found');
+    if (user && !this.isAdmin(user)) {
+      const scopedIds = await this.getScopedUserIds(user);
+      if (!scopedIds.includes(invoice.userId)) throw new ForbiddenException('You do not have permission to update this invoice');
+    }
     invoice.status = status;
     return this.invoiceRepository.save(invoice);
   }
@@ -1617,9 +1631,13 @@ export class FinancialService {
     description?: string;
     status?: string;
     documentUrl?: string | null;
-  }): Promise<Invoice> {
+  }, user?: any): Promise<Invoice> {
     const invoice = await this.invoiceRepository.findOne({ where: { id } });
     if (!invoice) throw new Error('Invoice not found');
+    if (user && !this.isAdmin(user)) {
+      const scopedIds = await this.getScopedUserIds(user);
+      if (!scopedIds.includes(invoice.userId)) throw new ForbiddenException('You do not have permission to update this invoice');
+    }
 
     if (typeof dto.amount === 'number' && dto.amount >= 0) {
       invoice.amount = dto.amount;
@@ -1642,80 +1660,64 @@ export class FinancialService {
     return this.invoiceRepository.save(invoice);
   }
 
-  async deleteInvoice(id: string): Promise<void> {
+  async deleteInvoice(id: string, user?: any): Promise<void> {
     const invoice = await this.invoiceRepository.findOne({ where: { id } });
     if (!invoice) throw new Error('Invoice not found');
+    if (user && !this.isAdmin(user)) {
+      const scopedIds = await this.getScopedUserIds(user);
+      if (!scopedIds.includes(invoice.userId)) throw new ForbiddenException('You do not have permission to delete this invoice');
+    }
     await this.invoiceRepository.remove(invoice);
   }
 
   async payInvoice(userId: string, invoiceId: string, paymentMethod: PaymentMethod): Promise<Invoice> {
-    let invoice = await this.invoiceRepository.findOne({
-        where: [
-            { id: invoiceId, userId },
-            { referenceId: invoiceId, userId, referenceType: 'ServiceRequest' }
-        ]
+    if (!userId) throw new UnauthorizedException('Authentication required');
+    if (paymentMethod !== PaymentMethod.WALLET) throw new BadRequestException('Card payments must use the payment gateway');
+    const target = await this.invoiceRepository.findOne({
+      where: [{ id: invoiceId, userId }, { referenceId: invoiceId, userId, referenceType: 'ServiceRequest' }],
     });
-
-    // Auto-generate missing invoice for legacy ServiceRequests
-    if (!invoice) {
-        const serviceRequest = await this.serviceRequestRepository.findOne({ where: { id: invoiceId, userId }});
-        if (serviceRequest && serviceRequest.paymentStatus === PaidStatus.UNPAID) {
-            const user = await this.userRepository.findOne({ where: { id: userId } });
-            if (user) {
-                invoice = this.invoiceRepository.create({
-                    user,
-                    userId,
-                    amount: serviceRequest.price || 0,
-                    total: serviceRequest.price || 0,
-                    status: InvoiceStatus.UNPAID,
-                    description: `فاتورة خدمة: ${serviceRequest.serviceType}`,
-                    referenceType: 'ServiceRequest',
-                    referenceId: serviceRequest.id,
-                });
-                invoice = await this.invoiceRepository.save(invoice);
-            }
-        }
+    if (target && ['GeideaWalletTopup', 'GeideaSubscription'].includes(target.referenceType)) {
+      throw new BadRequestException('This invoice must use the payment gateway');
     }
-
-    if (!invoice) throw new Error('Invoice not found');
-    if (invoice.status === InvoiceStatus.PAID) throw new Error('Invoice already paid');
-
-    if (paymentMethod === PaymentMethod.WALLET) {
-      const balance = await this.getUserBalance(userId);
-      if (balance < invoice.total) {
-        throw new Error('Insufficient balance');
-      }
-
-      // Create a transaction to deduct from balance
-      const transaction = this.transactionRepository.create({
-        type: TransactionType.EXPENSE,
-        amount: invoice.total,
-        fromUserId: userId,
-        status: TransactionStatus.COMPLETED,
-        paymentMethod: PaymentMethod.WALLET,
-        description: `Payment for Invoice #${invoice.id.substring(0, 8)}: ${invoice.description}`,
-        referenceType: 'invoice',
-        referenceId: invoice.id,
+    return this.invoiceRepository.manager.transaction(async manager => {
+      const owner = await manager.findOne(User, { where: { id: userId }, lock: { mode: 'pessimistic_write' } });
+      if (!owner) throw new BadRequestException('Wallet owner not found');
+      let invoice = await manager.findOne(Invoice, {
+        where: [{ id: invoiceId, userId }, { referenceId: invoiceId, userId, referenceType: 'ServiceRequest' }],
+        lock: { mode: 'pessimistic_write' },
       });
-      await this.transactionRepository.save(transaction);
-    }
-
-    invoice.status = InvoiceStatus.PAID;
-
-    // IF this invoice is linked to a ServiceRequest, update the ServiceRequest status
-    if (invoice.referenceType === 'ServiceRequest' && invoice.referenceId) {
-      const serviceRequest = await this.serviceRequestRepository.findOne({ where: { id: invoice.referenceId } });
-      if (serviceRequest) {
-        serviceRequest.paymentStatus = PaidStatus.PAID;
-        // Auto-approve Construction and Legal on payment
-        if (['construction', 'legal'].includes(serviceRequest.category || 'other')) {
-            serviceRequest.adminAccepted = true;
+      if (!invoice) {
+        const request = await manager.findOne(ServiceRequest, { where: { id: invoiceId, userId }, lock: { mode: 'pessimistic_write' } });
+        if (request?.paymentStatus === PaidStatus.UNPAID) {
+          invoice = await manager.save(Invoice, {
+            userId, amount: Number(request.price), total: Number(request.price),
+            status: InvoiceStatus.UNPAID, description: `فاتورة خدمة: ${request.serviceType}`,
+            referenceType: 'ServiceRequest', referenceId: request.id,
+          });
         }
-        await this.serviceRequestRepository.save(serviceRequest);
       }
-    }
-
-    return this.invoiceRepository.save(invoice);
+      if (!invoice || invoice.status !== InvoiceStatus.UNPAID) throw new BadRequestException('Invoice is not payable');
+      if (['GeideaWalletTopup', 'GeideaSubscription'].includes(invoice.referenceType)) {
+        throw new BadRequestException('This invoice must use the payment gateway');
+      }
+      const amount = Number(invoice.total);
+      if (!Number.isFinite(amount) || amount <= 0) throw new BadRequestException('Invalid invoice amount');
+      const request = await invoiceServiceRequest(manager, invoice);
+      const entries = await manager.find(FinancialTransaction, { where: [{ fromUserId: userId }, { toUserId: userId }] });
+      if (walletBalance(entries, userId) < amount) throw new BadRequestException('Insufficient balance');
+      await manager.save(FinancialTransaction, {
+        type: TransactionType.EXPENSE, amount, fromUserId: userId, status: TransactionStatus.COMPLETED,
+        paymentMethod: PaymentMethod.WALLET, description: `Payment for Invoice #${invoice.id.substring(0, 8)}`,
+        referenceType: 'invoice', referenceId: invoice.id,
+      });
+      if (request) {
+          request.paymentStatus = PaidStatus.PAID;
+          if (['construction', 'legal'].includes(request.category || 'other')) request.adminAccepted = true;
+          await manager.save(ServiceRequest, request);
+      }
+      invoice.status = InvoiceStatus.PAID;
+      return manager.save(Invoice, invoice);
+    });
   }
 
   async getUserCommissions(userId: string): Promise<Commission[]> {

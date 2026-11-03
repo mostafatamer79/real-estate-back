@@ -60,4 +60,11 @@ config.bat
 !.env.example
 
 graphify-out/
-.codex/
+.codex/*
+!.codex/skills/
+.codex/skills/*
+!.codex/skills/README.md
+!.codex/skills/graphify/
+!.codex/skills/graphify/**
+!.codex/skills/superpowers/
+!.codex/skills/superpowers/**

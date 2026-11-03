@@ -35,6 +35,7 @@ export class SubscriptionController {
     return await this.subscriptionService.create(
       userId,
       createSubscriptionDto,
+      req.user.role === 'admin',
     );
   }
 
@@ -69,13 +70,13 @@ export class SubscriptionController {
   }
 
   @Get('property/:propertyId')
-  async getByProperty(@Param('propertyId') propertyId: string) {
-    return await this.subscriptionService.getSubscriptionsByProperty(propertyId);
+  async getByProperty(@Param('propertyId') propertyId: string, @Request() req) {
+    return await this.subscriptionService.getSubscriptionsByProperty(propertyId, req.user);
   }
 
   @Get('unit/:unitId')
-  async getByUnit(@Param('unitId') unitId: string) {
-    return await this.subscriptionService.getSubscriptionsByUnit(unitId);
+  async getByUnit(@Param('unitId') unitId: string, @Request() req) {
+    return await this.subscriptionService.getSubscriptionsByUnit(unitId, req.user);
   }
 
   @Get()
@@ -92,8 +93,8 @@ export class SubscriptionController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return await this.subscriptionService.findOne(id);
+  async findOne(@Param('id') id: string, @Request() req) {
+    return await this.subscriptionService.findOneForUser(id, req.user);
   }
 
   @Put(':id')

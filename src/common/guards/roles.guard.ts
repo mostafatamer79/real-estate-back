@@ -24,7 +24,7 @@ canActivate(context: ExecutionContext): boolean {
   const user = req.user;
   
   if (!user) {
-    return true;
+    return false;
   }
 
   // Always allow admins to bypass role checks
@@ -40,13 +40,6 @@ canActivate(context: ExecutionContext): boolean {
   }
 
   return hasRole;
-
-  // OR, if user.roles is an array:
-  // if (!user.roles.some((r: Role) => requiredRoles.includes(r))) {
-  //   throw new ForbiddenException('Access denied');
-  // }
-
-  return true;
 }
     }
     /*  */

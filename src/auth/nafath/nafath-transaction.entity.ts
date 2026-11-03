@@ -10,6 +10,12 @@ export class NafathTransaction {
   @Column()
   clientSecretHash: string;
 
+  @Column({ nullable: true, unique: true })
+  hashedState?: string;
+
+  @Column({ nullable: true })
+  endUserIp?: string;
+
   @Column()
   nationalId: string;
 

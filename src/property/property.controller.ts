@@ -66,6 +66,11 @@ export class PropertyController {
         return this.propertyService.updateUnit(id, updateUnitDto, req.user);
     }
 
+    @Delete('units/:id')
+    removeUnit(@Param('id') id: string, @Request() req) {
+        return this.propertyService.removeUnit(id, req.user);
+    }
+
     // Tenant Endpoints
     @Post('tenants')
     createTenant(@Body() createTenantDto: CreateTenantDto, @Request() req) {

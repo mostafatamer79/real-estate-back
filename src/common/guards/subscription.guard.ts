@@ -45,6 +45,10 @@ export class SubscriptionGuard implements CanActivate {
     // If no user (public route or JWT already rejected), let other guards handle.
     if (!user) return true;
 
+    // Unverified accounts may browse; the identity guard rejects business writes.
+    // Verification must not force a subscription purchase just to view the site.
+    if (!user.nafathVerifiedAt && ['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return true;
+
     // ── 2.5 Bypass for ADMIN and USER ──────────────────────────────────────────
     if (user.role === Role.ADMIN || user.role === Role.USER) return true;
 

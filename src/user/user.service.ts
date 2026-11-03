@@ -115,23 +115,6 @@ export class UserService {
         return await this.userRepository.findOne({ where: { nationalId } });
       }
 
-      public async findOrCreateNafathUser(identity: { nationalId: string; firstName?: string; lastName?: string }): Promise<User> {
-        const existingUser = await this.findOneByNationalId(identity.nationalId);
-        if (existingUser) {
-          existingUser.isActive = true;
-          existingUser.isVerified = true;
-          return this.userRepository.save(existingUser);
-        }
-
-        return this.userRepository.save(this.userRepository.create({
-          nationalId: identity.nationalId,
-          firstName: identity.firstName,
-          lastName: identity.lastName,
-          isActive: true,
-          isVerified: true,
-          role: Role.VIEWER,
-        }));
-      }
       public async createUserByphone(createUserDto: CreateUserDto,otp:string): Promise<User> {
         const existingUser = await this.findOneByPhone(createUserDto.phone);
         
@@ -142,7 +125,7 @@ export class UserService {
           await this.updateUser(existingUser);
            return existingUser;
         }
-        const newUser = this.userRepository.create({...createUserDto,expireOtp:createUserDto.expiredOtp,otp});
+        const newUser = this.userRepository.create({...createUserDto,nafathVerifiedAt: null,expireOtp:createUserDto.expiredOtp,otp});
         return await this.userRepository.save(newUser);
       }
       public async createUserByemail(createUserDto: CreateUserDto,otp:string): Promise<User> {
@@ -161,7 +144,7 @@ export class UserService {
           return existingUser;
         }
 
-        const newUser = this.userRepository.create({...createUserDto,expireOtp:createUserDto.expiredOtp,otp});
+        const newUser = this.userRepository.create({...createUserDto,nafathVerifiedAt: null,expireOtp:createUserDto.expiredOtp,otp});
 
         return await this.userRepository.save(newUser);
       }
@@ -264,6 +247,8 @@ export class UserService {
 
         const newUser = this.userRepository.create({
             ...createUserDto,
+            // Only the signed Nafath callback may establish identity proof.
+            nafathVerifiedAt: null,
             isActive: true, // Auto-activate when created by admin
             isVerified: true, // Auto-verify when created by admin
             createAt: new Date(),
@@ -469,6 +454,10 @@ export class UserService {
             throw new BadRequestException('Submit a license application and wait for approval before selecting an agent or broker role');
         }
 
+        if (user.nafathVerifiedAt && updateUserDto.nationalId !== undefined && updateUserDto.nationalId !== user.nationalId) {
+            throw new BadRequestException('An identity verified through Nafath cannot be edited');
+        }
+
         // Handle verification status reset if critical info changes
         if (updateUserDto.falLicenseNumber) {
             // Logic to verify Fal license could go here or trigger a job
@@ -479,11 +468,6 @@ export class UserService {
         // separate from Nafath identity verification.
         if (updateUserDto.licenseVerificationStatus) {
             updateUserDto.agentVerificationStatus = updateUserDto.licenseVerificationStatus;
-        }
-
-        // Standardize verify flag based on profile completion (simplified logic)
-        if(updateUserDto.firstName || updateUserDto.lastName ){
-            user.isVerified = true
         }
 
         Object.assign(user, updateUserDto);
@@ -573,7 +557,7 @@ export class UserService {
             // Select all relevant fields including new ones
             select: [
                 'id', 'firstName', 'lastName', 'email', 'phone', 'role', 'roleOtherDescription',
-                'isVerified', 'isActive', 'hasFreeTrial',
+                'isVerified', 'nafathVerifiedAt', 'isActive', 'hasFreeTrial',
                 'falLicenseNumber', 'falLicenseExpiry', 'lawLicenseNumber', 'commercialRegistrationNumber',
                 'agentLicenseNumber', 'agentVerificationStatus', 'requestedRole', 'licenseDocument',
                 'address', 'city', 'country',
@@ -628,17 +612,6 @@ export class UserService {
     // should use `reviewLicenseApplication`, which also promotes the role.
     public async updateVerificationStatus(userId: string, status: VerifyStatus): Promise<User> {
         return this.reviewLicenseApplication(userId, status);
-    }
-
-    public async verifyNafath(userId: string, nationalId: string): Promise<User> {
-        const user = await this.findOne(userId);
-        if (!user) throw new NotFoundException('User not found');
-
-        // Mock verification
-        user.nationalId = nationalId;
-        user.isVerified = true;
-        
-        return await this.userRepository.save(user);
     }
 
     public async remove(userId: string): Promise<void> {

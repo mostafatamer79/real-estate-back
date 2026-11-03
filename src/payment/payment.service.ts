@@ -34,7 +34,7 @@ export class PaymentService {
       amount = Math.round(booking.price * 100);
       metadata.bookingId = booking.id;
     } else if (params.invoiceId) {
-      const invoice = await this.financialService.findInvoiceById(params.invoiceId);
+      const invoice = await this.financialService.findInvoiceById(params.invoiceId, user);
       if (!invoice) throw new BadRequestException('Invoice not found');
       if (invoice.status === InvoiceStatus.PAID) throw new BadRequestException('Invoice already paid');
       

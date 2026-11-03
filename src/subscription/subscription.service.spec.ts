@@ -15,6 +15,7 @@ describe('SubscriptionService', () => {
   let packageService: ManagementPackageService;
 
   const mockSubscriptionRepository = {
+    findOne: jest.fn(),
     create: jest.fn().mockImplementation((dto) => dto),
     save: jest.fn().mockImplementation((sub) => Promise.resolve({ id: 'sub-id', ...sub })),
   };
@@ -75,6 +76,26 @@ describe('SubscriptionService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  it('requires gateway confirmation before a customer can activate a paid subscription', async () => {
+    mockSubscriptionRepository.findOne.mockResolvedValue({ id: 'sub-id', userId: 'user-id', amount: 100, status: SubscriptionStatus.PENDING });
+    await expect(service.activate('sub-id', 'user-id')).rejects.toThrow('gateway');
+  });
+
+  it('does not honor a customer-provided active status on a paid subscription', async () => {
+    mockPackageService.findOne.mockResolvedValue({ id: 'pkg-id', monthlyPrice: 100, yearlyPrice: 1000 });
+    const subscription = await service.create('user-id', {
+      packageId: 'pkg-id', subscriptionType: SubscriptionType.MONTHLY,
+      paymentMethod: PaymentMethod.CREDIT_CARD, startDate: new Date(), amount: 0,
+      status: SubscriptionStatus.ACTIVE,
+    });
+    expect(subscription.status).toBe(SubscriptionStatus.PENDING);
+  });
+
+  it('does not let customers change billing or access through subscription updates', async () => {
+    mockSubscriptionRepository.findOne.mockResolvedValue({ id: 'sub-id', userId: 'user-id', amount: 100, status: SubscriptionStatus.PENDING });
+    await expect(service.update('sub-id', 'user-id', { status: SubscriptionStatus.ACTIVE, noExpiry: true })).rejects.toThrow('administrator');
   });
 
   describe('create', () => {

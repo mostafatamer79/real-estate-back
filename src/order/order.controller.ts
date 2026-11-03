@@ -36,34 +36,34 @@ export class OrderController {
   @UseGuards(JwtAuthGuard, DepartmentsGuard)
   @Departments('properties', 'orders')
   findOne(@Param('id') id: string, @Req() req: any) {
-    return this.orderService.findOne(id);
+    return this.orderService.findOne(id, req.user);
   }
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, DepartmentsGuard)
   @Departments('properties', 'orders')
-  update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
-    return this.orderService.update(id, updateOrderDto);
+  update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto, @Req() req: any) {
+    return this.orderService.update(id, updateOrderDto, req.user);
   }
 
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard, DepartmentsGuard)
   @Departments('properties', 'orders')
-  updateStatus(@Param('id') id: string, @Body('status') status: string) {
-    return this.orderService.updateStatus(id, status);
+  updateStatus(@Param('id') id: string, @Body('status') status: string, @Req() req: any) {
+    return this.orderService.updateStatus(id, status, req.user);
   }
 
   @Patch(':id/assign')
   @UseGuards(JwtAuthGuard, DepartmentsGuard)
   @Departments('properties', 'orders')
-  assignOrder(@Param('id') id: string, @Body('assignedToId') assignedToId: string) {
-    return this.orderService.assignOrder(id, assignedToId);
+  assignOrder(@Param('id') id: string, @Body('assignedToId') assignedToId: string, @Req() req: any) {
+    return this.orderService.assignOrder(id, assignedToId, req.user);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, DepartmentsGuard)
   @Departments('properties', 'orders')
   remove(@Param('id') id: string, @Req() req: any) {
-    return this.orderService.remove(id);
+    return this.orderService.remove(id, req.user);
   }
 }

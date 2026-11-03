@@ -5,11 +5,10 @@ import { FileUploadService } from '../document/file-upload.service';
 import { UserService } from './user.service';
 import { LicenseApplicationDto, UpdateUserDto } from './create-user-dto';
 import { Department, OnboardingStatus, Role, User, VerifyStatus } from './user-entity';
+import { AllowUnverified } from '../common/decorators/allow-unverified.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
 import { EmployeeManagementGuard } from '../common/guards/employee-management.guard';
 import { SkipSubscriptionGuard } from '../common/decorators/skip-subscription.decorator';
-import { MailService } from '../mail/mail.service';
-import { AuthService } from '../auth/auth.service';
 
 @Controller('user')
 @UseGuards(JwtAuthGuard)
@@ -17,8 +16,6 @@ export class UserController {
     constructor(
         private readonly userService: UserService,
         private readonly fileUploadService: FileUploadService,
-        private readonly mailService: MailService,
-        private readonly authService: AuthService,
     ) {}
 
     @Get()
@@ -57,12 +54,13 @@ export class UserController {
         return this.userService.getAdminUserDetails(userId);
     }
 
+    @AllowUnverified()
     @Put('profile')
     @SkipSubscriptionGuard()
     async updateProfile(@Request() req, @Body() updateUserDto: UpdateUserDto) {
         // License-review fields are server controlled. A user must use the
         // dedicated application endpoint instead of self-verifying a role.
-        const { agentVerificationStatus, licenseVerificationStatus, requestedRole, ...profileUpdate } = updateUserDto;
+        const { agentVerificationStatus, licenseVerificationStatus, requestedRole, nationalId, ...profileUpdate } = updateUserDto;
         return this.userService.updateUserDetails(req.user.id, profileUpdate);
     }
 
@@ -72,6 +70,7 @@ export class UserController {
         return this.userService.submitLicenseApplication(req.user.id, application);
     }
 
+    @AllowUnverified()
     @Patch('profile/onboarding')
     @SkipSubscriptionGuard()
     async updateOnboardingStatus(
@@ -97,52 +96,9 @@ export class UserController {
     }
 
 
-    @Post('nafath/send-otp')
-    @SkipSubscriptionGuard()
-    async sendNafathOtp(@Request() req, @Body('nationalId') nationalId: string) {
-        if (!nationalId) {
-            throw new BadRequestException('National ID is required');
-        }
-
-        const user = await this.userService.findOne(req.user.id);
-        if (!user) {
-            throw new BadRequestException('User not found');
-        }
-
-        if (!user.email) {
-            throw new BadRequestException('A verified email address is required to receive the code');
-        }
-
-        const otp = await this.authService.generateOtp();
-        user.otp = otp;
-        user.expireOtp = new Date(Date.now() + 5 * 60 * 1000);
-        await this.userService.updateUser(user);
-        await this.mailService.sendOtp(user, otp);
-
-        return { message: 'OTP sent', success: true, nationalId };
-    }
-
-    @Post('nafath/verify')
-    @SkipSubscriptionGuard()
-    async verifyNafath(@Request() req, @Body('nationalId') nationalId: string, @Body('otp') otp: string) {
-        const user = await this.userService.findOne(req.user.id);
-        if (!user) {
-            throw new BadRequestException('User not found');
-        }
-
-        if (!user.otp || !user.expireOtp || user.expireOtp < new Date() || user.otp !== otp) {
-            throw new BadRequestException('Invalid OTP');
-        }
-
-        user.otp = null;
-        user.expireOtp = null;
-        await this.userService.updateUser(user);
-
-        return this.userService.verifyNafath(req.user.id, nationalId);
-    }
-
+    @AllowUnverified()
     @Post('upload')
-    @UseInterceptors(FileInterceptor('file'))
+    @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }))
     @SkipSubscriptionGuard()
     async uploadProfileImage(@UploadedFile() file: Express.Multer.File) {
         // Folder 'profile-images'

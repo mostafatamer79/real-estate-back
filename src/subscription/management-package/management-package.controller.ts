@@ -12,8 +12,8 @@ import { ManagementPackageService } from './management-package.service';
 import { CreateManagementPackageDto, UpdateManagementPackageDto } from './dto/create-management-package.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt.guard';
 import { SkipSubscriptionGuard } from '../../common/decorators/skip-subscription.decorator';
-// import { RolesGuard } from '../../auth/guards/roles.guard'; // Assuming roles guard exists
-// import { Roles } from '../../auth/decorators/roles.decorator';
+import { Roles } from '../../common/decorators/roles.decorators';
+import { Role } from '../../user/user-entity';
 
 @SkipSubscriptionGuard()
 @Controller('management-packages')
@@ -22,7 +22,7 @@ export class ManagementPackageController {
   constructor(private readonly packageService: ManagementPackageService) {}
 
   @Post()
-  // @Roles('admin') // Restrict to admin
+  @Roles([Role.ADMIN])
   create(@Body() createDto: CreateManagementPackageDto) {
     return this.packageService.create(createDto);
   }
@@ -38,13 +38,13 @@ export class ManagementPackageController {
   }
 
   @Patch(':id')
-  // @Roles('admin')
+  @Roles([Role.ADMIN])
   update(@Param('id') id: string, @Body() updateDto: UpdateManagementPackageDto) {
     return this.packageService.update(id, updateDto);
   }
 
   @Delete(':id')
-  // @Roles('admin')
+  @Roles([Role.ADMIN])
   remove(@Param('id') id: string) {
     return this.packageService.remove(id);
   }

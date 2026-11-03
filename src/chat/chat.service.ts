@@ -1,5 +1,6 @@
+import { requireVerifiedIdentity } from '../common/guards/identity-verification.guard';
 // src/chat/chat.service.ts - Simplified version
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 import { Message, ChatRoom } from './message.entity';
@@ -48,6 +49,17 @@ async getRoomById(roomId: string) {
     relations: ['participants'],
   });
 }
+
+  private async requireRoomParticipant(roomId: string, userId: string) {
+    const room = await this.chatRoomRepository.findOne({
+      where: { id: roomId },
+      relations: ['participants'],
+    });
+    if (!room || !room.participants.some((participant) => participant.id === userId)) {
+      throw new ForbiddenException('User is not a room participant');
+    }
+    return room;
+  }
 
 // Also update getOrCreateOfferChat to include offerTitle
 async getOrCreateOfferChat(offerId: string, buyerId: string, sellerId: string, offerTitle?: string) {
@@ -211,16 +223,15 @@ async getOrCreateDirectChat(userId1: string, userId2: string) {
 
   // Send message
   async sendMessage(roomId: string, senderId: string, content: string) {
-    const room = await this.chatRoomRepository.findOne({
-      where: { id: roomId },
-      relations: ['participants']
-    });
+    const room = await this.requireRoomParticipant(roomId, senderId);
 
     const sender = await this.userRepository.findOne({ where: { id: senderId } });
 
     if (!room || !sender) {
       throw new Error('Room or sender not found');
     }
+
+    requireVerifiedIdentity(sender);
 
     const message = this.messageRepository.create({
       content,
@@ -255,6 +266,7 @@ async getOrCreateDirectChat(userId1: string, userId2: string) {
   // Get messages for a room (marks them as read if userId is provided)
   async getRoomMessages(roomId: string, limit = 50, userId?: string) {
     if (userId) {
+      await this.requireRoomParticipant(roomId, userId);
       await this.messageRepository
         .createQueryBuilder()
         .update(Message)
@@ -276,6 +288,7 @@ async getOrCreateDirectChat(userId1: string, userId2: string) {
 
   // Get unread messages count for a specific room and user
   async getUnreadCount(roomId: string, userId: string): Promise<number> {
+    await this.requireRoomParticipant(roomId, userId);
     const count = await this.messageRepository.count({
       where: {
         room: { id: roomId },
@@ -293,6 +306,7 @@ async getOrCreateDirectChat(userId1: string, userId2: string) {
 
   // Mark all messages in a room as read for a user
   async markRoomAsRead(roomId: string, userId: string) {
+    await this.requireRoomParticipant(roomId, userId);
     await this.messageRepository
       .createQueryBuilder()
       .update(Message)

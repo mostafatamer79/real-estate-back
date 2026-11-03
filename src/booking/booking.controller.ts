@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, ParseUUIDPipe, ForbiddenException } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
@@ -23,13 +23,20 @@ export class BookingController {
   @Get('user/:userId')
   @UseGuards(JwtAuthGuard)
   // @Roles([Role.ADMIN]) // Allow admins to see user bookings
-  findUserBookings(@Param('userId', ParseUUIDPipe) userId: string) {
+  findUserBookings(@Param('userId', ParseUUIDPipe) userId: string, @Req() req) {
+    const requesterId = req.user.id || req.user.userId;
+    if (req.user.role !== 'admin' && requesterId !== userId) {
+      throw new ForbiddenException('You do not have permission to access these bookings');
+    }
     return this.bookingService.findByUser(userId);
   }
 
   @Get('offer/:offerId')
   @UseGuards(JwtAuthGuard)
-  findOfferBookings(@Param('offerId', ParseUUIDPipe) offerId: string) {
+  findOfferBookings(@Param('offerId', ParseUUIDPipe) offerId: string, @Req() req) {
+    if (req.user.role !== 'admin') {
+      throw new ForbiddenException('Only administrators can list offer bookings');
+    }
     return this.bookingService.findByOffer(offerId);
   }
 

@@ -5,11 +5,9 @@ services:
     container_name: postgres_postgis
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: realestate
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-realestate}
     volumes:
       - pgdata:/var/lib/postgresql/data
 

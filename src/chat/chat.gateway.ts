@@ -8,8 +8,10 @@ import {
   ConnectedSocket,
   MessageBody,
 } from '@nestjs/websockets';
+import { ForbiddenException, UseGuards } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
+import { WsAuthGuard } from '../common/guards/ws-jwt.guard';
 
 @WebSocketGateway({
   cors: {
@@ -18,6 +20,7 @@ import { ChatService } from './chat.service';
   },
   namespace: '/chat',
 })
+@UseGuards(WsAuthGuard)
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
@@ -27,19 +30,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(private chatService: ChatService) {}
 
   async handleConnection(client: Socket) {
-    try {
-      const userId = client.handshake.query.userId as string || client.handshake.auth.userId;
-      if (userId) {
-        this.connectedUsers.set(userId, client.id);
-        console.log(`User ${userId} connected`);
-        
-        // Broadcast online status to all connected clients (or specifically to relevant rooms if optimized)
-        // For simplicity, we broadcast to everyone or let clients check
-        this.server.emit('userStatus', { userId, status: 'online' });
-      }
-    } catch (error) {
-      console.error('Connection error:', error);
-    }
+    // Authentication is enforced on every message handler by WsAuthGuard.
+    // Do not trust query-string identity during the unauthenticated handshake.
+    void client;
   }
 
   handleDisconnect(client: Socket) {
@@ -59,6 +52,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { userId: string },
   ) {
+    const userId = client.data.user?.id;
+    if (userId) this.connectedUsers.set(userId, client.id);
     const isOnline = this.connectedUsers.has(data.userId);
     client.emit('userStatus', { 
       userId: data.userId, 
@@ -72,23 +67,29 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { roomId: string },
   ) {
     try {
+      await this.chatService.getRoomById(data.roomId).then((room) => {
+        if (!room?.participants.some((participant) => participant.id === client.data.user?.id)) {
+          throw new Error('User is not a room participant');
+        }
+      });
       client.join(data.roomId);
       console.log(`Socket ${client.id} joined room ${data.roomId}`);
     } catch (error) {
       console.error('Join room error:', error);
+      client.emit('error', { message: 'Not authorized to join this room' });
     }
   }
 
   @SubscribeMessage('sendMessage')
   async handleSendMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { roomId: string; senderId: string; content: string },
+    @MessageBody() data: { roomId: string; content: string },
   ) {
     try {
       // Save message to database
       const message = await this.chatService.sendMessage(
         data.roomId,
-        data.senderId,
+        client.data.user.id,
         data.content,
       );
 
@@ -109,6 +110,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
 
     } catch (error) {
+      if (error instanceof ForbiddenException) {
+        client.emit('error', error.getResponse());
+        return;
+      }
       console.error('Send message error:', error);
       client.emit('error', { message: 'Failed to send message' });
     }

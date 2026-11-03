@@ -46,6 +46,7 @@ import { FinancialTransaction } from './financial/entities/financial-transaction
 
 // ── Global Guards ──────────────────────────────────────────────────────────────
 import { Reflector, APP_INTERCEPTOR } from '@nestjs/core';
+import { IdentityVerificationGuard } from './common/guards/identity-verification.guard';
 import { JwtAuthGuard } from './common/guards/jwt.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { DepartmentsGuard } from './common/guards/departments.guard';
@@ -80,6 +81,7 @@ import { DebugInterceptor } from './common/interceptors/debug.interceptor';
 
     // ── Global guards ──────────────────────────────────────────────────────
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: IdentityVerificationGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: DepartmentsGuard },
     { provide: APP_GUARD, useClass: SubscriptionGuard },

@@ -131,10 +131,16 @@ export class BookingService {
       throw new NotFoundException(`Booking #${id} not found`);
     }
 
-    // Check ownership (User or Agent)
-    // if (booking.userId !== user.id && booking.agentId !== user.id) {
-    //   throw new ForbiddenException('You do not have permission to view this booking');
-    // }
+    const userId = user?.id || user?.userId;
+    const isSystem = user?.role === 'system';
+    const isAllowed =
+      isSystem ||
+      user?.role === 'admin' ||
+      booking.userId === userId ||
+      booking.agentId === userId;
+    if (!isAllowed) {
+      throw new ForbiddenException('You do not have permission to access this booking');
+    }
 
     return booking;
   }

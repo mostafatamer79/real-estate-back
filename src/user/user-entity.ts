@@ -204,6 +204,9 @@ expireOtp: Date | null;
   @Column({ unique: true, nullable: true })
   nationalId?: string;
 
+  @Column({ type: 'timestamp', nullable: true })
+  nafathVerifiedAt?: Date | null;
+
   // Broker Details
   @Column({ nullable: true })
   licenseIssueDate?: Date;

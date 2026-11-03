@@ -32,7 +32,7 @@ export class DepartmentsGuard implements CanActivate {
     const user = req.user;
 
     if (!user) {
-      return true;
+      return false;
     }
 
     // Admin has access to all departments.

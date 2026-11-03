@@ -123,23 +123,36 @@ export class OffersService {
     return offer;
   }
 
+  private async findOwnedOrManaged(id: string, user: any): Promise<Offer> {
+    const offer = await this.findOne(id, user);
+    if (user?.role === Role.ADMIN) return offer;
+
+    const requesterId = user?.sub || user?.userId || user?.id;
+    if (!requesterId) throw new ForbiddenException('Authentication required');
+    const ownerIds = await this.getOwnerIds(requesterId);
+    if (!offer.userId || !ownerIds.includes(offer.userId)) {
+      throw new ForbiddenException('You are not allowed to modify this offer');
+    }
+    return offer;
+  }
+
   // ✅ Update offer
   async update(id: string, dto: UpdateOfferDto, user: any): Promise<Offer> {
-    const offer = await this.findOne(id, user);
+    const offer = await this.findOwnedOrManaged(id, user);
     Object.assign(offer, dto);
     return this.offersRepository.save(offer);
   }
 
   // ✅ Soft delete
   async remove(id: string, user: any): Promise<Offer> {
-    const offer = await this.findOne(id, user);
+    const offer = await this.findOwnedOrManaged(id, user);
     offer.isActive = false;
     return this.offersRepository.save(offer);
   }
 
   // ✅ Toggle active (admin)
   async setActive(id: string, isActive: boolean, user: any): Promise<Offer> {
-    const offer = await this.findOne(id, user);
+    const offer = await this.findOwnedOrManaged(id, user);
     if (user?.role !== Role.ADMIN) {
       throw new ForbiddenException('Only admins can change offer visibility');
     }
@@ -149,27 +162,27 @@ export class OffersService {
 
   // ✅ Hard delete
   async delete(id: string, user: any): Promise<void> {
-    const offer = await this.findOne(id, user);
+    const offer = await this.findOwnedOrManaged(id, user);
     await this.offersRepository.delete(offer.id);
   }
 
   // ✅ Add media files
   async addMedia(id: string, files: string[], user: any): Promise<Offer> {
-    const offer = await this.findOne(id, user);
+    const offer = await this.findOwnedOrManaged(id, user);
     offer.mediaFiles = [...(offer.mediaFiles || []), ...files];
     return this.offersRepository.save(offer);
   }
 
   // ✅ Add 3D videos
   async addThreeDVideos(id: string, files: string[], user: any): Promise<Offer> {
-    const offer = await this.findOne(id, user);
+    const offer = await this.findOwnedOrManaged(id, user);
     offer.threeDVideos = [...(offer.threeDVideos || []), ...files];
     return this.offersRepository.save(offer);
   }
 
   // ✅ Update status
   async updateStatus(id: string, status: string, user: any): Promise<Offer> {
-    const offer = await this.findOne(id, user);
+    const offer = await this.findOwnedOrManaged(id, user);
     offer.status = status;
     return this.offersRepository.save(offer);
   }

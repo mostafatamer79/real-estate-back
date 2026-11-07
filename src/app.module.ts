@@ -1,3 +1,4 @@
+import { ProviderModule } from './provider/provider.module';
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { MailModule } from './mail/mail.module';
@@ -59,7 +60,7 @@ import { DebugInterceptor } from './common/interceptors/debug.interceptor';
     TypeOrmModule.forRoot(typeOrmConfig()),
     TypeOrmModule.forFeature([User, Permission, Activity, Property, FinancialTransaction]),
     AuthModule, UserModule, ServiceRequestModule, DocumentModule, CommissionModule,
-    OffersModule, ChatModule, PlacesModule, LegalServicesModule, SettingsModule,
+    ProviderModule, OffersModule, ChatModule, PlacesModule, LegalServicesModule, SettingsModule,
     OrderModule, BookingModule, PaymentModule, MarketingModule, FinancialModule,
     HomeModule, NotificationModule, PropertyModule, SubscriptionModule,
     ManagementPackageModule, ActivityModule,

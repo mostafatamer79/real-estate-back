@@ -79,3 +79,44 @@ describe('ServiceRequestService department pricing', () => {
     expect(invoiceRepository.save).toHaveBeenCalled();
   });
 });
+
+describe('service catalog availability', () => {
+  it('blocks a deleted catalog item even if a client submits its old value directly', async () => {
+    const service: any = Object.create(ServiceRequestService.prototype);
+    service.settingsService = { findOne: jest.fn(async key => key === 'custom_service_catalog' ? { value: JSON.stringify([{ category: 'postPurchase', name: 'الغاز', deleted: true, status: 'disabled' }]) } : null) };
+    service.serviceRequestRepository = { create: jest.fn() };
+    await expect(service.create({ category: 'postPurchase', serviceType: 'الغاز', quantity: 1 }, { id: 'owner', role: Role.USER })).rejects.toThrow('الخدمة');
+    expect(service.serviceRequestRepository.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('service request catalog browsing scope', () => {
+  const setup = () => {
+    const query = { leftJoinAndSelect: jest.fn().mockReturnThis(), andWhere: jest.fn().mockReturnThis(), orderBy: jest.fn().mockReturnThis(), skip: jest.fn().mockReturnThis(), take: jest.fn().mockReturnThis(), getManyAndCount: jest.fn().mockResolvedValue([[],0]) };
+    const service: any = Object.create(ServiceRequestService.prototype);
+    service.serviceRequestRepository = {createQueryBuilder: jest.fn().mockReturnValue(query)};
+    return {service,query};
+  };
+  it('includes legal and marketing in catalog scope while keeping the general center unchanged', async () => {
+    const {service,query} = setup();
+    await service.findAll({id:'admin',role:Role.ADMIN},1,200,false,undefined,undefined,true);
+    expect(query.andWhere).not.toHaveBeenCalled();
+    await service.findAll({id:'admin',role:Role.ADMIN},1,200);
+    expect(query.andWhere).toHaveBeenCalledWith(expect.stringContaining('deptOnlyCategories'),expect.any(Object));
+  });
+  it('catalog scope retains customer ownership restrictions', async () => {
+    const {service,query} = setup();
+    await service.findAll({id:'owner',role:Role.USER},1,200,false,undefined,undefined,true);
+    expect(query.andWhere).toHaveBeenCalledWith('service.userId = :userId',{userId:'owner'});
+  });
+});
+
+describe('deleted legal parent service', () => {
+  it('blocks a child request submitted directly after its legal branch is deleted', async () => {
+    const service: any = Object.create(ServiceRequestService.prototype);
+    service.settingsService = { findOne: jest.fn(async key => key === 'custom_service_catalog' ? { value: JSON.stringify([{category:'legal',name:'التوثيق',deleted:true,status:'disabled'}]) } : null) };
+    service.serviceRequestRepository = { create: jest.fn() };
+    await expect(service.create({category:'legal',serviceType:'توثيق صك الملكية',metadata:{deedInfo:{}},quantity:1},{id:'owner',role:Role.USER})).rejects.toThrow('الخدمة');
+    expect(service.serviceRequestRepository.create).not.toHaveBeenCalled();
+  });
+});

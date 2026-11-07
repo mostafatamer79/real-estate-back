@@ -1,3 +1,4 @@
+import { Notification, NotificationType } from '../notification/notification.entity';
 import { ConflictException, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Department, OnboardingStatus, Role, User, VerifyStatus } from './user-entity';
@@ -125,7 +126,7 @@ export class UserService {
           await this.updateUser(existingUser);
            return existingUser;
         }
-        const newUser = this.userRepository.create({...createUserDto,nafathVerifiedAt: null,expireOtp:createUserDto.expiredOtp,otp});
+        const newUser = this.userRepository.create({...createUserDto,nafathVerifiedAt: null, providerProfile: null,expireOtp:createUserDto.expiredOtp,otp});
         return await this.userRepository.save(newUser);
       }
       public async createUserByemail(createUserDto: CreateUserDto,otp:string): Promise<User> {
@@ -144,7 +145,7 @@ export class UserService {
           return existingUser;
         }
 
-        const newUser = this.userRepository.create({...createUserDto,nafathVerifiedAt: null,expireOtp:createUserDto.expiredOtp,otp});
+        const newUser = this.userRepository.create({...createUserDto,nafathVerifiedAt: null, providerProfile: null,expireOtp:createUserDto.expiredOtp,otp});
 
         return await this.userRepository.save(newUser);
       }
@@ -248,7 +249,7 @@ export class UserService {
         const newUser = this.userRepository.create({
             ...createUserDto,
             // Only the signed Nafath callback may establish identity proof.
-            nafathVerifiedAt: null,
+            nafathVerifiedAt: null, providerProfile: null,
             isActive: true, // Auto-activate when created by admin
             isVerified: true, // Auto-verify when created by admin
             createAt: new Date(),
@@ -450,7 +451,7 @@ export class UserService {
             throw new BadRequestException('Cannot set role to admin');
         }
 
-        if (updateUserDto.role && [Role.AGENT, Role.BROKER].includes(updateUserDto.role) && user.agentVerificationStatus !== VerifyStatus.VERIFIED) {
+        if (updateUserDto.role && updateUserDto.role !== user.role && [Role.AGENT, Role.BROKER].includes(updateUserDto.role) && user.agentVerificationStatus !== VerifyStatus.VERIFIED) {
             throw new BadRequestException('Submit a license application and wait for approval before selecting an agent or broker role');
         }
 
@@ -458,11 +459,14 @@ export class UserService {
             throw new BadRequestException('An identity verified through Nafath cannot be edited');
         }
 
-        // Handle verification status reset if critical info changes
-        if (updateUserDto.falLicenseNumber) {
-            // Logic to verify Fal license could go here or trigger a job
-             user.agentVerificationStatus = VerifyStatus.PENDING; 
-        }
+        // Resubmitting unchanged profile data must not revoke a reviewed license.
+        const evidenceChanged = ['falLicenseNumber', 'agentLicenseNumber', 'licenseDocument', 'falLicenseExpiry'].some(key => {
+            if (updateUserDto[key] === undefined) return false;
+            const oldValue = user[key] instanceof Date ? user[key].toISOString().slice(0, 10) : String(user[key] || '');
+            const newValue = updateUserDto[key] instanceof Date ? updateUserDto[key].toISOString().slice(0, 10) : String(updateUserDto[key] || '');
+            return oldValue !== newValue;
+        });
+        if (evidenceChanged) user.agentVerificationStatus = VerifyStatus.PENDING;
 
         // Accept the old admin field from cached clients, but keep FAL verification
         // separate from Nafath identity verification.
@@ -586,26 +590,44 @@ export class UserService {
             .getMany();
     }
 
-    public async reviewLicenseApplication(userId: string, status: VerifyStatus): Promise<User> {
+    public async reviewLicenseApplication(userId: string, status: VerifyStatus, reviewNote?: string): Promise<User> {
         const user = await this.findOne(userId);
         
         if (!user) {
             throw new NotFoundException('User not found');
         }
 
-        if (!user.requestedRole || ![Role.AGENT, Role.BROKER].includes(user.requestedRole)) {
+        const professionalRole = user.requestedRole || user.role;
+        if (![Role.AGENT, Role.BROKER].includes(professionalRole)) {
             throw new BadRequestException('This user has no pending professional role application');
         }
 
+        if (status === VerifyStatus.VERIFIED && (!user.licenseDocument || !(user.falLicenseNumber || user.agentLicenseNumber))) {
+            throw new BadRequestException('A license number and document are required for approval');
+        }
+        const reason = typeof reviewNote === 'string' ? reviewNote.trim().slice(0, 2000) : '';
+        if (status === VerifyStatus.REJECTED && !reason) {
+            throw new BadRequestException('Enter a reason for rejecting this license');
+        }
         user.agentVerificationStatus = status;
-        if (status === VerifyStatus.VERIFIED) {
+        if (status === VerifyStatus.VERIFIED && user.requestedRole) {
             // A single save writes both fields together, preventing a verified
             // application from being left with the old low-privilege role.
             user.role = user.requestedRole;
             user.requestedRole = null;
         }
         
-        return await this.userRepository.save(user);
+        return this.userRepository.manager.transaction(async manager => {
+            const saved = await manager.save(User, user);
+            await manager.save(Notification, {
+                userId, type: NotificationType.SYSTEM, title: 'مراجعة الترخيص',
+                message: reason || (status === VerifyStatus.VERIFIED
+                    ? 'تم اعتماد رخصتك.'
+                    : 'تم تعليق تنفيذ الخدمات بسبب عدم اعتماد الرخصة. يمكنك التصفح وتحديث بياناتك وإعادة إرسال المستندات للمراجعة.'),
+                data: { licenseStatus: status },
+            });
+            return saved;
+        });
     }
 
     // Compatibility for callers that only update the status. New review flows

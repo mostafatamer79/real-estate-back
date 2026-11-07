@@ -115,8 +115,8 @@ import {
 
     @Column({ nullable: true })
     userId: string | null;
-   @Column({nullable:false,default:100})
-    price:number
+   @Column({ type: 'decimal', precision: 12, scale: 2, nullable: false, default: 100, transformer: { to: (value: number) => value, from: (value: string) => Number(value) } })
+    price: number
 
     @Column({type:'enum',enum:PaidStatus,default:PaidStatus.UNPAID})
     paymentStatus:PaidStatus

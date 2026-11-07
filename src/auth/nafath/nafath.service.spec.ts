@@ -79,6 +79,15 @@ describe('Nafath OIDC profile verification', () => {
     expect(result.url).toBe('https://iam.example.test/auth');
     expect(repository.save).toHaveBeenCalledWith(expect.objectContaining({ transId: '42' }));
   });
+  it('accepts null session ID returned by Elm Staging and uses requestId as transId', async () => {
+    const { service, repository, fetchMock } = setup();
+    fetchMock.mockImplementation(async (url: any) => ({ ok: true, status: 200, json: async () => ({
+      id: null, requestId: new URL(url).searchParams.get('requestId'), url: 'https://iam.example.test/auth', hashedState,
+    }) }));
+    const result = await service.startAuthentication('owner', '198.51.100.10', 'ar');
+    expect(result.url).toBe('https://iam.example.test/auth');
+    expect(repository.save).toHaveBeenCalledWith(expect.objectContaining({ transId: expect.any(String) }));
+  });
   it('does not create a session when provider configuration is incomplete', async () => {
     const { service, config, fetchMock } = setup();
     config.get.mockReturnValue({ ...settings, appKey: '' });

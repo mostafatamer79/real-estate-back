@@ -33,6 +33,8 @@ describe('profile identity boundaries', () => {
     const controller = new UserController(users as any, {} as any);
     await controller.updateProfile({ user: { id: 'owner' } }, { firstName: 'Name', nationalId: '1000000000' } as any);
     expect(users.updateUserDetails).toHaveBeenCalledWith('owner', { firstName: 'Name' });
+    await controller.updateProfile({ user: { id: 'owner', role: 'user' } }, { city: 'Riyadh', departmentPermissions: { legal: 'manage' }, financialAgreementValue: 1, isActive: true } as any);
+    expect(users.updateUserDetails).toHaveBeenLastCalledWith('owner', { city: 'Riyadh' });
   });
   it('does not mark identity verified when a name is edited', async () => {
     const service: any = Object.create(UserService.prototype);
@@ -52,8 +54,9 @@ describe('profile identity boundaries', () => {
     const service: any = Object.create(UserService.prototype);
     service.findOneByEmail = jest.fn(async () => null);
     service.userRepository = { create: jest.fn(v => v), save: jest.fn(async v => v) };
-    const result = await service.createUser({ email: 'new@example.test', role: 'user', nationalId: '1000000000', nafathVerifiedAt: new Date() });
+    const result = await service.createUser({ email: 'new@example.test', role: 'user', nationalId: '1000000000', nafathVerifiedAt: new Date(), providerProfile: { status: 'approved' } });
     expect(result.nafathVerifiedAt).toBeFalsy();
+    expect(result.providerProfile).toBeFalsy();
   });
   it('cannot bypass verification by assigning admin or an identity during registration', async () => {
     const users = { createUserByemail: jest.fn(), findOneByEmail: jest.fn() };

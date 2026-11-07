@@ -12,6 +12,7 @@ import {  Column,
   OneToMany,
   OneToOne
 } from "typeorm";
+import type { ProviderProfile } from '../provider/provider-profile';
 import { Department } from "./department.enum";
 export { Department };
 
@@ -247,6 +248,9 @@ expireOtp: Date | null;
 
   @Column({ type: 'simple-json', nullable: true })
   departments?: Department[];
+
+  @Column({ type: 'jsonb', nullable: true, select: false })
+  providerProfile?: ProviderProfile | null;
 
   @Column({ nullable: true })
   parentId?: string;

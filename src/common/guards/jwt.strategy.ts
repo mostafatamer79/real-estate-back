@@ -33,6 +33,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       isActive: user.isActive,
       nafathVerifiedAt: user.nafathVerifiedAt,
       verifyStatus: user.agentVerificationStatus,
+      licenseExpired: Boolean(user.falLicenseExpiry && new Date(user.falLicenseExpiry).toISOString().slice(0, 10) < new Date().toISOString().slice(0, 10)),
       phone: user.phone,
       departments: Array.isArray(user.departments) ? user.departments : [],
       departmentPermissions: user.departmentPermissions || {},

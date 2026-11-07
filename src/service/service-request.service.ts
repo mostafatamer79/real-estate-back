@@ -1,3 +1,4 @@
+import { cleanProviderMetadata } from '../provider/provider-policy';
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { User, Role, Department } from '../user/user-entity';
 import { SettingsService } from '../settings/settings.service';
@@ -71,6 +72,7 @@ export class ServiceRequestService {
        }
     }
 
+    if (updateDto.metadata !== undefined) updateDto.metadata = cleanProviderMetadata(updateDto.metadata, serviceRequest.metadata);
     Object.assign(serviceRequest, updateDto);
 
     // Update timestamps based on status
@@ -136,6 +138,8 @@ export class ServiceRequestService {
   }
 
   async create(createDto: CreateServiceRequestDto, user: User) {
+    createDto.metadata = cleanProviderMetadata(createDto.metadata);
+    await this.assertCatalogServiceAvailable(createDto, user);
     // Server-side required-field validation driven by the dynamic form definitions
     await this.validateAgainstServiceForm(createDto, user);
 
@@ -187,7 +191,7 @@ export class ServiceRequestService {
         existing.description = createDto.description ?? existing.description;
         existing.firstParty = createDto.firstParty ?? existing.firstParty;
         existing.secondParty = createDto.secondParty ?? existing.secondParty;
-        existing.metadata = createDto.metadata ?? existing.metadata;
+        existing.metadata = cleanProviderMetadata(createDto.metadata, existing.metadata);
         existing.documentIds = createDto.documentIds ?? existing.documentIds;
         if (typeof requestedPrice === 'number') existing.price = requestedPrice;
 
@@ -557,6 +561,31 @@ export class ServiceRequestService {
    * their visibleWhen condition are skipped, as are divider/file/terms fields.
    * Unknown categories or unresolvable definitions never block a request.
    */
+  private async assertCatalogServiceAvailable(dto: CreateServiceRequestDto, user: User): Promise<void> {
+    if (user.role === Role.ADMIN) return;
+    const category = dto.category || 'other';
+    const formKey = category === 'legal' ? this.resolveLegalFormKey(dto) || category : category;
+    const [categoryFlag, formFlag, catalog] = await Promise.all([
+      this.settingsService.findOne(`module_services_${category}`),
+      this.settingsService.findOne(`module_${formKey}`),
+      this.settingsService.findOne('custom_service_catalog'),
+    ]);
+    if ([categoryFlag, formFlag].some(flag => flag?.value === 'disabled' || flag?.value === 'soon')) throw new BadRequestException('هذه الخدمة غير متاحة حالياً');
+    const selected = dto.metadata?.catalogService || dto.metadata?.disputeType || dto.metadata?.type || dto.serviceType;
+    let changes: { category: string; name: string; deleted?: boolean; status?: string }[] = [];
+    if (catalog?.value) {
+      try { const value: unknown = JSON.parse(catalog.value); if (Array.isArray(value)) changes = value; }
+      catch { throw new BadRequestException('تعذر قراءة إعدادات الخدمة. يرجى المحاولة لاحقاً.'); }
+    }
+    const legalBranchNames: Record<string, string> = { legal_disputes: 'المنازعات العقارية', legal_contracts: 'العقود', legal_documentation: 'التوثيق', legal_other: 'أخرى' };
+    const parent = category === 'legal' ? changes.find(item => item.category === 'legal' && item.name === legalBranchNames[formKey]) : undefined;
+    if (parent?.deleted || parent?.status === 'disabled' || parent?.status === 'soon') throw new BadRequestException('هذه الخدمة غير متاحة حالياً');
+    const item = changes.find(item => item.category === formKey && item.name === selected);
+    const itemKey = `module_service_item_${formKey}_${selected}`.replace(/\s+/g, '_').toLowerCase();
+    const flag = await this.settingsService.findOne(itemKey);
+    if (item?.deleted || item?.status === 'disabled' || item?.status === 'soon' || flag?.value === 'disabled' || flag?.value === 'soon') throw new BadRequestException('هذه الخدمة غير متاحة حالياً');
+  }
+
   private async validateAgainstServiceForm(createDto: CreateServiceRequestDto, user: User): Promise<void> {
     const category = createDto.category as string;
     if (!category) return;
@@ -662,6 +691,7 @@ export class ServiceRequestService {
     onlyMine: boolean = false,
     department?: string,
     category?: string,
+    includeDepartmentServices = false,
   ) {
     const skip = (page - 1) * limit;
     const queryBuilder = this.serviceRequestRepository
@@ -690,7 +720,7 @@ export class ServiceRequestService {
 
     if ((user.role === Role.ADMIN || user.role === Role.AGENT) && !onlyMine) {
       // General list (مركز الطلبات): legal and marketing requests only belong in their departments and must not go here.
-      if (!department && !category) {
+      if (!department && !category && !includeDepartmentServices) {
         queryBuilder.andWhere(
           '(service.category IS NULL OR service.category NOT IN (:...deptOnlyCategories))',
           { deptOnlyCategories: ['legal', 'marketing'] },
@@ -702,7 +732,7 @@ export class ServiceRequestService {
       }
     } else if (user.role === Role.USER || user.role === Role.VIEWER || onlyMine) {
       queryBuilder.andWhere('service.userId = :userId', { userId: user.id });
-      if (!department && !category) {
+      if (!department && !category && !includeDepartmentServices) {
         queryBuilder.andWhere(
           '(service.category IS NULL OR service.category NOT IN (:...deptOnlyCategories))',
           { deptOnlyCategories: ['legal', 'marketing'] },

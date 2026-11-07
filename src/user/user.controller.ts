@@ -1,3 +1,4 @@
+import { Roles } from '../common/decorators/roles.decorators';
 // src/user/user.controller.ts
 import { Controller, Get, Put, Patch, Post, Delete, Body, Param, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -60,10 +61,16 @@ export class UserController {
     async updateProfile(@Request() req, @Body() updateUserDto: UpdateUserDto) {
         // License-review fields are server controlled. A user must use the
         // dedicated application endpoint instead of self-verifying a role.
-        const { agentVerificationStatus, licenseVerificationStatus, requestedRole, nationalId, ...profileUpdate } = updateUserDto;
-        return this.userService.updateUserDetails(req.user.id, profileUpdate);
+        // Profile maintenance never grants staff departments, pricing, approval or an administrative role.
+        const allowed = new Set(['firstName', 'lastName', 'role', 'roleOtherDescription', 'address', 'city', 'country', 'profileImage', 'idDocument', 'licenseDocument', 'falLicenseNumber', 'agentLicenseNumber', 'falLicenseExpiry', 'licenseIssueDate', 'lawLicenseNumber', 'commercialRegistrationNumber', 'brokerType']);
+        const profileUpdate = Object.fromEntries(Object.entries(updateUserDto).filter(([key, value]) => allowed.has(key) && value !== undefined));
+        if (profileUpdate.role && ![Role.USER, Role.VIEWER, Role.OWNER, req.user.role].includes(profileUpdate.role)) {
+            throw new BadRequestException('Submit a professional application or contact the administrator to change this role');
+        }
+        return this.userService.updateUserDetails(req.user.id, profileUpdate as UpdateUserDto);
     }
 
+    @AllowUnverified()
     @Post('profile/license-application')
     @SkipSubscriptionGuard()
     async submitLicenseApplication(@Request() req, @Body() application: LicenseApplicationDto) {
@@ -84,15 +91,17 @@ export class UserController {
     }
 
     @Post(':id/license-review')
+    @Roles([Role.ADMIN])
     @UseGuards(EmployeeManagementGuard)
     async reviewLicenseApplication(
         @Param('id') userId: string,
-        @Body('status') status: VerifyStatus
+        @Body('status') status: VerifyStatus,
+        @Body('reviewNote') reviewNote?: string
     ) {
         if (status !== VerifyStatus.VERIFIED && status !== VerifyStatus.REJECTED) {
             throw new BadRequestException('Invalid license review status');
         }
-        return this.userService.reviewLicenseApplication(userId, status);
+        return this.userService.reviewLicenseApplication(userId, status, reviewNote);
     }
 
 

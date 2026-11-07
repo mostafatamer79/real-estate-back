@@ -28,7 +28,7 @@ describe('Geidea checkout', () => {
     booking = null;
     serviceRequest = null;
     settings = {
-      GEIDEA_ENABLED: 'true', GEIDEA_MERCHANT_PUBLIC_KEY: 'test-public-key',
+      GEIDEA_ENABLED: 'true', GEIDEA_MODE: 'test', GEIDEA_MERCHANT_PUBLIC_KEY: 'test-public-key',
       GEIDEA_API_PASSWORD: 'test-api-password',
       GEIDEA_CALLBACK_URL: 'https://api.example.test/api/payment/geidea/callback',
       GEIDEA_RETURN_URL: 'https://example.test/wallet',

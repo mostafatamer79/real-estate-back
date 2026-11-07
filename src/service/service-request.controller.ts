@@ -1,3 +1,4 @@
+import { ProviderPrivacyInterceptor } from '../provider/provider-privacy.interceptor';
 // src/service-request/service-request.controller.ts
 import {
     Controller,
@@ -9,6 +10,7 @@ import {
     Param,
     Query,
     UseGuards,
+    UseInterceptors,
     Request,
     ParseUUIDPipe,
     ForbiddenException
@@ -20,6 +22,7 @@ import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { ChatService } from '../chat/chat.service';
 import { SkipSubscriptionGuard } from '../common/decorators/skip-subscription.decorator';
 
+  @UseInterceptors(ProviderPrivacyInterceptor)
   @SkipSubscriptionGuard()
   @Controller('service-requests')
   export class ServiceRequestController {
@@ -43,6 +46,7 @@ import { SkipSubscriptionGuard } from '../common/decorators/skip-subscription.de
       @Query('mine') mine: string = 'false',
       @Query('department') department?: string,
       @Query('category') category?: string,
+      @Query('scope') scope?: string,
     ) {
       return this.serviceRequestService.findAll(
         req.user,
@@ -51,6 +55,7 @@ import { SkipSubscriptionGuard } from '../common/decorators/skip-subscription.de
         mine === 'true',
         department,
         category,
+        scope === 'catalog',
       );
     }
 

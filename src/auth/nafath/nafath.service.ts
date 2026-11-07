@@ -102,7 +102,9 @@ export class NafathService {
     const query = new URLSearchParams({ locale, requestId });
     const data = await this.providerRequest(`/api/v2/oidc/session?${query}`, endUserIp);
     const { url, id, hashedState, requestId: returnedRequestId } = data;
-    const validId = (typeof id === 'string' && id.length > 0) || (typeof id === 'number' && Number.isSafeInteger(id) && id >= 0);
+    const validId = id === null || id === undefined ||
+      (typeof id === 'string' && id.length > 0) ||
+      (typeof id === 'number' && Number.isSafeInteger(id) && id >= 0);
     if (typeof url !== 'string' || !validId || typeof hashedState !== 'string' || !hashedState || returnedRequestId !== requestId) {
       throw new ServiceUnavailableException('Invalid Nafath session response');
     }
@@ -113,11 +115,12 @@ export class NafathService {
     } catch {
       throw new ServiceUnavailableException('Invalid Nafath session response');
     }
+    const transId = (id !== null && id !== undefined && String(id).length > 0) ? String(id) : requestId;
     const transaction = this.transactionRepository.create({
       requestId, clientSecretHash: this.hash(clientSecret), userId,
       hashedState, endUserIp,
       // Retain the legacy MFA columns until a separate cleanup migration.
-      transId: String(id), random: '', nationalId: '',
+      transId, random: '', nationalId: '',
       status: 'WAITING', expiresAt: new Date(Date.now() + 5 * 60_000),
     });
     await this.transactionRepository.save(transaction);

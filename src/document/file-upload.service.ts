@@ -46,7 +46,7 @@ export class FileUploadService {
       ) {
         throw new BadRequestException('Invalid upload folder');
       }
-      const allowedExtensions = new Set(['pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx', 'xls', 'xlsx']);
+      const allowedExtensions = new Set(['pdf', 'png', 'jpg', 'jpeg', 'webp', 'doc', 'docx', 'xls', 'xlsx']);
       const fileExtension = file.originalname.split('.').pop()?.toLowerCase();
       if (!fileExtension || !allowedExtensions.has(fileExtension)) {
         throw new BadRequestException('Unsupported file type');
@@ -59,6 +59,7 @@ export class FileUploadService {
         png: ['image/png'],
         jpg: ['image/jpeg'],
         jpeg: ['image/jpeg'],
+        webp: ['image/webp'],
         doc: ['application/msword', 'application/octet-stream'],
         docx: ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/octet-stream'],
         xls: ['application/vnd.ms-excel', 'application/octet-stream'],

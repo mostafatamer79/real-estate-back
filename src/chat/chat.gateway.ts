@@ -7,18 +7,23 @@ import {
   OnGatewayDisconnect,
   ConnectedSocket,
   MessageBody,
-} from '@nestjs/websockets';
-import { ForbiddenException, UseGuards } from '@nestjs/common';
-import { Server, Socket } from 'socket.io';
-import { ChatService } from './chat.service';
-import { WsAuthGuard } from '../common/guards/ws-jwt.guard';
+} from "@nestjs/websockets";
+import { ForbiddenException, UseGuards } from "@nestjs/common";
+import { Server, Socket } from "socket.io";
+import { ChatService } from "./chat.service";
+import { WsAuthGuard } from "../common/guards/ws-jwt.guard";
 
 @WebSocketGateway({
   cors: {
-    origin: ['http://localhost:3000', 'http://localhost:5173'],
+    origin: [
+      "https://www.digitalbrokerage.sa",
+      "https://digitalbrokerage.sa",
+      "http://localhost:3000",
+      "http://localhost:5173",
+    ],
     credentials: true,
   },
-  namespace: '/chat',
+  namespace: "/chat",
 })
 @UseGuards(WsAuthGuard)
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -41,13 +46,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (socketId === client.id) {
         this.connectedUsers.delete(userId);
         console.log(`User ${userId} disconnected`);
-        this.server.emit('userStatus', { userId, status: 'offline' });
+        this.server.emit("userStatus", { userId, status: "offline" });
         break;
       }
     }
   }
 
-  @SubscribeMessage('checkUserStatus')
+  @SubscribeMessage("checkUserStatus")
   handleCheckUserStatus(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { userId: string },
@@ -55,32 +60,36 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const userId = client.data.user?.id;
     if (userId) this.connectedUsers.set(userId, client.id);
     const isOnline = this.connectedUsers.has(data.userId);
-    client.emit('userStatus', { 
-      userId: data.userId, 
-      status: isOnline ? 'online' : 'offline' 
+    client.emit("userStatus", {
+      userId: data.userId,
+      status: isOnline ? "online" : "offline",
     });
   }
 
-  @SubscribeMessage('joinRoom')
+  @SubscribeMessage("joinRoom")
   async handleJoinRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { roomId: string },
   ) {
     try {
       await this.chatService.getRoomById(data.roomId).then((room) => {
-        if (!room?.participants.some((participant) => participant.id === client.data.user?.id)) {
-          throw new Error('User is not a room participant');
+        if (
+          !room?.participants.some(
+            (participant) => participant.id === client.data.user?.id,
+          )
+        ) {
+          throw new Error("User is not a room participant");
         }
       });
       client.join(data.roomId);
       console.log(`Socket ${client.id} joined room ${data.roomId}`);
     } catch (error) {
-      console.error('Join room error:', error);
-      client.emit('error', { message: 'Not authorized to join this room' });
+      console.error("Join room error:", error);
+      client.emit("error", { message: "Not authorized to join this room" });
     }
   }
 
-  @SubscribeMessage('sendMessage')
+  @SubscribeMessage("sendMessage")
   async handleSendMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { roomId: string; content: string },
@@ -94,8 +103,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
 
       // Broadcast to room
-      this.server.to(data.roomId).emit('receiveMessage', {
-        type: 'receiveMessage',
+      this.server.to(data.roomId).emit("receiveMessage", {
+        type: "receiveMessage",
         message: {
           id: message.id,
           content: message.content,
@@ -106,16 +115,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             email: message.sender.email,
           },
           createdAt: message.createdAt,
-        }
+        },
       });
-
     } catch (error) {
       if (error instanceof ForbiddenException) {
-        client.emit('error', error.getResponse());
+        client.emit("error", error.getResponse());
         return;
       }
-      console.error('Send message error:', error);
-      client.emit('error', { message: 'Failed to send message' });
+      console.error("Send message error:", error);
+      client.emit("error", { message: "Failed to send message" });
     }
   }
 }

@@ -5,8 +5,10 @@ import {
   IsArray,
   IsBoolean,
   Min,
+  Max,
+  IsIn,
   IsObject,
-} from 'class-validator';
+} from "class-validator";
 
 export class CreateManagementPackageDto {
   @IsString()
@@ -23,7 +25,12 @@ export class CreateManagementPackageDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(100)
   discount?: number;
+
+  @IsOptional()
+  @IsIn(["both", "monthly", "yearly"])
+  discountPeriod?: "both" | "monthly" | "yearly";
 
   @IsOptional()
   @IsString()
@@ -63,59 +70,64 @@ export class CreateManagementPackageDto {
 }
 
 export class UpdateManagementPackageDto {
-    @IsOptional()
-    @IsString()
-    name?: string;
-  
-    @IsOptional()
-    @IsNumber()
-    @Min(0)
-    yearlyPrice?: number;
+  @IsOptional()
+  @IsString()
+  name?: string;
 
-    @IsOptional()
-    @IsNumber()
-    @Min(0)
-    monthlyPrice?: number;
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  yearlyPrice?: number;
 
-    @IsOptional()
-    @IsNumber()
-    @Min(0)
-    discount?: number;
-  
-    @IsOptional()
-    @IsString()
-    description?: string;
-  
-    @IsOptional()
-    @IsArray()
-    @IsString({ each: true })
-    features?: string[];
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  monthlyPrice?: number;
 
-    @IsOptional()
-    @IsArray()
-    @IsString({ each: true })
-    administrations?: string[];
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  discount?: number;
 
-    @IsOptional()
-    @IsObject()
-    departmentPrices?: Record<string, { monthly: number; yearly: number }>;
+  @IsOptional()
+  @IsIn(["both", "monthly", "yearly"])
+  discountPeriod?: "both" | "monthly" | "yearly";
 
-    @IsOptional()
-    @IsNumber()
-    @Min(0)
-    employeeSeatMonthlyPrice?: number;
+  @IsOptional()
+  @IsString()
+  description?: string;
 
-    @IsOptional()
-    @IsNumber()
-    @Min(0)
-    employeeSeatYearlyPrice?: number;
-  
-    @IsOptional()
-    @IsArray()
-    @IsString({ each: true })
-    services?: string[];
-  
-    @IsOptional()
-    @IsBoolean()
-    isActive?: boolean;
-  }
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  features?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  administrations?: string[];
+
+  @IsOptional()
+  @IsObject()
+  departmentPrices?: Record<string, { monthly: number; yearly: number }>;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  employeeSeatMonthlyPrice?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  employeeSeatYearlyPrice?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  services?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}

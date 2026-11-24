@@ -1,6 +1,7 @@
 import type { ProviderProfile } from "./provider-profile";
 import {
   assertProviderCanOffer,
+  providerDeliveryModes,
   validateProviderReview,
   contactIsUnlocked,
   cleanProviderMetadata,
@@ -133,13 +134,73 @@ describe("provider offers and contact boundaries", () => {
   });
 });
 
-
 describe("uploaded license URL compatibility", () => {
   it("accepts the relative URL returned by the real upload service", () => {
-    expect(validLicenseDocument("/uploads/profile-images/12345678-1234-1234-1234-123456789abc.pdf")).toBe(true);
+    expect(
+      validLicenseDocument(
+        "/uploads/profile-images/12345678-1234-1234-1234-123456789abc.pdf",
+      ),
+    ).toBe(true);
     expect(validLicenseDocument("https://example.test/license.pdf")).toBe(true);
   });
   it("rejects traversal, protocol-relative and executable URLs", () => {
-    for (const value of ["/uploads/../private.pdf", "//example.test/license.pdf", "javascript:alert(1)", "/etc/passwd"]) expect(validLicenseDocument(value)).toBe(false);
+    for (const value of [
+      "/uploads/../private.pdf",
+      "//example.test/license.pdf",
+      "javascript:alert(1)",
+      "/etc/passwd",
+    ])
+      expect(validLicenseDocument(value)).toBe(false);
   });
+});
+
+describe("delivery modes shown for each opportunity", () => {
+  const profile = {
+    kind: "notary",
+    city: "أبها",
+    deliveryModes: ["in_person", "online"],
+  } as ProviderProfile;
+  it("only exposes online for an out-of-city notary request when nationwide online is enabled", () => {
+    expect(providerDeliveryModes(profile, { city: "الرياض" }, true)).toEqual([
+      "online",
+    ]);
+  });
+  it("hides out-of-city modes when nationwide online is disabled", () => {
+    expect(providerDeliveryModes(profile, { city: "الرياض" }, false)).toEqual(
+      [],
+    );
+  });
+  it("normalizes city names like offer validation and retains registered mode order locally", () => {
+    expect(providerDeliveryModes(profile, { city: " ابها " }, false)).toEqual([
+      "in_person",
+      "online",
+    ]);
+  });
+});
+
+describe("customer requested execution mode", () => {
+  const profile = {
+    kind: "general",
+    deliveryModes: ["online", "in_person"],
+  } as ProviderProfile;
+  it("retains both registered modes for legacy requests", () =>
+    expect(providerDeliveryModes(profile, { city: "الرياض" })).toEqual([
+      "online",
+      "in_person",
+    ]));
+  it("only offers the method requested by the customer", () =>
+    expect(
+      providerDeliveryModes(profile, {
+        city: "الرياض",
+        metadata: { requestedDeliveryMode: "in_person" },
+      }),
+    ).toEqual(["in_person"]));
+  it("does not offer online as a substitute for an in-person request outside the notary city", () =>
+    expect(
+      providerDeliveryModes(
+        { ...profile, kind: "notary", city: "مكة" },
+        { city: "الرياض", metadata: { requestedDeliveryMode: "in_person" } },
+        true,
+      ),
+    ).toEqual([]));
 });

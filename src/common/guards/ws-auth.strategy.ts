@@ -1,9 +1,9 @@
 // src/auth/ws-jwt.strategy.ts
-import { Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from '../../user/user-entity';
+import { Injectable } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { User } from "../../user/user-entity";
 
 @Injectable()
 export class WsJwtStrategy {
@@ -15,7 +15,10 @@ export class WsJwtStrategy {
   async validate(token: string): Promise<any> {
     try {
       const payload = this.jwtService.verify(token);
-      const user = await this.userRepository.findOne({ where: { id: payload.sub } });
+      if (typeof payload.sub !== "string" || !payload.sub.trim()) return null;
+      const user = await this.userRepository.findOne({
+        where: { id: payload.sub },
+      });
       if (!user || user.isActive === false) return null;
       return {
         id: user.id,

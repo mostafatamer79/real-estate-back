@@ -1,5 +1,5 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { Role } from '../../user/user-entity';
+import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
+import { Role } from "../../user/user-entity";
 
 @Injectable()
 export class EmployeeManagementGuard implements CanActivate {
@@ -13,8 +13,10 @@ export class EmployeeManagementGuard implements CanActivate {
     const perms = user.departmentPermissions || {};
     const depts = Array.isArray(user.departments) ? user.departments : [];
     const p = perms.employees;
-    if (depts.includes('employees')) return true;
-    if (p === true || p === 'manage' || p === 'view') return true;
+    if (p === false || p === "none") return false;
+    if (p === "view") return ["GET", "HEAD", "OPTIONS"].includes(req.method);
+    if (p === true || p === "manage") return true;
+    if (depts.includes("employees")) return true;
 
     return false;
   }

@@ -1,8 +1,10 @@
+import { Public } from "../common/decorators/public.decorator";
 import {
   ProviderApplicationDto,
   ProviderReviewDto,
   ProviderOfferDto,
   ProviderControlsDto,
+  ProviderAccountActionDto,
 } from "./provider.dto";
 import {
   BadRequestException,
@@ -32,6 +34,40 @@ const pageNumber = (page?: string) =>
 export class ProviderController {
   constructor(private readonly providers: ProviderService) {}
 
+  @Public() @Get("registration-fields") registrationFields() {
+    return this.providers.registrationFields();
+  }
+  @Put("registration-fields") @Roles([Role.ADMIN]) saveRegistrationFields(
+    @Body() body: { items: unknown },
+  ) {
+    return this.providers.saveRegistrationFields(body?.items);
+  }
+  @Public() @Get("specializations") specializations() {
+    return this.providers.specializations();
+  }
+  @Put("specializations") @Roles([Role.ADMIN]) saveSpecializations(
+    @Body() body: { items: unknown },
+  ) {
+    return this.providers.saveSpecializations(body?.items);
+  }
+  @Post(":id/notice") @Roles([Role.ADMIN]) notice(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() input: { message: unknown },
+  ) {
+    return this.providers.sendNotice(id, input?.message);
+  }
+  @Put(":id/account") @Roles([Role.ADMIN]) accountAction(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() input: ProviderAccountActionDto,
+    @Request() req: ProviderActorRequest,
+  ) {
+    return this.providers.accountAction(
+      id,
+      input.action,
+      req.user.id,
+      input.note,
+    );
+  }
   @Get("me") mine(@Request() req: ProviderActorRequest) {
     return this.providers.mine(req.user.id);
   }
@@ -53,10 +89,18 @@ export class ProviderController {
     @Query("category") category?: string,
     @Query("service") service?: string,
   ) {
-    if ((category !== undefined && (typeof category !== "string" || category.length > 80)) || (service !== undefined && (typeof service !== "string" || service.length > 500))) {
+    if (
+      (category !== undefined &&
+        (typeof category !== "string" || category.length > 80)) ||
+      (service !== undefined &&
+        (typeof service !== "string" || service.length > 500))
+    ) {
       throw new BadRequestException("Invalid service filter");
     }
-    return this.providers.opportunities(req.user.id, pageNumber(page), { category, service });
+    return this.providers.opportunities(req.user.id, pageNumber(page), {
+      category,
+      service,
+    });
   }
   @Get("controls") @Roles([Role.ADMIN]) controls() {
     return this.providers.getControls();

@@ -11,7 +11,67 @@ export function validMoney(value: unknown): value is number {
     Math.abs(value * 100 - Math.round(value * 100)) < 0.00001
   );
 }
+export function validLicenseDate(value: unknown): value is string {
+  if (
+    typeof value !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
+    value.startsWith("0000")
+  )
+    return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return (
+    Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value
+  );
+}
+
+export function validateProviderLicenseDates(
+  profile: Pick<
+    Partial<ProviderProfile>,
+    "licenseIssueDate" | "licenseExpiryDate"
+  >,
+) {
+  for (const value of [profile.licenseIssueDate, profile.licenseExpiryDate]) {
+    if (value !== undefined && !validLicenseDate(value))
+      throw new BadRequestException(
+        "Invalid license date; use a real Gregorian date (YYYY-MM-DD)",
+      );
+  }
+  if (
+    profile.licenseIssueDate &&
+    profile.licenseExpiryDate &&
+    profile.licenseIssueDate > profile.licenseExpiryDate
+  )
+    throw new BadRequestException(
+      "The license expiry date must be on or after its issue date",
+    );
+}
+
+export function providerLicenseExpired(
+  profile: Pick<Partial<ProviderProfile>, "licenseExpiryDate">,
+  now = new Date(),
+): boolean {
+  if (!validLicenseDate(profile.licenseExpiryDate)) return false;
+  // Saudi calendar day: the license remains valid throughout its expiry date.
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Riyadh",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const part = (type: string) =>
+    parts.find((item) => item.type === type)!.value;
+  return (
+    profile.licenseExpiryDate <
+    `${part("year")}-${part("month")}-${part("day")}`
+  );
+}
+
 export function validateProviderReview(profile: Partial<ProviderProfile>) {
+  validateProviderLicenseDates(profile);
+  if (providerLicenseExpired(profile))
+    throw new BadRequestException(
+      "The provided license has expired; renew it before approval or new offers",
+    );
   if (
     !Array.isArray(profile.categories) ||
     !profile.categories.length ||
@@ -36,11 +96,26 @@ export function validateProviderReview(profile: Partial<ProviderProfile>) {
   )
     throw new BadRequestException("Invalid offer limits");
 }
-const cityKey = (city: string) =>
+export const cityKey = (city: string) =>
   city.trim().replace(/[أإآ]/g, "ا").replace(/\s+/g, " ").toLowerCase();
+export function providerDeliveryModes(
+  profile: ProviderProfile,
+  request: { city: string; metadata?: unknown },
+  onlineAllCities = false,
+): DeliveryMode[] {
+  const requested = metadataRecord(request.metadata).requestedDeliveryMode;
+  return profile.deliveryModes.filter(
+    (mode) =>
+      (!requested || requested === "any" || requested === mode) &&
+      (profile.kind !== "notary" ||
+        (mode === "online" && onlineAllCities) ||
+        (Boolean(cityKey(profile.city)) &&
+          cityKey(profile.city) === cityKey(request.city))),
+  );
+}
 export function assertProviderCanOffer(
   profile: ProviderProfile | null | undefined,
-  request: { category?: string | null; city: string },
+  request: { category?: string | null; city: string; metadata?: unknown },
   amount: number,
   mode: DeliveryMode,
   onlineAllCities = false,
@@ -73,11 +148,7 @@ export function assertProviderCanOffer(
     throw new BadRequestException(
       "Offer must cover the agreed platform amount",
     );
-  if (
-    profile.kind === "notary" &&
-    !(mode === "online" && onlineAllCities) &&
-    (!cityKey(profile.city) || cityKey(profile.city) !== cityKey(request.city))
-  )
+  if (!providerDeliveryModes(profile, request, onlineAllCities).includes(mode))
     throw new ForbiddenException("This request is outside the notary city");
 }
 export function contactIsUnlocked(
@@ -127,11 +198,19 @@ export function cleanProviderMetadata(
   return safe;
 }
 
-
 export function validLicenseDocument(value: string): boolean {
-  if (/^\/uploads\/[a-z0-9_-]+\/[a-f0-9-]+\.(?:pdf|png|jpe?g|webp)$/i.test(value)) return true;
+  if (
+    /^\/uploads\/[a-z0-9_-]+\/[a-f0-9-]+\.(?:pdf|png|jpe?g|webp)$/i.test(value)
+  )
+    return true;
   try {
     const url = new URL(value);
-    return ["http:", "https:"].includes(url.protocol) && !url.username && !url.password;
-  } catch { return false; }
+    return (
+      ["http:", "https:"].includes(url.protocol) &&
+      !url.username &&
+      !url.password
+    );
+  } catch {
+    return false;
+  }
 }

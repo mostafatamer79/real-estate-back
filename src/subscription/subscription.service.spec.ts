@@ -1,34 +1,47 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { SubscriptionService } from './subscription.service';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Subscription, SubscriptionStatus, SubscriptionType, PaymentMethod } from './subscription.entity';
-import { User } from '../user/user-entity';
-import { Property } from '../property/entities/property.entity';
-import { Unit } from '../property/entities/unit.entity';
-import { ManagementPackageService } from './management-package/management-package.service';
-import { ManagementPackage } from './management-package/management-package.entity';
-import { CreateSubscriptionDto } from './dto/create-subscription.dto';
-import { SettingsService } from '../settings/settings.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { SubscriptionService } from "./subscription.service";
+import { getRepositoryToken } from "@nestjs/typeorm";
+import {
+  Subscription,
+  SubscriptionStatus,
+  SubscriptionType,
+  PaymentMethod,
+} from "./subscription.entity";
+import { User } from "../user/user-entity";
+import { Property } from "../property/entities/property.entity";
+import { Unit } from "../property/entities/unit.entity";
+import { ManagementPackageService } from "./management-package/management-package.service";
+import { ManagementPackage } from "./management-package/management-package.entity";
+import { CreateSubscriptionDto } from "./dto/create-subscription.dto";
+import { SettingsService } from "../settings/settings.service";
 
-describe('SubscriptionService', () => {
+describe("SubscriptionService", () => {
   let service: SubscriptionService;
   let packageService: ManagementPackageService;
 
   const mockSubscriptionRepository = {
     findOne: jest.fn(),
     create: jest.fn().mockImplementation((dto) => dto),
-    save: jest.fn().mockImplementation((sub) => Promise.resolve({ id: 'sub-id', ...sub })),
+    save: jest
+      .fn()
+      .mockImplementation((sub) => Promise.resolve({ id: "sub-id", ...sub })),
   };
 
   const mockUserRepository = {
-    findOne: jest.fn().mockResolvedValue({ id: 'user-id', departments: [], departmentPermissions: {} }),
+    findOne: jest
+      .fn()
+      .mockResolvedValue({
+        id: "user-id",
+        departments: [],
+        departmentPermissions: {},
+      }),
     save: jest.fn().mockImplementation(async (user) => user),
   };
   const mockPropertyRepository = {
-    findOne: jest.fn().mockResolvedValue({ id: 'prop-id' }),
+    findOne: jest.fn().mockResolvedValue({ id: "prop-id" }),
   };
   const mockUnitRepository = {
-    findOne: jest.fn().mockResolvedValue({ id: 'unit-id' }),
+    findOne: jest.fn().mockResolvedValue({ id: "unit-id" }),
   };
 
   const mockPackageService = {
@@ -71,37 +84,115 @@ describe('SubscriptionService', () => {
     }).compile();
 
     service = module.get<SubscriptionService>(SubscriptionService);
-    packageService = module.get<ManagementPackageService>(ManagementPackageService);
+    packageService = module.get<ManagementPackageService>(
+      ManagementPackageService,
+    );
   });
 
-  it('should be defined', () => {
+  it("keeps a manual trial active until it is revoked, then checks normal subscriptions", async () => {
+    mockUserRepository.findOne.mockResolvedValueOnce({
+      id: "trial-user",
+      role: "viewer",
+      hasFreeTrial: true,
+    } as never);
+    expect(await service.getSubscriptionStatus("trial-user")).toMatchObject({
+      active: true,
+      hasFreeTrial: true,
+    });
+    mockUserRepository.findOne.mockResolvedValueOnce({
+      id: "trial-user",
+      role: "viewer",
+      hasFreeTrial: false,
+    } as never);
+    mockSubscriptionRepository.findOne.mockResolvedValue(null);
+    expect(await service.getSubscriptionStatus("trial-user")).toMatchObject({
+      active: false,
+    });
+  });
+
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  it('requires gateway confirmation before a customer can activate a paid subscription', async () => {
-    mockSubscriptionRepository.findOne.mockResolvedValue({ id: 'sub-id', userId: 'user-id', amount: 100, status: SubscriptionStatus.PENDING });
-    await expect(service.activate('sub-id', 'user-id')).rejects.toThrow('gateway');
+  it("requires gateway confirmation before a customer can activate a paid subscription", async () => {
+    mockSubscriptionRepository.findOne.mockResolvedValue({
+      id: "sub-id",
+      userId: "user-id",
+      amount: 100,
+      status: SubscriptionStatus.PENDING,
+    });
+    await expect(service.activate("sub-id", "user-id")).rejects.toThrow(
+      "gateway",
+    );
   });
 
-  it('does not honor a customer-provided active status on a paid subscription', async () => {
-    mockPackageService.findOne.mockResolvedValue({ id: 'pkg-id', monthlyPrice: 100, yearlyPrice: 1000 });
-    const subscription = await service.create('user-id', {
-      packageId: 'pkg-id', subscriptionType: SubscriptionType.MONTHLY,
-      paymentMethod: PaymentMethod.CREDIT_CARD, startDate: new Date(), amount: 0,
+  it("does not honor a customer-provided active status on a paid subscription", async () => {
+    mockPackageService.findOne.mockResolvedValue({
+      id: "pkg-id",
+      monthlyPrice: 100,
+      yearlyPrice: 1000,
+    });
+    const subscription = await service.create("user-id", {
+      packageId: "pkg-id",
+      subscriptionType: SubscriptionType.MONTHLY,
+      paymentMethod: PaymentMethod.CREDIT_CARD,
+      startDate: new Date(),
+      amount: 0,
       status: SubscriptionStatus.ACTIVE,
     });
     expect(subscription.status).toBe(SubscriptionStatus.PENDING);
   });
 
-  it('does not let customers change billing or access through subscription updates', async () => {
-    mockSubscriptionRepository.findOne.mockResolvedValue({ id: 'sub-id', userId: 'user-id', amount: 100, status: SubscriptionStatus.PENDING });
-    await expect(service.update('sub-id', 'user-id', { status: SubscriptionStatus.ACTIVE, noExpiry: true })).rejects.toThrow('administrator');
+  it("does not let customers change billing or access through subscription updates", async () => {
+    mockSubscriptionRepository.findOne.mockResolvedValue({
+      id: "sub-id",
+      userId: "user-id",
+      amount: 100,
+      status: SubscriptionStatus.PENDING,
+    });
+    await expect(
+      service.update("sub-id", "user-id", {
+        status: SubscriptionStatus.ACTIVE,
+        noExpiry: true,
+      }),
+    ).rejects.toThrow("administrator");
   });
 
-  describe('create', () => {
-    it('should calculate yearly price with discount correctly', async () => {
+  describe("discount billing period", () => {
+    it.each([
+      ["yearly", SubscriptionType.MONTHLY, 100],
+      ["yearly", SubscriptionType.YEARLY, 900],
+      ["monthly", SubscriptionType.YEARLY, 1000],
+      ["monthly", SubscriptionType.MONTHLY, 90],
+      ["both", SubscriptionType.MONTHLY, 90],
+      ["both", SubscriptionType.YEARLY, 900],
+    ])(
+      "applies %s discount only to the eligible %s charge",
+      async (discountPeriod, subscriptionType, expected) => {
+        mockPackageService.findOne.mockResolvedValue({
+          id: "pkg-id",
+          monthlyPrice: 100,
+          yearlyPrice: 1000,
+          discount: 10,
+          discountPeriod,
+        });
+        const result = await service.create("user-id", {
+          packageId: "pkg-id",
+          subscriptionType,
+          paymentMethod: PaymentMethod.CREDIT_CARD,
+          startDate: new Date("2026-11-11"),
+          amount: 1,
+        });
+        expect(result.amount).toBe(expected);
+        expect(result.status).toBe(SubscriptionStatus.PENDING);
+      },
+    );
+  });
+
+  describe("create", () => {
+    it("should calculate yearly price with discount correctly", async () => {
       const mockPackage = {
-        id: 'pkg-id',
+        id: "pkg-id",
         yearlyPrice: 1000,
         monthlyPrice: 100,
         discount: 10,
@@ -111,23 +202,23 @@ describe('SubscriptionService', () => {
 
       const dto: CreateSubscriptionDto = {
         subscriptionType: SubscriptionType.YEARLY,
-        packageId: 'pkg-id',
-        propertyId: 'prop-id',
+        packageId: "pkg-id",
+        propertyId: "prop-id",
         paymentMethod: PaymentMethod.CREDIT_CARD,
         startDate: new Date(),
         amount: 0, // Should be overwritten
       };
 
-      const result = await service.create('user-id', dto);
+      const result = await service.create("user-id", dto);
 
-      expect(packageService.findOne).toHaveBeenCalledWith('pkg-id');
+      expect(packageService.findOne).toHaveBeenCalledWith("pkg-id");
       // Base: 1000, Discount: 10% (100) => Final: 900
       expect(result.amount).toBe(900);
     });
 
-    it('should calculate monthly price with discount correctly', async () => {
+    it("should calculate monthly price with discount correctly", async () => {
       const mockPackage = {
-        id: 'pkg-id',
+        id: "pkg-id",
         yearlyPrice: 1000,
         monthlyPrice: 100,
         discount: 10,
@@ -137,68 +228,70 @@ describe('SubscriptionService', () => {
 
       const dto: CreateSubscriptionDto = {
         subscriptionType: SubscriptionType.MONTHLY,
-        packageId: 'pkg-id',
-        propertyId: 'prop-id',
+        packageId: "pkg-id",
+        propertyId: "prop-id",
         paymentMethod: PaymentMethod.CREDIT_CARD,
         startDate: new Date(),
         amount: 0, // Should be overwritten
       };
 
-      const result = await service.create('user-id', dto);
+      const result = await service.create("user-id", dto);
 
-      expect(packageService.findOne).toHaveBeenCalledWith('pkg-id');
+      expect(packageService.findOne).toHaveBeenCalledWith("pkg-id");
       // Base: 100, Discount: 10% (10) => Final: 90
       expect(result.amount).toBe(90);
     });
 
-    it('should calculate price correctly when no discount', async () => {
-        const mockPackage = {
-          id: 'pkg-id',
-          yearlyPrice: 1000,
-          monthlyPrice: 100,
-          discount: 0,
-        } as ManagementPackage;
-  
-        mockPackageService.findOne.mockResolvedValue(mockPackage);
-  
-        const dto: CreateSubscriptionDto = {
-          subscriptionType: SubscriptionType.YEARLY,
-          packageId: 'pkg-id',
-          propertyId: 'prop-id',
-          paymentMethod: PaymentMethod.CREDIT_CARD,
-          startDate: new Date(),
-          amount: 0,
-        };
-  
-        const result = await service.create('user-id', dto);
-  
+    it("should calculate price correctly when no discount", async () => {
+      const mockPackage = {
+        id: "pkg-id",
+        yearlyPrice: 1000,
+        monthlyPrice: 100,
+        discount: 0,
+      } as ManagementPackage;
+
+      mockPackageService.findOne.mockResolvedValue(mockPackage);
+
+      const dto: CreateSubscriptionDto = {
+        subscriptionType: SubscriptionType.YEARLY,
+        packageId: "pkg-id",
+        propertyId: "prop-id",
+        paymentMethod: PaymentMethod.CREDIT_CARD,
+        startDate: new Date(),
+        amount: 0,
+      };
+
+      const result = await service.create("user-id", dto);
+
       expect(result.amount).toBe(1000);
     });
 
-    it('activates a free package immediately without leaving it pending for payment', async () => {
+    it("activates a free package immediately without leaving it pending for payment", async () => {
       mockPackageService.findOne.mockResolvedValue({
-        id: 'free-pkg-id',
+        id: "free-pkg-id",
         yearlyPrice: 0,
         monthlyPrice: 0,
         discount: 0,
-        administrations: ['admin.dept.real_estate'],
+        administrations: ["admin.dept.real_estate"],
       } as ManagementPackage);
 
       const dto: CreateSubscriptionDto = {
         subscriptionType: SubscriptionType.MONTHLY,
-        packageId: 'free-pkg-id',
+        packageId: "free-pkg-id",
         paymentMethod: PaymentMethod.MADA,
-        startDate: new Date('2026-09-15'),
+        startDate: new Date("2026-09-15"),
         amount: 0,
       };
 
-      const result = await service.create('user-id', dto);
+      const result = await service.create("user-id", dto);
 
       expect(result.status).toBe(SubscriptionStatus.ACTIVE);
       expect(result.paidAt).toBeInstanceOf(Date);
-      expect(mockUserRepository.save).toHaveBeenCalledWith(expect.objectContaining({
-        departments: expect.arrayContaining(['properties']),
-      }));
+      expect(mockUserRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          departments: expect.arrayContaining(["properties"]),
+        }),
+      );
     });
   });
 });

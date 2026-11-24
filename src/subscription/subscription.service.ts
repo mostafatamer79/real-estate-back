@@ -3,22 +3,26 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager } from 'typeorm';
-import { Subscription, SubscriptionStatus, SubscriptionType } from './subscription.entity';
-import { User } from '../user/user-entity';
-import { Department } from '../user/department.enum';
-import { Property } from '../property/entities/property.entity';
-import { Unit } from '../property/entities/unit.entity';
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, EntityManager } from "typeorm";
+import {
+  Subscription,
+  SubscriptionStatus,
+  SubscriptionType,
+} from "./subscription.entity";
+import { User } from "../user/user-entity";
+import { Department } from "../user/department.enum";
+import { Property } from "../property/entities/property.entity";
+import { Unit } from "../property/entities/unit.entity";
 import {
   CreateSubscriptionDto,
   UpdateSubscriptionDto,
   CancelSubscriptionDto,
-} from './dto/create-subscription.dto';
-import { ManagementPackageService } from './management-package/management-package.service';
-import { PaymentMethod } from './subscription.entity';
-import { SettingsService } from '../settings/settings.service';
+} from "./dto/create-subscription.dto";
+import { ManagementPackageService } from "./management-package/management-package.service";
+import { PaymentMethod } from "./subscription.entity";
+import { SettingsService } from "../settings/settings.service";
 
 export interface SubscriptionDepartmentPricing {
   departmentPrices: Record<string, { monthly: number; yearly: number }>;
@@ -29,34 +33,38 @@ export interface SubscriptionDepartmentPricing {
 @Injectable()
 export class SubscriptionService {
   private readonly administrationToDepartment: Record<string, Department> = {
-    'admin.dept.real_estate': Department.PROPERTIES,
+    "admin.dept.real_estate": Department.PROPERTIES,
     properties: Department.PROPERTIES,
-    'admin.dept.offers': Department.OFFERS,
+    "admin.dept.offers": Department.OFFERS,
     offers: Department.OFFERS,
-    'admin.dept.orders': Department.ORDERS,
+    "admin.dept.orders": Department.ORDERS,
     orders: Department.ORDERS,
-    'admin.dept.marketing': Department.MARKETING,
+    "admin.dept.marketing": Department.MARKETING,
     marketing: Department.MARKETING,
-    'admin.dept.legal': Department.LEGAL,
+    "admin.dept.legal": Department.LEGAL,
     legal: Department.LEGAL,
-    'admin.dept.finance': Department.FINANCE,
+    "admin.dept.finance": Department.FINANCE,
     finance: Department.FINANCE,
     financial: Department.FINANCE,
-    'admin.dept.hr': Department.EMPLOYEES,
+    "admin.dept.hr": Department.EMPLOYEES,
     employees: Department.EMPLOYEES,
   };
 
-  private readonly employeeDepartmentKeys = new Set(['admin.dept.hr', 'employees']);
-  private readonly departmentPricingSettingKey = 'subscription_department_pricing';
+  private readonly employeeDepartmentKeys = new Set([
+    "admin.dept.hr",
+    "employees",
+  ]);
+  private readonly departmentPricingSettingKey =
+    "subscription_department_pricing";
   private readonly defaultDepartmentPricing: SubscriptionDepartmentPricing = {
     departmentPrices: {
-      'admin.dept.real_estate': { monthly: 0, yearly: 0 },
-      'admin.dept.offers': { monthly: 0, yearly: 0 },
-      'admin.dept.orders': { monthly: 0, yearly: 0 },
-      'admin.dept.marketing': { monthly: 0, yearly: 0 },
-      'admin.dept.legal': { monthly: 0, yearly: 0 },
-      'admin.dept.finance': { monthly: 0, yearly: 0 },
-      'admin.dept.hr': { monthly: 0, yearly: 0 },
+      "admin.dept.real_estate": { monthly: 0, yearly: 0 },
+      "admin.dept.offers": { monthly: 0, yearly: 0 },
+      "admin.dept.orders": { monthly: 0, yearly: 0 },
+      "admin.dept.marketing": { monthly: 0, yearly: 0 },
+      "admin.dept.legal": { monthly: 0, yearly: 0 },
+      "admin.dept.finance": { monthly: 0, yearly: 0 },
+      "admin.dept.hr": { monthly: 0, yearly: 0 },
     },
     employeeSeatMonthlyPrice: 0,
     employeeSeatYearlyPrice: 0,
@@ -76,7 +84,9 @@ export class SubscriptionService {
   ) {}
 
   async getDepartmentPricing(): Promise<SubscriptionDepartmentPricing> {
-    const setting = await this.settingsService.findOne(this.departmentPricingSettingKey);
+    const setting = await this.settingsService.findOne(
+      this.departmentPricingSettingKey,
+    );
     if (!setting?.value) return this.defaultDepartmentPricing;
 
     try {
@@ -94,21 +104,29 @@ export class SubscriptionService {
     }
   }
 
-  async updateDepartmentPricing(pricing: Partial<SubscriptionDepartmentPricing>): Promise<SubscriptionDepartmentPricing> {
+  async updateDepartmentPricing(
+    pricing: Partial<SubscriptionDepartmentPricing>,
+  ): Promise<SubscriptionDepartmentPricing> {
     const current = await this.getDepartmentPricing();
     const next: SubscriptionDepartmentPricing = {
       departmentPrices: {
         ...current.departmentPrices,
         ...(pricing.departmentPrices || {}),
       },
-      employeeSeatMonthlyPrice: Number(pricing.employeeSeatMonthlyPrice ?? current.employeeSeatMonthlyPrice ?? 0),
-      employeeSeatYearlyPrice: Number(pricing.employeeSeatYearlyPrice ?? current.employeeSeatYearlyPrice ?? 0),
+      employeeSeatMonthlyPrice: Number(
+        pricing.employeeSeatMonthlyPrice ??
+          current.employeeSeatMonthlyPrice ??
+          0,
+      ),
+      employeeSeatYearlyPrice: Number(
+        pricing.employeeSeatYearlyPrice ?? current.employeeSeatYearlyPrice ?? 0,
+      ),
     };
 
     await this.settingsService.setSetting(
       this.departmentPricingSettingKey,
       JSON.stringify(next),
-      'Global subscription department and employee pricing',
+      "Global subscription department and employee pricing",
     );
     return next;
   }
@@ -124,7 +142,7 @@ export class SubscriptionService {
         where: { id: createSubscriptionDto.propertyId },
       });
       if (!property) {
-        throw new NotFoundException('Property not found');
+        throw new NotFoundException("Property not found");
       }
     }
 
@@ -133,54 +151,85 @@ export class SubscriptionService {
         where: { id: createSubscriptionDto.unitId },
       });
       if (!unit) {
-        throw new NotFoundException('Unit not found');
+        throw new NotFoundException("Unit not found");
       }
     }
 
-    let selectedDepartments = Array.isArray(createSubscriptionDto.selectedDepartments)
+    let selectedDepartments = Array.isArray(
+      createSubscriptionDto.selectedDepartments,
+    )
       ? createSubscriptionDto.selectedDepartments.filter(Boolean)
       : [];
     let employeeSeats = Number(createSubscriptionDto.employeeSeats || 0);
-    let selectedPackage: Awaited<ReturnType<ManagementPackageService['findOne']>> | undefined;
+    let selectedPackage:
+      | Awaited<ReturnType<ManagementPackageService["findOne"]>>
+      | undefined;
 
     if (createSubscriptionDto.packageId) {
-      selectedPackage = await this.managementPackageService.findOne(createSubscriptionDto.packageId);
+      selectedPackage = await this.managementPackageService.findOne(
+        createSubscriptionDto.packageId,
+      );
       selectedDepartments = [];
       employeeSeats = 0;
 
       let basePrice = 0;
       if (createSubscriptionDto.subscriptionType === SubscriptionType.YEARLY) {
         basePrice = Number(selectedPackage.yearlyPrice);
-      } else if (createSubscriptionDto.subscriptionType === SubscriptionType.MONTHLY) {
+      } else if (
+        createSubscriptionDto.subscriptionType === SubscriptionType.MONTHLY
+      ) {
         basePrice = Number(selectedPackage.monthlyPrice);
       }
 
       if (basePrice > 0) {
-        const discountAmount = basePrice * (Number(selectedPackage.discount || 0) / 100);
+        const period =
+          createSubscriptionDto.subscriptionType === SubscriptionType.YEARLY
+            ? "yearly"
+            : "monthly";
+        const discountPeriod = selectedPackage.discountPeriod ?? "both";
+        const discount =
+          discountPeriod === "both" || discountPeriod === period
+            ? Number(selectedPackage.discount || 0)
+            : 0;
+        const discountAmount = basePrice * (discount / 100);
         createSubscriptionDto.amount = basePrice - discountAmount;
       } else {
         createSubscriptionDto.amount = 0;
       }
     } else {
-      if (selectedDepartments.length === 0 && createSubscriptionDto.departmentSlug) {
+      if (
+        selectedDepartments.length === 0 &&
+        createSubscriptionDto.departmentSlug
+      ) {
         selectedDepartments = [createSubscriptionDto.departmentSlug];
       }
-      const hasEmployeeDepartment = selectedDepartments.some((department) => this.employeeDepartmentKeys.has(department));
+      const hasEmployeeDepartment = selectedDepartments.some((department) =>
+        this.employeeDepartmentKeys.has(department),
+      );
       if (!hasEmployeeDepartment) {
         employeeSeats = 0;
       } else if (employeeSeats < 1) {
-        throw new BadRequestException('Employee seats are required for the employee department');
+        throw new BadRequestException(
+          "Employee seats are required for the employee department",
+        );
       }
 
       const pricing = await this.getDepartmentPricing();
-      const periodKey = createSubscriptionDto.subscriptionType === SubscriptionType.YEARLY ? 'yearly' : 'monthly';
+      const periodKey =
+        createSubscriptionDto.subscriptionType === SubscriptionType.YEARLY
+          ? "yearly"
+          : "monthly";
       let basePrice = selectedDepartments.reduce((total, department) => {
-        return total + Number(pricing.departmentPrices?.[department]?.[periodKey] || 0);
+        return (
+          total +
+          Number(pricing.departmentPrices?.[department]?.[periodKey] || 0)
+        );
       }, 0);
       if (hasEmployeeDepartment) {
-        const seatPrice = periodKey === 'yearly'
-          ? Number(pricing.employeeSeatYearlyPrice || 0)
-          : Number(pricing.employeeSeatMonthlyPrice || 0);
+        const seatPrice =
+          periodKey === "yearly"
+            ? Number(pricing.employeeSeatYearlyPrice || 0)
+            : Number(pricing.employeeSeatMonthlyPrice || 0);
         basePrice += employeeSeats * seatPrice;
       }
       createSubscriptionDto.amount = basePrice;
@@ -200,15 +249,20 @@ export class SubscriptionService {
       case SubscriptionType.CUSTOM:
         if (!createSubscriptionDto.customPeriodMonths) {
           throw new BadRequestException(
-            'Custom period months required for custom subscription type',
+            "Custom period months required for custom subscription type",
           );
         }
-        endDate.setMonth(endDate.getMonth() + createSubscriptionDto.customPeriodMonths);
+        endDate.setMonth(
+          endDate.getMonth() + createSubscriptionDto.customPeriodMonths,
+        );
         break;
     }
 
-    if (!Number.isFinite(Number(createSubscriptionDto.amount)) || Number(createSubscriptionDto.amount) < 0) {
-      throw new BadRequestException('Invalid subscription amount');
+    if (
+      !Number.isFinite(Number(createSubscriptionDto.amount)) ||
+      Number(createSubscriptionDto.amount) < 0
+    ) {
+      throw new BadRequestException("Invalid subscription amount");
     }
     const isFreeSubscription = Number(createSubscriptionDto.amount) === 0;
     const subscription = this.subscriptionRepository.create({
@@ -224,18 +278,24 @@ export class SubscriptionService {
       customPeriodMonths: createSubscriptionDto.customPeriodMonths,
       amount: createSubscriptionDto.amount,
       startDate,
-      endDate: isAdmin && createSubscriptionDto.endDate ? new Date(createSubscriptionDto.endDate) : endDate,
+      endDate:
+        isAdmin && createSubscriptionDto.endDate
+          ? new Date(createSubscriptionDto.endDate)
+          : endDate,
       paymentMethod: createSubscriptionDto.paymentMethod,
       notes: createSubscriptionDto.notes,
       paymentReference: createSubscriptionDto.paymentReference,
       status: isFreeSubscription
         ? SubscriptionStatus.ACTIVE
-        : (isAdmin ? createSubscriptionDto.status as SubscriptionStatus : undefined) || SubscriptionStatus.PENDING,
+        : (isAdmin
+            ? (createSubscriptionDto.status as SubscriptionStatus)
+            : undefined) || SubscriptionStatus.PENDING,
       paidAt: isFreeSubscription ? new Date() : undefined,
       noExpiry: isAdmin && Boolean(createSubscriptionDto.noExpiry),
     });
 
-    const savedSubscription = await this.subscriptionRepository.save(subscription);
+    const savedSubscription =
+      await this.subscriptionRepository.save(subscription);
     if (isFreeSubscription) {
       await this.applyPackageDepartmentsToUser(savedSubscription);
     }
@@ -244,35 +304,40 @@ export class SubscriptionService {
 
   async findAll(userId?: string): Promise<Subscription[]> {
     const query = this.subscriptionRepository
-      .createQueryBuilder('subscription')
-      .leftJoinAndSelect('subscription.user', 'user')
-      .leftJoinAndSelect('subscription.property', 'property')
-      .leftJoinAndSelect('subscription.unit', 'unit')
-      .leftJoinAndSelect('subscription.managementPackage', 'managementPackage');
+      .createQueryBuilder("subscription")
+      .leftJoinAndSelect("subscription.user", "user")
+      .leftJoinAndSelect("subscription.property", "property")
+      .leftJoinAndSelect("subscription.unit", "unit")
+      .leftJoinAndSelect("subscription.managementPackage", "managementPackage");
 
     if (userId) {
-      query.where('subscription.userId = :userId', { userId });
+      query.where("subscription.userId = :userId", { userId });
     }
 
-    return await query.orderBy('subscription.createdAt', 'DESC').getMany();
+    return await query.orderBy("subscription.createdAt", "DESC").getMany();
   }
 
   async findOne(id: string): Promise<Subscription> {
     const subscription = await this.subscriptionRepository.findOne({
       where: { id },
-      relations: ['user', 'property', 'unit', 'managementPackage'],
+      relations: ["user", "property", "unit", "managementPackage"],
     });
 
     if (!subscription) {
-      throw new NotFoundException('Subscription not found');
+      throw new NotFoundException("Subscription not found");
     }
     return subscription;
   }
 
   async findOneForUser(id: string, user: any): Promise<Subscription> {
     const subscription = await this.findOne(id);
-    if (user?.role !== 'admin' && subscription.userId !== (user?.userId || user?.id)) {
-      throw new ForbiddenException('You do not have permission to view this subscription');
+    if (
+      user?.role !== "admin" &&
+      subscription.userId !== (user?.userId || user?.id)
+    ) {
+      throw new ForbiddenException(
+        "You do not have permission to view this subscription",
+      );
     }
     return subscription;
   }
@@ -280,8 +345,8 @@ export class SubscriptionService {
   async findMySubscriptions(userId: string): Promise<Subscription[]> {
     return await this.subscriptionRepository.find({
       where: { userId },
-      relations: ['property', 'unit', 'managementPackage'],
-      order: { createdAt: 'DESC' },
+      relations: ["property", "unit", "managementPackage"],
+      order: { createdAt: "DESC" },
     });
   }
 
@@ -291,8 +356,8 @@ export class SubscriptionService {
         userId,
         status: SubscriptionStatus.ACTIVE,
       },
-      relations: ['property', 'unit', 'managementPackage'],
-      order: { createdAt: 'DESC' },
+      relations: ["property", "unit", "managementPackage"],
+      order: { createdAt: "DESC" },
     });
   }
 
@@ -305,15 +370,22 @@ export class SubscriptionService {
     const subscription = await this.findOne(id);
 
     if (!isAdmin && subscription.userId !== userId) {
-      throw new ForbiddenException('You can only update your own subscription');
+      throw new ForbiddenException("You can only update your own subscription");
     }
 
-    if (!isAdmin && Object.keys(updateSubscriptionDto).some(key => !['notes', 'autoRenew'].includes(key))) {
-      throw new ForbiddenException('Billing and access changes require an administrator');
+    if (
+      !isAdmin &&
+      Object.keys(updateSubscriptionDto).some(
+        (key) => !["notes", "autoRenew"].includes(key),
+      )
+    ) {
+      throw new ForbiddenException(
+        "Billing and access changes require an administrator",
+      );
     }
 
     if (subscription.status === SubscriptionStatus.CANCELLED) {
-      throw new BadRequestException('Cannot update a cancelled subscription');
+      throw new BadRequestException("Cannot update a cancelled subscription");
     }
 
     Object.assign(subscription, updateSubscriptionDto);
@@ -330,13 +402,11 @@ export class SubscriptionService {
     const subscription = await this.findOne(id);
 
     if (!isAdmin && subscription.userId !== userId) {
-      throw new ForbiddenException(
-        'You can only cancel your own subscription',
-      );
+      throw new ForbiddenException("You can only cancel your own subscription");
     }
 
     if (subscription.status === SubscriptionStatus.CANCELLED) {
-      throw new BadRequestException('Subscription is already cancelled');
+      throw new BadRequestException("Subscription is already cancelled");
     }
 
     subscription.status = SubscriptionStatus.CANCELLED;
@@ -347,19 +417,28 @@ export class SubscriptionService {
     return await this.subscriptionRepository.save(subscription);
   }
 
-  async activate(id: string, userId: string, paymentMethod?: PaymentMethod, isAdmin: boolean = false): Promise<Subscription> {
+  async activate(
+    id: string,
+    userId: string,
+    paymentMethod?: PaymentMethod,
+    isAdmin: boolean = false,
+  ): Promise<Subscription> {
     const subscription = await this.findOne(id);
 
     if (!isAdmin && subscription.userId !== userId) {
-      throw new ForbiddenException('You can only activate your own subscription');
+      throw new ForbiddenException(
+        "You can only activate your own subscription",
+      );
     }
 
     if (subscription.status === SubscriptionStatus.ACTIVE) {
-      throw new BadRequestException('Subscription is already active');
+      throw new BadRequestException("Subscription is already active");
     }
 
     if (!isAdmin && Number(subscription.amount) > 0) {
-      throw new BadRequestException('Paid subscriptions must be confirmed by the payment gateway');
+      throw new BadRequestException(
+        "Paid subscriptions must be confirmed by the payment gateway",
+      );
     }
 
     subscription.status = SubscriptionStatus.ACTIVE;
@@ -368,26 +447,44 @@ export class SubscriptionService {
       subscription.paymentMethod = paymentMethod;
     }
 
-    const savedSubscription = await this.subscriptionRepository.save(subscription);
+    const savedSubscription =
+      await this.subscriptionRepository.save(subscription);
     await this.applyPackageDepartmentsToUser(savedSubscription);
     return savedSubscription;
   }
 
-  async activateVerifiedPayment(id: string, userId: string, orderId: string, paymentMethod: PaymentMethod, manager: EntityManager): Promise<Subscription> {
-    const subscription = await manager.findOne(Subscription, { where: { id }, relations: ['managementPackage'] });
-    if (!subscription || subscription.userId !== userId || subscription.status !== SubscriptionStatus.PENDING) {
-      throw new BadRequestException('Subscription is not payable');
+  async activateVerifiedPayment(
+    id: string,
+    userId: string,
+    orderId: string,
+    paymentMethod: PaymentMethod,
+    manager: EntityManager,
+  ): Promise<Subscription> {
+    const subscription = await manager.findOne(Subscription, {
+      where: { id },
+      relations: ["managementPackage"],
+    });
+    if (
+      !subscription ||
+      subscription.userId !== userId ||
+      subscription.status !== SubscriptionStatus.PENDING
+    ) {
+      throw new BadRequestException("Subscription is not payable");
     }
     subscription.status = SubscriptionStatus.ACTIVE;
     subscription.paidAt = new Date();
     subscription.paymentMethod = paymentMethod;
-    subscription.paymentReference = 'geidea:' + orderId;
+    subscription.paymentReference = "geidea:" + orderId;
     const today = new Date();
     if (new Date(subscription.startDate) <= today) {
       subscription.startDate = today;
       if (!subscription.noExpiry) {
-        const months = subscription.subscriptionType === SubscriptionType.YEARLY ? 12
-          : subscription.subscriptionType === SubscriptionType.CUSTOM ? Number(subscription.customPeriodMonths || 1) : 1;
+        const months =
+          subscription.subscriptionType === SubscriptionType.YEARLY
+            ? 12
+            : subscription.subscriptionType === SubscriptionType.CUSTOM
+              ? Number(subscription.customPeriodMonths || 1)
+              : 1;
         const end = new Date(today);
         end.setMonth(end.getMonth() + months);
         subscription.endDate = end;
@@ -398,50 +495,71 @@ export class SubscriptionService {
     return saved;
   }
 
-  private async applyPackageDepartmentsToUser(subscription: Subscription, manager?: EntityManager): Promise<void> {
+  private async applyPackageDepartmentsToUser(
+    subscription: Subscription,
+    manager?: EntityManager,
+  ): Promise<void> {
     if (!subscription.userId) return;
 
-    const user = manager ? await manager.findOne(User, { where: { id: subscription.userId }, lock: { mode: 'pessimistic_write' } })
-      : await this.userRepository.findOne({ where: { id: subscription.userId } });
+    const user = manager
+      ? await manager.findOne(User, {
+          where: { id: subscription.userId },
+          lock: { mode: "pessimistic_write" },
+        })
+      : await this.userRepository.findOne({
+          where: { id: subscription.userId },
+        });
     if (!user) return;
 
-    const packageAdministrations = Array.isArray(subscription.managementPackage?.administrations)
+    const packageAdministrations = Array.isArray(
+      subscription.managementPackage?.administrations,
+    )
       ? subscription.managementPackage.administrations
       : [];
-    const selectedDepartments = Array.isArray(subscription.selectedDepartments) && subscription.selectedDepartments.length > 0
-      ? subscription.selectedDepartments
-      : packageAdministrations;
+    const selectedDepartments =
+      Array.isArray(subscription.selectedDepartments) &&
+      subscription.selectedDepartments.length > 0
+        ? subscription.selectedDepartments
+        : packageAdministrations;
 
     const mappedDepartments = selectedDepartments
-      .map((administrationKey) => this.administrationToDepartment[administrationKey])
+      .map(
+        (administrationKey) =>
+          this.administrationToDepartment[administrationKey],
+      )
       .filter(Boolean);
 
     if (mappedDepartments.length === 0) return;
 
-    const currentDepartments = Array.isArray(user.departments) ? user.departments : [];
-    user.departments = Array.from(new Set([...currentDepartments, ...mappedDepartments]));
+    const currentDepartments = Array.isArray(user.departments)
+      ? user.departments
+      : [];
+    user.departments = Array.from(
+      new Set([...currentDepartments, ...mappedDepartments]),
+    );
 
     const nextPermissions = { ...(user.departmentPermissions || {}) };
     for (const dept of mappedDepartments) {
-      if (!nextPermissions[dept] || nextPermissions[dept] === 'none') {
+      if (!nextPermissions[dept] || nextPermissions[dept] === "none") {
         nextPermissions[dept] = true;
       }
     }
     user.departmentPermissions = nextPermissions;
 
-    if (manager) await manager.save(User, user); else await this.userRepository.save(user);
+    if (manager) await manager.save(User, user);
+    else await this.userRepository.save(user);
   }
 
   async checkExpiredSubscriptions(): Promise<void> {
     const now = new Date();
 
     const expiredSubscriptions = await this.subscriptionRepository
-      .createQueryBuilder('subscription')
-      .where('subscription.status = :status', {
+      .createQueryBuilder("subscription")
+      .where("subscription.status = :status", {
         status: SubscriptionStatus.ACTIVE,
       })
-      .andWhere('subscription.endDate < :now', { now })
-      .andWhere('subscription.noExpiry = false')
+      .andWhere("subscription.endDate < :now", { now })
+      .andWhere("subscription.noExpiry = false")
       .getMany();
 
     for (const subscription of expiredSubscriptions) {
@@ -450,41 +568,61 @@ export class SubscriptionService {
     }
   }
 
-  async getSubscriptionsByProperty(propertyId: string, user?: any): Promise<Subscription[]> {
+  async getSubscriptionsByProperty(
+    propertyId: string,
+    user?: any,
+  ): Promise<Subscription[]> {
     const subscriptions = await this.subscriptionRepository.find({
       where: { propertyId },
-      relations: ['user', 'unit'],
-      order: { createdAt: 'DESC' },
+      relations: ["user", "unit"],
+      order: { createdAt: "DESC" },
     });
-    return user?.role === 'admin' ? subscriptions : subscriptions.filter((s) => s.userId === (user?.userId || user?.id));
+    return user?.role === "admin"
+      ? subscriptions
+      : subscriptions.filter((s) => s.userId === (user?.userId || user?.id));
   }
 
-  async getSubscriptionsByUnit(unitId: string, user?: any): Promise<Subscription[]> {
+  async getSubscriptionsByUnit(
+    unitId: string,
+    user?: any,
+  ): Promise<Subscription[]> {
     const subscriptions = await this.subscriptionRepository.find({
       where: { unitId },
-      relations: ['user', 'property'],
-      order: { createdAt: 'DESC' },
+      relations: ["user", "property"],
+      order: { createdAt: "DESC" },
     });
-    return user?.role === 'admin' ? subscriptions : subscriptions.filter((s) => s.userId === (user?.userId || user?.id));
+    return user?.role === "admin"
+      ? subscriptions
+      : subscriptions.filter((s) => s.userId === (user?.userId || user?.id));
   }
 
   async hardDelete(id: string, isAdmin: boolean = false): Promise<void> {
     if (!isAdmin) {
-      throw new ForbiddenException('Only admins can permanently delete subscriptions');
+      throw new ForbiddenException(
+        "Only admins can permanently delete subscriptions",
+      );
     }
     const result = await this.subscriptionRepository.delete(id);
     if (!result.affected) {
-      throw new NotFoundException('Subscription not found');
+      throw new NotFoundException("Subscription not found");
     }
   }
 
-  async getSubscriptionStatus(userId: string): Promise<{ active: boolean; daysLeft: number; noExpiry: boolean; subscription?: Subscription; hasFreeTrial?: boolean }> {
+  async getSubscriptionStatus(
+    userId: string,
+  ): Promise<{
+    active: boolean;
+    daysLeft: number;
+    noExpiry: boolean;
+    subscription?: Subscription;
+    hasFreeTrial?: boolean;
+  }> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
-    if (user.role === 'admin' || user.role === 'user') {
+    if (user.role === "admin" || user.role === "user") {
       return { active: true, daysLeft: 9999, noExpiry: true };
     }
 
@@ -494,13 +632,15 @@ export class SubscriptionService {
 
     // Find the root admin/manager if this is an employee
     let targetUserId = userId;
-    if (user.role === 'employee' && user.parentId) {
+    if (user.role === "employee" && user.parentId) {
       // Find the root of the tree
       let current = user;
       const seen = new Set([user.id]);
-      while (current.role === 'employee' && current.parentId) {
+      while (current.role === "employee" && current.parentId) {
         if (seen.has(current.parentId)) break; // Prevent cycles
-        const parent = await this.userRepository.findOne({ where: { id: current.parentId } });
+        const parent = await this.userRepository.findOne({
+          where: { id: current.parentId },
+        });
         if (!parent) break;
         current = parent;
         seen.add(current.id);
@@ -513,19 +653,19 @@ export class SubscriptionService {
         userId: targetUserId,
         status: SubscriptionStatus.ACTIVE,
       },
-      order: { endDate: 'DESC' },
+      order: { endDate: "DESC" },
     });
 
     if (!subscription) {
       // Check if there are any subscriptions at all (maybe expired)
       const lastSub = await this.subscriptionRepository.findOne({
         where: { userId: targetUserId },
-        order: { endDate: 'DESC' },
+        order: { endDate: "DESC" },
       });
-      
-      return { 
-        active: false, 
-        daysLeft: 0, 
+
+      return {
+        active: false,
+        daysLeft: 0,
         noExpiry: false,
         subscription: lastSub ?? undefined,
       };

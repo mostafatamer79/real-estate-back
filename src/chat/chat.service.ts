@@ -1,13 +1,17 @@
-import { requireVerifiedIdentity } from '../common/guards/identity-verification.guard';
+import { requireVerifiedIdentity } from "../common/guards/identity-verification.guard";
 // src/chat/chat.service.ts - Simplified version
-import { ForbiddenException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not } from 'typeorm';
-import { Message, ChatRoom } from './message.entity';
-import { User, Role } from '../user/user-entity';
-import { NotificationService } from '../notification/notification.service';
-import { NotificationGateway } from '../notification/notification.gateway';
-import { NotificationType } from '../notification/notification.entity';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, Not } from "typeorm";
+import { Message, ChatRoom } from "./message.entity";
+import { User, Role } from "../user/user-entity";
+import { NotificationService } from "../notification/notification.service";
+import { NotificationGateway } from "../notification/notification.gateway";
+import { NotificationType } from "../notification/notification.entity";
 
 @Injectable()
 export class ChatService {
@@ -22,9 +26,22 @@ export class ChatService {
     private notificationGateway: NotificationGateway,
   ) {}
 
-  async createRoom(data: { name: string; description?: string; userIds: string[]; isGroup?: boolean; isPublic?: boolean; serviceRequestId?: string; offerId?: string; orderId?: string; disputeId?: string }, creator: User) {
+  async createRoom(
+    data: {
+      name: string;
+      description?: string;
+      userIds: string[];
+      isGroup?: boolean;
+      isPublic?: boolean;
+      serviceRequestId?: string;
+      offerId?: string;
+      orderId?: string;
+      disputeId?: string;
+    },
+    creator: User,
+  ) {
     const participants = await this.userRepository.find({
-      where: { id: (require('typeorm').In)(data.userIds) }
+      where: { id: require("typeorm").In(data.userIds) },
     });
 
     const room = this.chatRoomRepository.create({
@@ -43,192 +60,249 @@ export class ChatService {
     return await this.chatRoomRepository.save(room);
   }
 
-async getRoomById(roomId: string) {
-  return this.chatRoomRepository.findOne({
-    where: { id: roomId },
-    relations: ['participants'],
-  });
-}
+  async getRoomById(roomId: string) {
+    return this.chatRoomRepository.findOne({
+      where: { id: roomId },
+      relations: ["participants"],
+    });
+  }
+
+  async ensureParticipant(roomId: string, userId: string) {
+    const room = await this.getRoomById(roomId);
+    if (!room) throw new BadRequestException("Chat room not found");
+    if (!room.participants.some((participant) => participant.id === userId)) {
+      // Called only after the service-request access check.
+      await this.chatRoomRepository
+        .createQueryBuilder()
+        .relation(ChatRoom, "participants")
+        .of(roomId)
+        .add(userId);
+    }
+  }
 
   private async requireRoomParticipant(roomId: string, userId: string) {
     const room = await this.chatRoomRepository.findOne({
       where: { id: roomId },
-      relations: ['participants'],
+      relations: ["participants"],
     });
-    if (!room || !room.participants.some((participant) => participant.id === userId)) {
-      throw new ForbiddenException('User is not a room participant');
+    if (
+      !room ||
+      !room.participants.some((participant) => participant.id === userId)
+    ) {
+      throw new ForbiddenException("User is not a room participant");
     }
     return room;
   }
 
-// Also update getOrCreateOfferChat to include offerTitle
-async getOrCreateOfferChat(offerId: string, buyerId: string, sellerId: string, offerTitle?: string) {
-  // Check if room already exists
+  // Also update getOrCreateOfferChat to include offerTitle
+  async getOrCreateOfferChat(
+    offerId: string,
+    buyerId: string,
+    sellerId: string,
+    offerTitle?: string,
+  ) {
+    // Check if room already exists
     let room = await this.chatRoomRepository.findOne({
       where: { offerId, createdBy: buyerId },
-      relations: ['participants'],
+      relations: ["participants"],
     });
 
-  if (!room) {
-    // Get buyer and seller
-    const buyer = await this.userRepository.findOne({ where: { id: buyerId } });
-    const seller = await this.userRepository.findOne({ where: { id: sellerId } });
+    if (!room) {
+      // Get buyer and seller
+      const buyer = await this.userRepository.findOne({
+        where: { id: buyerId },
+      });
+      const seller = await this.userRepository.findOne({
+        where: { id: sellerId },
+      });
 
-    if (!buyer || !seller) {
-      throw new Error('User not found');
+      if (!buyer || !seller) {
+        throw new Error("User not found");
+      }
+
+      // Create new chat room
+      room = this.chatRoomRepository.create({
+        name: offerTitle || `Chat for Offer ${offerId.substring(0, 8)}`,
+        description: `محادثة حول العرض: ${offerTitle || offerId}`,
+        participants: [buyer, seller],
+        createdBy: buyerId,
+        offerId,
+        isGroup: false,
+      });
+
+      await this.chatRoomRepository.save(room);
     }
 
-    // Create new chat room
-    room = this.chatRoomRepository.create({
-      name: offerTitle || `Chat for Offer ${offerId.substring(0, 8)}`,
-      description: `محادثة حول العرض: ${offerTitle || offerId}`,
-      participants: [buyer, seller],
-      createdBy: buyerId,
-      offerId,
-      isGroup: false,
-    });
-
-    await this.chatRoomRepository.save(room);
+    return room;
   }
 
-  return room;
-}
-
-async getOrCreateOrderChat(orderId: string, userId: string, otherId: string, title?: string) {
+  async getOrCreateOrderChat(
+    orderId: string,
+    userId: string,
+    otherId: string,
+    title?: string,
+  ) {
     let room = await this.chatRoomRepository.findOne({
-        where: { orderId, createdBy: userId },
-        relations: ['participants'],
+      where: { orderId, createdBy: userId },
+      relations: ["participants"],
     });
 
     if (!room) {
-        const user = await this.userRepository.findOne({ where: { id: userId } });
-        let other: User | null = null;
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      let other: User | null = null;
 
-        if (otherId && otherId !== 'admin' && otherId !== 'null' && otherId !== 'undefined') {
-            other = await this.userRepository.findOne({ where: { id: otherId } });
-        }
+      if (
+        otherId &&
+        otherId !== "admin" &&
+        otherId !== "null" &&
+        otherId !== "undefined"
+      ) {
+        other = await this.userRepository.findOne({ where: { id: otherId } });
+      }
 
-        if (!other) {
-            other = await this.userRepository.findOne({
-                where: [
-                    { role: Role.ADMIN },
-                    { role: Role.MANGER }
-                ]
-            });
-        }
-
-        if (!user || !other) throw new Error('User not found');
-
-        room = this.chatRoomRepository.create({
-            name: title || `Order #${orderId.substring(0, 8)}`,
-            description: `Chat for Order ${orderId}`,
-            participants: [user, other],
-            createdBy: userId,
-            orderId,
-            isGroup: false,
+      if (!other) {
+        other = await this.userRepository.findOne({
+          where: [{ role: Role.ADMIN }, { role: Role.MANGER }],
         });
+      }
 
-        await this.chatRoomRepository.save(room);
+      if (!user || !other) throw new Error("User not found");
+
+      room = this.chatRoomRepository.create({
+        name: title || `Order #${orderId.substring(0, 8)}`,
+        description: `Chat for Order ${orderId}`,
+        participants: [user, other],
+        createdBy: userId,
+        orderId,
+        isGroup: false,
+      });
+
+      await this.chatRoomRepository.save(room);
     }
     return room;
-}
+  }
 
-async getOrCreateDisputeChat(disputeId: string, userId: string, otherId: string, title?: string) {
+  async getOrCreateDisputeChat(
+    disputeId: string,
+    userId: string,
+    otherId: string,
+    title?: string,
+  ) {
     let room = await this.chatRoomRepository.findOne({
-        where: { disputeId, createdBy: userId },
-        relations: ['participants'],
+      where: { disputeId, createdBy: userId },
+      relations: ["participants"],
     });
 
     if (!room) {
-        const user = await this.userRepository.findOne({ where: { id: userId } });
-        const other = await this.userRepository.findOne({ where: { id: otherId } });
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      const other = await this.userRepository.findOne({
+        where: { id: otherId },
+      });
 
-        if (!user || !other) throw new Error('User not found');
+      if (!user || !other) throw new Error("User not found");
 
-        room = this.chatRoomRepository.create({
-            name: title || `Dispute #${disputeId.substring(0, 8)}`,
-            description: `Chat for Dispute ${disputeId}`,
-            participants: [user, other],
-            createdBy: userId,
-            disputeId,
-            isGroup: false,
-        });
+      room = this.chatRoomRepository.create({
+        name: title || `Dispute #${disputeId.substring(0, 8)}`,
+        description: `Chat for Dispute ${disputeId}`,
+        participants: [user, other],
+        createdBy: userId,
+        disputeId,
+        isGroup: false,
+      });
 
-        await this.chatRoomRepository.save(room);
+      await this.chatRoomRepository.save(room);
     }
     return room;
-}
+  }
 
-async getOrCreateServiceRequestChat(serviceRequestId: string, userId: string, clientId: string, title?: string) {
+  async getOrCreateServiceRequestChat(
+    serviceRequestId: string,
+    userId: string,
+    clientId: string,
+    title?: string,
+  ) {
     let room = await this.chatRoomRepository.findOne({
-        where: { serviceRequestId, createdBy: userId },
-        relations: ['participants'],
+      where: { serviceRequestId, createdBy: userId },
+      relations: ["participants"],
     });
 
     if (!room) {
-        const user = await this.userRepository.findOne({ where: { id: userId } });
-        const client = await this.userRepository.findOne({ where: { id: clientId } });
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      const client = await this.userRepository.findOne({
+        where: { id: clientId },
+      });
 
-        if (!user || !client) throw new Error('User or Client not found');
+      if (!user || !client) throw new Error("User or Client not found");
 
-        room = this.chatRoomRepository.create({
-            name: title || `Service Request #${serviceRequestId.substring(0, 8)}`,
-            description: `محادثة حول طلب الخدمة: ${title || serviceRequestId}`,
-            participants: [user, client],
-            createdBy: userId,
-            serviceRequestId,
-            isGroup: false,
-        });
+      room = this.chatRoomRepository.create({
+        name: title || `Service Request #${serviceRequestId.substring(0, 8)}`,
+        description: `محادثة حول طلب الخدمة: ${title || serviceRequestId}`,
+        participants: [user, client],
+        createdBy: userId,
+        serviceRequestId,
+        isGroup: false,
+      });
 
-        await this.chatRoomRepository.save(room);
+      await this.chatRoomRepository.save(room);
     }
     return room;
-}
+  }
 
-async getOrCreateDirectChat(userId1: string, userId2: string) {
-    const rooms = await this.chatRoomRepository.createQueryBuilder('room')
-        .leftJoinAndSelect('room.participants', 'participant')
-        .where('room.isGroup = :isGroup', { isGroup: false })
-        .andWhere('room.offerId IS NULL')
-        .andWhere('room.orderId IS NULL')
-        .andWhere('room.serviceRequestId IS NULL')
-        .andWhere('room.disputeId IS NULL')
-        .getMany();
+  async getOrCreateDirectChat(userId1: string, userId2: string) {
+    const rooms = await this.chatRoomRepository
+      .createQueryBuilder("room")
+      .leftJoinAndSelect("room.participants", "participant")
+      .where("room.isGroup = :isGroup", { isGroup: false })
+      .andWhere("room.offerId IS NULL")
+      .andWhere("room.orderId IS NULL")
+      .andWhere("room.serviceRequestId IS NULL")
+      .andWhere("room.disputeId IS NULL")
+      .getMany();
 
-    let room = rooms.find(r => {
-        const pIds = r.participants.map(p => p.id);
-        return pIds.includes(userId1) && pIds.includes(userId2) && pIds.length === 2;
+    let room = rooms.find((r) => {
+      const pIds = r.participants.map((p) => p.id);
+      return (
+        pIds.includes(userId1) && pIds.includes(userId2) && pIds.length === 2
+      );
     });
 
     if (!room) {
-        const user1 = await this.userRepository.findOne({ where: { id: userId1 } });
-        const user2 = await this.userRepository.findOne({ where: { id: userId2 } });
+      const user1 = await this.userRepository.findOne({
+        where: { id: userId1 },
+      });
+      const user2 = await this.userRepository.findOne({
+        where: { id: userId2 },
+      });
 
-        if (!user1 || !user2) throw new Error('User not found');
+      if (!user1 || !user2) throw new Error("User not found");
 
-        room = this.chatRoomRepository.create({
-            name: `محادثة مباشرة`,
-            description: `Direct chat between ${user1.firstName} and ${user2.firstName}`,
-            participants: [user1, user2],
-            createdBy: userId1,
-            isGroup: false,
-        });
+      room = this.chatRoomRepository.create({
+        name: `محادثة مباشرة`,
+        description: `Direct chat between ${user1.firstName} and ${user2.firstName}`,
+        participants: [user1, user2],
+        createdBy: userId1,
+        isGroup: false,
+      });
 
-        await this.chatRoomRepository.save(room);
+      await this.chatRoomRepository.save(room);
     }
 
     return room;
-}
-
+  }
 
   // Send message
   async sendMessage(roomId: string, senderId: string, content: string) {
+    if (typeof content !== "string" || !content.trim()) {
+      throw new BadRequestException("Message content is required");
+    }
     const room = await this.requireRoomParticipant(roomId, senderId);
 
-    const sender = await this.userRepository.findOne({ where: { id: senderId } });
+    const sender = await this.userRepository.findOne({
+      where: { id: senderId },
+    });
 
     if (!room || !sender) {
-      throw new Error('Room or sender not found');
+      throw new Error("Room or sender not found");
     }
 
     requireVerifiedIdentity(sender);
@@ -242,7 +316,7 @@ async getOrCreateDirectChat(userId1: string, userId2: string) {
     const savedMessage = await this.messageRepository.save(message);
 
     // Filter recipients (everyone in room except sender)
-    const recipients = room.participants.filter(p => p.id !== senderId);
+    const recipients = room.participants.filter((p) => p.id !== senderId);
 
     // Send notifications
     for (const recipient of recipients) {
@@ -250,14 +324,17 @@ async getOrCreateDirectChat(userId1: string, userId2: string) {
         recipient.id,
         NotificationType.CHAT,
         `رسالة جديدة من ${sender.firstName}`,
-        content.length > 50 ? content.substring(0, 50) + '...' : content,
-        { 
-          roomId: room.id, 
+        content.length > 50 ? content.substring(0, 50) + "..." : content,
+        {
+          roomId: room.id,
           senderId: sender.id,
-          messageId: savedMessage.id 
-        }
+          messageId: savedMessage.id,
+        },
       );
-      await this.notificationGateway.sendNotificationToUser(recipient.id, notification);
+      await this.notificationGateway.sendNotificationToUser(
+        recipient.id,
+        notification,
+      );
     }
 
     return savedMessage;
@@ -271,19 +348,26 @@ async getOrCreateDirectChat(userId1: string, userId2: string) {
         .createQueryBuilder()
         .update(Message)
         .set({ isRead: true })
-        .where('roomId = :roomId AND senderId != :userId AND isRead = false', { roomId, userId })
+        .where("roomId = :roomId AND senderId != :userId AND isRead = false", {
+          roomId,
+          userId,
+        })
         .execute();
 
       // Mark matching chat notifications as read
-      await this.notificationService.markChatNotificationsAsRead(roomId, userId);
+      await this.notificationService.markChatNotificationsAsRead(
+        roomId,
+        userId,
+      );
     }
 
-    return this.messageRepository.find({
+    const messages = await this.messageRepository.find({
       where: { room: { id: roomId } },
-      relations: ['sender'],
-      order: { createdAt: 'ASC' },
+      relations: ["sender"],
+      order: { createdAt: "DESC", id: "DESC" },
       take: limit,
     });
+    return messages.reverse();
   }
 
   // Get unread messages count for a specific room and user
@@ -294,11 +378,14 @@ async getOrCreateDirectChat(userId1: string, userId2: string) {
         room: { id: roomId },
         sender: { id: Not(userId) },
         isRead: false,
-      }
+      },
     });
 
     if (count === 0) {
-      await this.notificationService.markChatNotificationsAsRead(roomId, userId);
+      await this.notificationService.markChatNotificationsAsRead(
+        roomId,
+        userId,
+      );
     }
 
     return count;
@@ -311,7 +398,10 @@ async getOrCreateDirectChat(userId1: string, userId2: string) {
       .createQueryBuilder()
       .update(Message)
       .set({ isRead: true })
-      .where('roomId = :roomId AND senderId != :userId AND isRead = false', { roomId, userId })
+      .where("roomId = :roomId AND senderId != :userId AND isRead = false", {
+        roomId,
+        userId,
+      })
       .execute();
 
     // Mark matching chat notifications as read
@@ -321,23 +411,23 @@ async getOrCreateDirectChat(userId1: string, userId2: string) {
   // Get user's chat rooms
   async getUserRooms(userId: string) {
     const roomsUserIsIn = await this.chatRoomRepository
-      .createQueryBuilder('room')
-      .innerJoin('room.participants', 'p')
-      .where('p.id = :userId', { userId })
-      .select('room.id')
+      .createQueryBuilder("room")
+      .innerJoin("room.participants", "p")
+      .where("p.id = :userId", { userId })
+      .select("room.id")
       .getMany();
 
     if (roomsUserIsIn.length === 0) return [];
 
-    const roomIds = roomsUserIsIn.map(r => r.id);
+    const roomIds = roomsUserIsIn.map((r) => r.id);
 
     return this.chatRoomRepository
-      .createQueryBuilder('room')
-      .leftJoinAndSelect('room.participants', 'participant')
-      .leftJoinAndSelect('room.messages', 'message')
-      .leftJoinAndSelect('message.sender', 'sender')
-      .where('room.id IN (:...roomIds)', { roomIds })
-      .orderBy('message.createdAt', 'DESC')
+      .createQueryBuilder("room")
+      .leftJoinAndSelect("room.participants", "participant")
+      .leftJoinAndSelect("room.messages", "message")
+      .leftJoinAndSelect("message.sender", "sender")
+      .where("room.id IN (:...roomIds)", { roomIds })
+      .orderBy("message.createdAt", "DESC")
       .getMany();
   }
 }

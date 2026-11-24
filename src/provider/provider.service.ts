@@ -1,4 +1,11 @@
-import { providerRequestCategory, providerCategoryExpression } from "./provider-category";
+import {
+  providerSpecializations,
+  providerRegistrationFields,
+} from "./provider-catalog";
+import {
+  providerRequestCategory,
+  providerCategoryExpression,
+} from "./provider-category";
 export { providerRequestCategory } from "./provider-category";
 import { providerMetadata, metadataRecord } from "./provider-metadata";
 import type { ProviderApplicationDto, ProviderReviewDto } from "./provider.dto";
@@ -25,10 +32,13 @@ import {
 } from "../notification/notification.entity";
 import {
   assertProviderCanOffer,
+  providerDeliveryModes,
+  cityKey,
   contactIsUnlocked,
   validMoney,
   validLicenseDocument,
   validateProviderReview,
+  validateProviderLicenseDates,
 } from "./provider-policy";
 import type {
   DeliveryMode,
@@ -69,6 +79,100 @@ export class ProviderService {
     if (!user) throw new NotFoundException("User not found");
     return user;
   }
+  async specializations() {
+    const setting = await this.settings.findOne("provider_specializations");
+    if (!setting?.value) return [];
+    try {
+      return providerSpecializations(JSON.parse(setting.value));
+    } catch {
+      return [];
+    }
+  }
+  async registrationFields() {
+    const setting = await this.settings.findOne("provider_registration_fields");
+    try {
+      return providerRegistrationFields(JSON.parse(setting?.value || "[]"));
+    } catch {
+      return [];
+    }
+  }
+  async saveRegistrationFields(input: unknown) {
+    const fields = providerRegistrationFields(input);
+    await this.settings.setSetting(
+      "provider_registration_fields",
+      JSON.stringify(fields),
+      "Provider registration fields",
+    );
+    return fields;
+  }
+  async saveSpecializations(input: unknown) {
+    const items = providerSpecializations(input);
+    await this.settings.setSetting(
+      "provider_specializations",
+      JSON.stringify(items),
+      "Provider specializations",
+    );
+    return items;
+  }
+  async sendNotice(id: string, message: unknown) {
+    const account = await this.account(id);
+    if (!account.providerProfile)
+      throw new BadRequestException("No provider application");
+    const content = text(message, 2000);
+    if (!content) throw new BadRequestException("Enter notification text");
+    await this.dataSource.transaction((manager) =>
+      manager.save(Notification, {
+        userId: id,
+        type: NotificationType.SYSTEM,
+        title: "إشعار من إدارة المزودين",
+        message: content,
+      }),
+    );
+    return { sent: true };
+  }
+  async accountAction(
+    id: string,
+    action: "activate" | "restrict" | "archive",
+    adminId: string,
+    note?: string,
+  ) {
+    if (!["activate", "restrict", "archive"].includes(action))
+      throw new BadRequestException("Invalid account action");
+    const account = await this.account(id);
+    if (!account.providerProfile)
+      throw new BadRequestException("No provider application");
+    if (account.role === Role.ADMIN)
+      throw new BadRequestException(
+        "Administrator account cannot be changed here",
+      );
+    const profile = { ...account.providerProfile };
+    if (action === "archive") {
+      profile.status = "suspended";
+      profile.archivedAt = new Date().toISOString();
+    }
+    if (action === "activate") delete profile.archivedAt;
+    await this.dataSource.transaction(async (manager) => {
+      await manager.update(User, id, {
+        isActive: action === "activate",
+        providerProfile: profile,
+      });
+      await manager.save(Notification, {
+        userId: id,
+        type: NotificationType.SYSTEM,
+        title: "حالة حساب مزود الخدمة",
+        message:
+          text(note, 2000) ||
+          {
+            activate:
+              "تم تفعيل حسابك. اعتماد تخصصاتك يخضع لقرار مراجعة المزود.",
+            restrict: "تم تقييد حسابك. يرجى التواصل مع الإدارة.",
+            archive: "تمت أرشفة حسابك مع الاحتفاظ بالطلبات والسجلات المالية.",
+          }[action],
+        data: { providerAccountAction: action, adminId },
+      });
+    });
+    return { isActive: action === "activate", providerProfile: profile };
+  }
   async mine(id: string) {
     return (await this.account(id)).providerProfile || null;
   }
@@ -104,15 +208,109 @@ export class ProviderService {
     const licenseDocument = text(input.licenseDocument, 2048);
     if (licenseDocument && !validLicenseDocument(licenseDocument))
       throw new BadRequestException("Invalid license document URL");
+    const licenseDates = {
+      licenseIssueDate:
+        input.licenseIssueDate === undefined
+          ? account.providerProfile?.licenseIssueDate
+          : input.licenseIssueDate,
+      licenseExpiryDate:
+        input.licenseExpiryDate === undefined
+          ? account.providerProfile?.licenseExpiryDate
+          : input.licenseExpiryDate,
+    };
+    validateProviderLicenseDates(licenseDates);
+    const unchangedSpecialization =
+      input.specializationId &&
+      input.specializationId === account.providerProfile?.specializationId &&
+      requestedCategories.length ===
+        account.providerProfile.requestedCategories.length &&
+      requestedCategories.every((category) =>
+        account.providerProfile!.requestedCategories.includes(category),
+      );
+    const specialization = input.specializationId
+      ? (await this.specializations()).find(
+          (item) => item.id === input.specializationId && item.enabled,
+        ) ||
+        (unchangedSpecialization
+          ? {
+              id: input.specializationId,
+              title:
+                account.providerProfile!.specializationTitle ||
+                input.specializationId,
+              categories: account.providerProfile!.requestedCategories,
+              enabled: false,
+            }
+          : undefined)
+      : undefined;
+    if (
+      input.specializationId &&
+      (!specialization ||
+        requestedCategories.some(
+          (category) =>
+            specialization.categories.length &&
+            !specialization.categories.some(
+              (root) => category === root || category.startsWith(root + "_"),
+            ),
+        ))
+    )
+      throw new BadRequestException(
+        "Select a provider type matching the requested categories",
+      );
+    if (account.providerProfile?.archivedAt)
+      throw new ConflictException(
+        "Contact the administrator to restore this provider account",
+      );
+    const registrationFields = (await this.registrationFields()).filter(
+      (field) =>
+        field.enabled &&
+        (!field.categories.length ||
+          requestedCategories.some((category) =>
+            field.categories.some(
+              (root) =>
+                category === root ||
+                category.startsWith(root + "_") ||
+                root.startsWith(category + "_"),
+            ),
+          )),
+    );
+    const registrationAnswers: Record<string, string> = {
+      ...account.providerProfile?.registrationAnswers,
+    };
+    for (const field of registrationFields) {
+      const raw = input.registrationAnswers?.[field.id];
+      if (raw !== undefined && typeof raw !== "string")
+        throw new BadRequestException("Invalid provider answer");
+      const answer = text(raw, 2000);
+      if (field.required && !answer)
+        throw new BadRequestException(
+          "Required provider field: " + field.label,
+        );
+      if (answer && field.type === "number" && !Number.isFinite(Number(answer)))
+        throw new BadRequestException("Enter a valid number: " + field.label);
+      if (answer) registrationAnswers[field.id] = answer;
+      else delete registrationAnswers[field.id];
+    }
     const profile: ProviderProfile = {
       status: "pending",
       kind: input.kind,
+      registrationAnswers,
+      registrationFields: [
+        ...new Map(
+          [
+            ...(account.providerProfile?.registrationFields || []),
+            ...registrationFields.map(({ id, label }) => ({ id, label })),
+          ].map((field) => [field.id, field]),
+        ).values(),
+      ],
+      specializationId: specialization?.id,
+      specializationTitle: specialization?.title,
       city,
       deliveryModes: deliveryModes,
       requestedCategories: requestedCategories,
       categories: [],
       licenseNumber: text(input.licenseNumber, 100),
       licenseDocument,
+      ...licenseDates,
       notes: text(input.notes, 2000),
       submittedAt: new Date().toISOString(),
     };
@@ -144,6 +342,7 @@ export class ProviderService {
         email: true,
         phone: true,
         providerProfile: true,
+        isActive: true,
       },
     });
     return { items, total, page };
@@ -162,7 +361,7 @@ export class ProviderService {
       ...prior,
       status: input.status as ProviderProfile["status"],
       categories: Array.isArray(input.categories)
-        ? (input.categories)
+        ? input.categories
         : prior.categories,
       agreementType: input.agreementType ?? prior.agreementType,
       agreementValue: input.agreementValue ?? prior.agreementValue,
@@ -228,7 +427,11 @@ export class ProviderService {
     return this.getControls();
   }
 
-  async opportunities(id: string, page: number, filter: { category?: string; service?: string } = {}) {
+  async opportunities(
+    id: string,
+    page: number,
+    filter: { category?: string; service?: string } = {},
+  ) {
     const profile = (await this.account(id)).providerProfile;
     if (profile?.status !== "approved")
       throw new ForbiddenException("Provider approval is required");
@@ -247,13 +450,22 @@ export class ProviderService {
       .andWhere("request.status = :status", { status: ServiceStatus.PENDING })
       .andWhere("request.assignedAgentId IS NULL")
       .andWhere("request.userId != :id", { id });
-    if (
-      profile.kind === "notary" &&
-      !(controls.onlineAllCities && profile.deliveryModes.includes("online"))
-    )
-      query.andWhere("TRIM(request.city) = :city", {
-        city: profile.city.trim(),
-      });
+    const requestedModeSql =
+      "COALESCE(request.metadata ->> 'requestedDeliveryMode', 'any')";
+    query.andWhere(
+      `(${requestedModeSql} = 'any' OR ${requestedModeSql} IN (:...deliveryModes))`,
+      { deliveryModes: profile.deliveryModes },
+    );
+    if (profile.kind === "notary") {
+      const sameCity =
+        "LOWER(REGEXP_REPLACE(TRANSLATE(TRIM(request.city), 'أإآ', 'ااا'), '[[:space:]]+', ' ', 'g')) = :providerCity";
+      if (controls.onlineAllCities && profile.deliveryModes.includes("online"))
+        query.andWhere(
+          `(${sameCity} OR ${requestedModeSql} IN ('any','online'))`,
+          { providerCity: cityKey(profile.city) },
+        );
+      else query.andWhere(sameCity, { providerCity: cityKey(profile.city) });
+    }
     const grantParams: Record<string, string> = {};
     const grantConditions = profile.categories.map((grant, index) => {
       grantParams[`grant${index}`] = grant;
@@ -261,11 +473,20 @@ export class ProviderService {
       return `((${providerCategoryExpression}) = :grant${index} OR starts_with((${providerCategoryExpression}), :grantPrefix${index}))`;
     });
     query.andWhere(`(${grantConditions.join(" OR ")})`, grantParams);
-    if (profile.kind === "notary") query.andWhere(`(${providerCategoryExpression}) = 'legal_documentation'`);
+    if (profile.kind === "notary")
+      query.andWhere(`(${providerCategoryExpression}) = 'legal_documentation'`);
     if (filter.category) {
-      query.andWhere(filter.category === "legal" ? "request.category = :browseCategory" : `(${providerCategoryExpression}) = :browseCategory`, { browseCategory: filter.category });
+      query.andWhere(
+        filter.category === "legal"
+          ? "request.category = :browseCategory"
+          : `(${providerCategoryExpression}) = :browseCategory`,
+        { browseCategory: filter.category },
+      );
     }
-    if (filter.service) query.andWhere("request.serviceType = :browseService", { browseService: filter.service });
+    if (filter.service)
+      query.andWhere("request.serviceType = :browseService", {
+        browseService: filter.service,
+      });
     const [items, total] = await query
       .orderBy("request.createdAt", "DESC")
       .skip((page - 1) * 30)
@@ -290,6 +511,11 @@ export class ProviderService {
           city: item.city,
           district: item.district,
           quantity: item.quantity,
+          availableDeliveryModes: providerDeliveryModes(
+            profile,
+            item,
+            controls.onlineAllCities,
+          ),
           createdAt: item.createdAt,
           ownOffer:
             providerMetadata(item.metadata).providerOffers?.[id] || null,

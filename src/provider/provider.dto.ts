@@ -3,9 +3,11 @@ import {
   ArrayMinSize,
   ArrayUnique,
   IsArray,
+  IsObject,
   IsBoolean,
   IsIn,
   IsNumber,
+  Matches,
   IsOptional,
   IsString,
   Max,
@@ -18,6 +20,8 @@ import type { DeliveryMode } from "./provider-profile";
 export class ProviderApplicationDto {
   @IsIn(["general", "notary"]) kind: "general" | "notary";
   @IsString() @MaxLength(100) city: string;
+  @IsOptional() @IsString() @MaxLength(80) specializationId?: string;
+  @IsOptional() @IsObject() registrationAnswers?: Record<string, unknown>;
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(30)
@@ -32,6 +36,14 @@ export class ProviderApplicationDto {
   deliveryModes: DeliveryMode[];
   @IsOptional() @IsString() @MaxLength(100) licenseNumber?: string;
   @IsOptional() @IsString() @MaxLength(2048) licenseDocument?: string;
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  licenseIssueDate?: string;
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  licenseExpiryDate?: string;
   @IsOptional() @IsString() @MaxLength(2000) notes?: string;
 }
 export class ProviderReviewDto {
@@ -75,6 +87,17 @@ export class ProviderControlsDto {
   @Min(0.01)
   @Max(9999999999)
   notaryPlatformFee: number;
-  @Transform(({ obj, key }: TransformFnParams) => (obj as Record<string, unknown>)[key])
-  @IsBoolean() onlineAllCities: boolean;
+  @Transform(
+    ({ obj, key }: TransformFnParams) => (obj as Record<string, unknown>)[key],
+  )
+  @IsBoolean()
+  onlineAllCities: boolean;
+}
+
+export class ProviderAccountActionDto {
+  @IsIn(["activate", "restrict", "archive"]) action:
+    | "activate"
+    | "restrict"
+    | "archive";
+  @IsOptional() @IsString() @MaxLength(2000) note?: string;
 }

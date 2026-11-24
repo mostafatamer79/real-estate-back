@@ -1,20 +1,35 @@
-import { cleanProviderMetadata } from '../provider/provider-policy';
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { User, Role, Department } from '../user/user-entity';
-import { SettingsService } from '../settings/settings.service';
+import { departmentAccess } from "./department-access";
+import { cleanProviderMetadata } from "../provider/provider-policy";
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from "@nestjs/common";
+import { User, Role, Department } from "../user/user-entity";
+import { SettingsService } from "../settings/settings.service";
 import {
   DEFAULT_SERVICE_FORMS,
   ServiceFormDef,
   VisibleWhen,
-} from '../settings/service-form.defaults';
-import { MailService } from '../mail/mail.service';
-import { NotificationService } from '../notification/notification.service';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ServiceRequest, ServiceStatus, TargetDepartment, PaidStatus, ClientDecision } from './service-request.entity';
-import { CreateServiceRequestDto, UpdateServiceRequestDto } from './create-service-request.dto';
-import { NotificationType } from '../notification/notification.entity';
-import { Invoice, InvoiceStatus } from '../financial/entities/invoice.entity';
+} from "../settings/service-form.defaults";
+import { MailService } from "../mail/mail.service";
+import { NotificationService } from "../notification/notification.service";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import {
+  ServiceRequest,
+  ServiceStatus,
+  TargetDepartment,
+  PaidStatus,
+  ClientDecision,
+} from "./service-request.entity";
+import {
+  CreateServiceRequestDto,
+  UpdateServiceRequestDto,
+} from "./create-service-request.dto";
+import { NotificationType } from "../notification/notification.entity";
+import { Invoice, InvoiceStatus } from "../financial/entities/invoice.entity";
 
 @Injectable()
 export class ServiceRequestService {
@@ -35,14 +50,20 @@ export class ServiceRequestService {
     if (!user) return [ownerId];
 
     if (user.role === Role.MANGER) {
-        const subUsers = await this.userRepository.find({ where: { parentId: ownerId } });
-        return [ownerId, ...subUsers.map(u => u.id)];
+      const subUsers = await this.userRepository.find({
+        where: { parentId: ownerId },
+      });
+      return [ownerId, ...subUsers.map((u) => u.id)];
     }
 
     return [ownerId];
   }
 
-  async update(id: string, updateDto: UpdateServiceRequestDto, user: User): Promise<ServiceRequest> {
+  async update(
+    id: string,
+    updateDto: UpdateServiceRequestDto,
+    user: User,
+  ): Promise<ServiceRequest> {
     const serviceRequest = await this.findOne(id, user);
 
     // Permission Check for Update
@@ -51,36 +72,59 @@ export class ServiceRequestService {
 
     // Map TargetDepartment to User Department Slug
     const targetToSlugMap: Record<string, string> = {
-      [TargetDepartment.MARKETING]: 'marketing',
-      [TargetDepartment.FINANCE]: 'finance',
-      [TargetDepartment.LEGAL]: 'legal',
-      [TargetDepartment.REAL_ESTATE]: 'properties',
-      [TargetDepartment.EMPLOYEES]: 'employees',
+      [TargetDepartment.MARKETING]: "marketing",
+      [TargetDepartment.FINANCE]: "finance",
+      [TargetDepartment.LEGAL]: "legal",
+      [TargetDepartment.REAL_ESTATE]: "properties",
+      [TargetDepartment.EMPLOYEES]: "employees",
     };
     const requiredDeptSlug = targetToSlugMap[targetDept];
 
-    const isDepartmentRelated = userDepts.includes(requiredDeptSlug as Department);
+    const isDepartmentRelated = departmentAccess(user, requiredDeptSlug, true);
 
-    if (user.role !== Role.ADMIN && user.role !== Role.AGENT && !isDepartmentRelated && serviceRequest.userId !== user.id) {
-      throw new ForbiddenException('You do not have permission to update this request');
+    if (
+      user.role !== Role.ADMIN &&
+      user.role !== Role.AGENT &&
+      !isDepartmentRelated &&
+      serviceRequest.userId !== user.id
+    ) {
+      throw new ForbiddenException(
+        "You do not have permission to update this request",
+      );
     }
 
     // Only agents/admins or the target department worker can update status (if they have permission)
     if (updateDto.status || updateDto.assignedAgentId) {
-       if (user.role !== Role.AGENT && user.role !== Role.ADMIN && !isDepartmentRelated) {
-         throw new ForbiddenException('Only agents, admins, or assigned department workers can update request status');
-       }
+      if (
+        user.role !== Role.AGENT &&
+        user.role !== Role.ADMIN &&
+        !isDepartmentRelated
+      ) {
+        throw new ForbiddenException(
+          "Only agents, admins, or assigned department workers can update request status",
+        );
+      }
     }
 
-    if (updateDto.metadata !== undefined) updateDto.metadata = cleanProviderMetadata(updateDto.metadata, serviceRequest.metadata);
+    if (updateDto.metadata !== undefined)
+      updateDto.metadata = cleanProviderMetadata(
+        updateDto.metadata,
+        serviceRequest.metadata,
+      );
     Object.assign(serviceRequest, updateDto);
 
     // Update timestamps based on status
-    if (updateDto.status === ServiceStatus.ASSIGNED && !serviceRequest.assignedAt) {
+    if (
+      updateDto.status === ServiceStatus.ASSIGNED &&
+      !serviceRequest.assignedAt
+    ) {
       serviceRequest.assignedAt = new Date();
     }
 
-    if (updateDto.status === ServiceStatus.COMPLETED && !serviceRequest.completedAt) {
+    if (
+      updateDto.status === ServiceStatus.COMPLETED &&
+      !serviceRequest.completedAt
+    ) {
       serviceRequest.completedAt = new Date();
     }
 
@@ -92,7 +136,9 @@ export class ServiceRequestService {
 
     // Only admins or the request owner can delete
     if (user.role !== Role.ADMIN && serviceRequest.userId !== user.id) {
-      throw new ForbiddenException('You are not allowed to delete this request');
+      throw new ForbiddenException(
+        "You are not allowed to delete this request",
+      );
     }
 
     await this.serviceRequestRepository.remove(serviceRequest);
@@ -101,9 +147,15 @@ export class ServiceRequestService {
   async getStatistics() {
     const [total, pending, assigned, completed] = await Promise.all([
       this.serviceRequestRepository.count(),
-      this.serviceRequestRepository.count({ where: { status: ServiceStatus.PENDING } }),
-      this.serviceRequestRepository.count({ where: { status: ServiceStatus.ASSIGNED } }),
-      this.serviceRequestRepository.count({ where: { status: ServiceStatus.COMPLETED } }),
+      this.serviceRequestRepository.count({
+        where: { status: ServiceStatus.PENDING },
+      }),
+      this.serviceRequestRepository.count({
+        where: { status: ServiceStatus.ASSIGNED },
+      }),
+      this.serviceRequestRepository.count({
+        where: { status: ServiceStatus.COMPLETED },
+      }),
     ]);
 
     return {
@@ -115,11 +167,25 @@ export class ServiceRequestService {
     };
   }
 
-  async getByCategory(category: string): Promise<ServiceRequest[]> {
-    return await this.serviceRequestRepository.find({
-      where: { category: category as any },
-      order: { createdAt: 'DESC' }
-    });
+  async getByCategory(category: string, user: User): Promise<ServiceRequest[]> {
+    const items: ServiceRequest[] = [];
+    let page = 1;
+    let totalPages = 1;
+    do {
+      const result = await this.findAll(
+        user,
+        page,
+        200,
+        false,
+        undefined,
+        category,
+        true,
+      );
+      items.push(...result.items);
+      totalPages = result.totalPages;
+      page += 1;
+    } while (page <= totalPages);
+    return items;
   }
 
   private checkPermissions(serviceRequest: ServiceRequest, user?: User): void {
@@ -129,34 +195,52 @@ export class ServiceRequestService {
     if (user.role === Role.ADMIN) return;
 
     // Agents can see assigned requests
-    if (user.role === Role.AGENT && serviceRequest.assignedAgentId === user.id) return;
+    if (user.role === Role.AGENT && serviceRequest.assignedAgentId === user.id)
+      return;
 
     // Users can see their own requests
     if (user.role === Role.USER && serviceRequest.userId === user.id) return;
 
-    throw new ForbiddenException('You do not have permission to view this request');
+    throw new ForbiddenException(
+      "You do not have permission to view this request",
+    );
   }
 
   async create(createDto: CreateServiceRequestDto, user: User) {
     createDto.metadata = cleanProviderMetadata(createDto.metadata);
+    if (
+      createDto.metadata.requestedDeliveryMode !== undefined &&
+      !["any", "online", "in_person"].includes(
+        createDto.metadata.requestedDeliveryMode,
+      )
+    )
+      throw new BadRequestException("Invalid requested delivery mode");
     await this.assertCatalogServiceAvailable(createDto, user);
     // Server-side required-field validation driven by the dynamic form definitions
     await this.validateAgainstServiceForm(createDto, user);
 
-    const category = createDto.category || 'other';
+    const category = createDto.category || "other";
     createDto.category = category;
-    const targetDepartment = createDto.targetDepartment || this.resolveTargetDepartment(category);
-    const calculatedPrice = await this.calculateDefaultPrice(category, createDto.serviceType);
-    const requestedPrice = typeof (createDto as any).price === 'number' ? (createDto as any).price : undefined;
+    const targetDepartment = ["legal", "marketing"].includes(category)
+      ? this.resolveTargetDepartment(category)
+      : createDto.targetDepartment || this.resolveTargetDepartment(category);
+    const calculatedPrice = await this.calculateDefaultPrice(
+      category,
+      createDto.serviceType,
+    );
+    const requestedPrice =
+      typeof (createDto as any).price === "number"
+        ? (createDto as any).price
+        : undefined;
 
     // Workflow Logic: Construction and Legal are auto-approved (will flip on payment)
     // Post-Purchase and Other require manual admin approval
-    const requiresManualApproval = ['postPurchase', 'other'].includes(category);
+    const requiresManualApproval = ["postPurchase", "other"].includes(category);
 
     // Differentiated Invoice Flow:
     // Legal and Marketing require manual admin pricing and client accept/reject.
     // All other categories skip the accept/reject flow and instantly generate an unpaid invoice.
-    const requiresManualPricing = ['legal', 'marketing'].includes(category);
+    const requiresManualPricing = ["legal", "marketing"].includes(category);
 
     // Upsert behavior: user can only have one active request per (category + serviceType).
     // If an active request exists, allow updating the editable fields instead of creating duplicates.
@@ -167,10 +251,15 @@ export class ServiceRequestService {
           category: category as any,
           serviceType: createDto.serviceType as any,
         } as any,
-        order: { createdAt: 'DESC' } as any,
+        order: { createdAt: "DESC" } as any,
       });
 
-      if (existing && ![ServiceStatus.COMPLETED, ServiceStatus.CANCELLED].includes(existing.status as any)) {
+      if (
+        existing &&
+        ![ServiceStatus.COMPLETED, ServiceStatus.CANCELLED].includes(
+          existing.status as any,
+        )
+      ) {
         // Only allow update while still pending and not in an invoice/decision state.
         const canEdit =
           existing.status === ServiceStatus.PENDING &&
@@ -180,7 +269,9 @@ export class ServiceRequestService {
           !existing.invoiceSent;
 
         if (!canEdit) {
-          throw new BadRequestException('You already have an active request for this service');
+          throw new BadRequestException(
+            "You already have an active request for this service",
+          );
         }
 
         existing.clientName = createDto.clientName ?? existing.clientName;
@@ -188,25 +279,34 @@ export class ServiceRequestService {
         existing.city = createDto.city ?? existing.city;
         existing.district = createDto.district ?? existing.district;
         existing.quantity = createDto.quantity ?? existing.quantity;
+        if (["legal", "marketing"].includes(category))
+          existing.targetDepartment = targetDepartment;
         existing.description = createDto.description ?? existing.description;
         existing.firstParty = createDto.firstParty ?? existing.firstParty;
         existing.secondParty = createDto.secondParty ?? existing.secondParty;
-        existing.metadata = cleanProviderMetadata(createDto.metadata, existing.metadata);
+        existing.metadata = cleanProviderMetadata(
+          createDto.metadata,
+          existing.metadata,
+        );
         existing.documentIds = createDto.documentIds ?? existing.documentIds;
-        if (typeof requestedPrice === 'number') existing.price = requestedPrice;
+        if (typeof requestedPrice === "number") existing.price = requestedPrice;
 
-        const savedExisting = await this.serviceRequestRepository.save(existing);
-        await this.notifyDepartmentOfNewRequest(savedExisting).catch(() => undefined);
+        const savedExisting =
+          await this.serviceRequestRepository.save(existing);
+        await this.notifyDepartmentOfNewRequest(savedExisting).catch(
+          () => undefined,
+        );
         return savedExisting;
       }
     }
 
     const serviceRequest = this.serviceRequestRepository.create({
       ...createDto,
-      user:user,
+      user: user,
       userId: user?.id || null,
       targetDepartment,
-      price: typeof requestedPrice === 'number' ? requestedPrice : calculatedPrice,
+      price:
+        typeof requestedPrice === "number" ? requestedPrice : calculatedPrice,
       paymentStatus: PaidStatus.UNPAID,
       adminAccepted: !requiresManualApproval,
       firstParty: createDto.firstParty,
@@ -215,29 +315,40 @@ export class ServiceRequestService {
       documentIds: createDto.documentIds,
       // If it doesn't require manual pricing, we treat the invoice as sent and accepted immediately
       invoiceSent: !requiresManualPricing,
-      clientDecision: !requiresManualPricing ? ClientDecision.ACCEPTED : ClientDecision.PENDING,
-      invoicePrice: !requiresManualPricing ? (typeof requestedPrice === 'number' ? requestedPrice : calculatedPrice) : undefined,
+      clientDecision: !requiresManualPricing
+        ? ClientDecision.ACCEPTED
+        : ClientDecision.PENDING,
+      invoicePrice: !requiresManualPricing
+        ? typeof requestedPrice === "number"
+          ? requestedPrice
+          : calculatedPrice
+        : undefined,
     });
 
-    const savedRequest = await this.serviceRequestRepository.save(serviceRequest);
+    const savedRequest =
+      await this.serviceRequestRepository.save(serviceRequest);
 
     // Actively generate the Invoice entity for non-manual-pricing categories
     if (!requiresManualPricing && user) {
       try {
-        const invoiceAmount = typeof requestedPrice === 'number' ? requestedPrice : calculatedPrice;
+        const invoiceAmount =
+          typeof requestedPrice === "number" ? requestedPrice : calculatedPrice;
         const invoice = this.invoiceRepository.create({
           amount: invoiceAmount || 0,
           total: invoiceAmount || 0,
           status: InvoiceStatus.UNPAID,
           description: `فاتورة خدمة: ${savedRequest.serviceType}`,
-          referenceType: 'ServiceRequest',
+          referenceType: "ServiceRequest",
           referenceId: savedRequest.id,
           userId: user.id,
           user: user,
         });
         await this.invoiceRepository.save(invoice);
       } catch (err) {
-        console.error('Failed to auto-generate invoice entity for service request:', err);
+        console.error(
+          "Failed to auto-generate invoice entity for service request:",
+          err,
+        );
       }
     }
 
@@ -255,11 +366,11 @@ export class ServiceRequestService {
   private async notifyDepartmentOfNewRequest(request: ServiceRequest) {
     const targetDept = request.targetDepartment;
     const targetToSlugMap: Record<string, string> = {
-      [TargetDepartment.MARKETING]: 'marketing',
-      [TargetDepartment.FINANCE]: 'finance',
-      [TargetDepartment.LEGAL]: 'legal',
-      [TargetDepartment.REAL_ESTATE]: 'properties',
-      [TargetDepartment.EMPLOYEES]: 'employees',
+      [TargetDepartment.MARKETING]: "marketing",
+      [TargetDepartment.FINANCE]: "finance",
+      [TargetDepartment.LEGAL]: "legal",
+      [TargetDepartment.REAL_ESTATE]: "properties",
+      [TargetDepartment.EMPLOYEES]: "employees",
     };
     const deptSlug = targetToSlugMap[targetDept];
 
@@ -271,8 +382,8 @@ export class ServiceRequestService {
       return (
         userDepartments.includes(dept as any) ||
         departmentPermissions[dept] === true ||
-        departmentPermissions[dept] === 'manage' ||
-        departmentPermissions[dept] === 'view'
+        departmentPermissions[dept] === "manage" ||
+        departmentPermissions[dept] === "view"
       );
     };
 
@@ -292,20 +403,25 @@ export class ServiceRequestService {
 
     const allStaff = await this.userRepository.find({
       where: {
-        role: (require('typeorm').In)(staffRoles),
+        role: require("typeorm").In(staffRoles),
       },
     });
 
     const recipients = allStaff.filter((u) => hasDeptAccess(u, deptSlug));
 
     // Remove duplicates
-    const uniqueRecipients = Array.from(new Map(recipients.map(r => [r.id, r])).values());
+    const uniqueRecipients = Array.from(
+      new Map(recipients.map((r) => [r.id, r])).values(),
+    );
 
     for (const recipient of uniqueRecipients) {
       try {
         if (recipient.email) {
-          if (request.category === 'legal') {
-             await this.mailService.sendLegalRequestNotification(recipient.email, request);
+          if (request.category === "legal") {
+            await this.mailService.sendLegalRequestNotification(
+              recipient.email,
+              request,
+            );
           } else {
             //  await this.mailService.sendNewServiceRequestNotification(recipient.email, request);
           }
@@ -313,7 +429,9 @@ export class ServiceRequestService {
         await this.notificationService.create(
           recipient.id,
           NotificationType.SERVICE_REQUEST,
-          request.category === 'legal' ? 'طلب خدمة قانونية جديد' : 'طلب خدمة جديد لقسمك',
+          request.category === "legal"
+            ? "طلب خدمة قانونية جديد"
+            : "طلب خدمة جديد لقسمك",
           `تم استلام طلب جديد: ${request.serviceType}. يمكنك مراجعته وتقديم عرض الآن.`,
           { serviceRequestId: request.id, department: deptSlug },
         );
@@ -324,14 +442,15 @@ export class ServiceRequestService {
   }
 
   private async notifyAdminsOfNewRequest(request: ServiceRequest) {
-    const admins = await this.userRepository.find({ where: { role: Role.ADMIN } });
+    const admins = await this.userRepository.find({
+      where: { role: Role.ADMIN },
+    });
     // for (const admin of admins) {
     //   if (admin.email) {
     //     await this.mailService.sendNewServiceRequestNotification(admin.email, request);
     //   }
     // }
   }
-
 
   /**
    * Make sure a service request has exactly one wallet invoice.
@@ -344,11 +463,16 @@ export class ServiceRequestService {
     if (!serviceRequest.userId) return null;
 
     let invoice = await this.invoiceRepository.findOne({
-      where: { referenceType: 'ServiceRequest', referenceId: serviceRequest.id },
+      where: {
+        referenceType: "ServiceRequest",
+        referenceId: serviceRequest.id,
+      },
     });
 
     if (invoice?.status === InvoiceStatus.PAID) {
-      throw new BadRequestException('This service invoice has already been paid');
+      throw new BadRequestException(
+        "This service invoice has already been paid",
+      );
     }
 
     if (invoice) {
@@ -362,7 +486,7 @@ export class ServiceRequestService {
         total: amount,
         status: InvoiceStatus.UNPAID,
         description: `فاتورة خدمة: ${serviceRequest.serviceType}`,
-        referenceType: 'ServiceRequest',
+        referenceType: "ServiceRequest",
         referenceId: serviceRequest.id,
         userId: serviceRequest.userId,
         user: serviceRequest.user,
@@ -373,44 +497,63 @@ export class ServiceRequestService {
   }
 
   /** Admin: Set price and send invoice to the client */
-  async sendInvoice(id: string, price: number, user: User): Promise<ServiceRequest> {
-    const allowedRoles = [Role.ADMIN, Role.LEGAL, Role.LEGAL_ADMIN, Role.MARKETING, Role.MARKETING_ADMIN, Role.FINANCE, Role.FINANCE_ADMIN];
+  async sendInvoice(
+    id: string,
+    price: number,
+    user: User,
+  ): Promise<ServiceRequest> {
+    const allowedRoles = [
+      Role.ADMIN,
+      Role.LEGAL,
+      Role.LEGAL_ADMIN,
+      Role.MARKETING,
+      Role.MARKETING_ADMIN,
+      Role.FINANCE,
+      Role.FINANCE_ADMIN,
+    ];
     if (!allowedRoles.includes(user.role as any)) {
-      throw new ForbiddenException('You do not have permission to send invoices');
+      throw new ForbiddenException(
+        "You do not have permission to send invoices",
+      );
     }
 
     const serviceRequest = await this.serviceRequestRepository.findOne({
       where: { id },
-      relations: ['user'],
+      relations: ["user"],
     });
 
-    if (!serviceRequest) throw new NotFoundException('Service request not found');
+    if (!serviceRequest)
+      throw new NotFoundException("Service request not found");
 
     // Only allow sending invoice for the request's department unless admin.
     const targetToSlugMap: Record<string, string> = {
-      [TargetDepartment.MARKETING]: 'marketing',
-      [TargetDepartment.FINANCE]: 'finance',
-      [TargetDepartment.LEGAL]: 'legal',
-      [TargetDepartment.REAL_ESTATE]: 'properties',
-      [TargetDepartment.EMPLOYEES]: 'employees',
+      [TargetDepartment.MARKETING]: "marketing",
+      [TargetDepartment.FINANCE]: "finance",
+      [TargetDepartment.LEGAL]: "legal",
+      [TargetDepartment.REAL_ESTATE]: "properties",
+      [TargetDepartment.EMPLOYEES]: "employees",
     };
     const deptSlug = targetToSlugMap[serviceRequest.targetDepartment];
-    const userDepartments = Array.isArray(user.departments) ? user.departments : [];
+    const userDepartments = Array.isArray(user.departments)
+      ? user.departments
+      : [];
     const departmentPermissions = user.departmentPermissions || {};
-    const hasDeptAccess =
-      user.role === Role.ADMIN ||
-      userDepartments.includes(deptSlug as any) ||
-      departmentPermissions[deptSlug] === true ||
-      departmentPermissions[deptSlug] === 'manage' ||
-      departmentPermissions[deptSlug] === 'view';
+    const hasDeptAccess = departmentAccess(user, deptSlug, true);
     if (!hasDeptAccess) {
-      throw new ForbiddenException('You do not have access to this department invoice');
+      throw new ForbiddenException(
+        "You do not have access to this department invoice",
+      );
     }
 
     // Validate the offered price is not below the default/base price.
-    const basePrice = await this.calculateDefaultPrice(serviceRequest.category as any, serviceRequest.serviceType);
-    if (typeof price !== 'number' || Number.isNaN(price) || price < basePrice) {
-      throw new BadRequestException(`Invoice price must be at least the default price (${basePrice})`);
+    const basePrice = await this.calculateDefaultPrice(
+      serviceRequest.category as any,
+      serviceRequest.serviceType,
+    );
+    if (typeof price !== "number" || Number.isNaN(price) || price < basePrice) {
+      throw new BadRequestException(
+        `Invoice price must be at least the default price (${basePrice})`,
+      );
     }
 
     serviceRequest.invoicePrice = price;
@@ -422,70 +565,96 @@ export class ServiceRequestService {
     await this.upsertServiceRequestInvoice(saved, price);
     // Notify client via email and in-app notification
     if (serviceRequest.user?.email) {
-      if (serviceRequest.category === 'legal') {
-        await this.mailService.sendLegalInvoiceToClient(serviceRequest.user.email, saved);
+      if (serviceRequest.category === "legal") {
+        await this.mailService.sendLegalInvoiceToClient(
+          serviceRequest.user.email,
+          saved,
+        );
       } else {
         // await this.mailService.sendNewServiceRequestNotification(serviceRequest.user.email, saved);
       }
     }
 
     if (serviceRequest.userId) {
-      await this.notificationService.create(
-        serviceRequest.userId,
-        NotificationType.SERVICE_REQUEST,
-        'تم إرسال الفاتورة الخاصة بطلبك',
-        `الخدمة: ${saved.serviceType} - السعر: ${price} ريال. يرجى قبول أو رفض الفاتورة من المحفظة.`,
-        { serviceRequestId: saved.id },
-      ).catch(err => console.error('Failed to send client notification:', err));
+      await this.notificationService
+        .create(
+          serviceRequest.userId,
+          NotificationType.SERVICE_REQUEST,
+          "تم إرسال الفاتورة الخاصة بطلبك",
+          `الخدمة: ${saved.serviceType} - السعر: ${price} ريال. يرجى قبول أو رفض الفاتورة من المحفظة.`,
+          { serviceRequestId: saved.id },
+        )
+        .catch((err) =>
+          console.error("Failed to send client notification:", err),
+        );
     }
 
     return saved;
   }
 
   /** Client: Accept or reject the invoice */
-  async clientDecision(id: string, decision: 'accepted' | 'rejected', user: User): Promise<ServiceRequest> {
+  async clientDecision(
+    id: string,
+    decision: "accepted" | "rejected",
+    user: User,
+  ): Promise<ServiceRequest> {
     const serviceRequest = await this.serviceRequestRepository.findOne({
       where: { id, userId: user.id },
-      relations: ['user'],
+      relations: ["user"],
     });
 
-    if (!serviceRequest) throw new NotFoundException('Service request not found');
+    if (!serviceRequest)
+      throw new NotFoundException("Service request not found");
     if (!serviceRequest.invoiceSent) {
-      throw new BadRequestException('No invoice has been sent yet for this request');
+      throw new BadRequestException(
+        "No invoice has been sent yet for this request",
+      );
     }
     if (serviceRequest.clientDecision === ClientDecision.ACCEPTED) {
-      throw new BadRequestException('You have already accepted this invoice. Payment is required.');
+      throw new BadRequestException(
+        "You have already accepted this invoice. Payment is required.",
+      );
     }
 
-    serviceRequest.clientDecision = decision === 'accepted' ? ClientDecision.ACCEPTED : ClientDecision.REJECTED;
+    serviceRequest.clientDecision =
+      decision === "accepted"
+        ? ClientDecision.ACCEPTED
+        : ClientDecision.REJECTED;
     const saved = await this.serviceRequestRepository.save(serviceRequest);
 
     // The invoice is normally created when the admin sends the price.
     // Keep this fallback for older requests and reuse the existing invoice.
-    if (decision === 'accepted') {
+    if (decision === "accepted") {
       try {
-        await this.upsertServiceRequestInvoice(saved, serviceRequest.invoicePrice || 0);
+        await this.upsertServiceRequestInvoice(
+          saved,
+          serviceRequest.invoicePrice || 0,
+        );
       } catch (err) {
-        console.error('Failed to create invoice entity for accepted service request:', err);
+        console.error(
+          "Failed to create invoice entity for accepted service request:",
+          err,
+        );
       }
     }
 
     // Notify admin and relevant team of client's decision
-    const [admins, lawyers, legalAdmins, marketing, marketingAdmins] = await Promise.all([
-      this.userRepository.find({ where: { role: Role.ADMIN } }),
-      this.userRepository.find({ where: { role: Role.LEGAL } }),
-      this.userRepository.find({ where: { role: Role.LEGAL_ADMIN } }),
-      this.userRepository.find({ where: { role: Role.MARKETING } }),
-      this.userRepository.find({ where: { role: Role.MARKETING_ADMIN } }),
-    ]);
+    const [admins, lawyers, legalAdmins, marketing, marketingAdmins] =
+      await Promise.all([
+        this.userRepository.find({ where: { role: Role.ADMIN } }),
+        this.userRepository.find({ where: { role: Role.LEGAL } }),
+        this.userRepository.find({ where: { role: Role.LEGAL_ADMIN } }),
+        this.userRepository.find({ where: { role: Role.MARKETING } }),
+        this.userRepository.find({ where: { role: Role.MARKETING_ADMIN } }),
+      ]);
 
     let recipients = [...admins];
-    if (serviceRequest.category === 'legal') {
+    if (serviceRequest.category === "legal") {
       recipients = [...recipients, ...lawyers, ...legalAdmins];
-    } else if (serviceRequest.category === 'marketing') {
+    } else if (serviceRequest.category === "marketing") {
       recipients = [...recipients, ...marketing, ...marketingAdmins];
     }
-    const decisionText = decision === 'accepted' ? 'قَبِل' : 'رَفَض';
+    const decisionText = decision === "accepted" ? "قَبِل" : "رَفَض";
 
     for (const recipient of recipients) {
       try {
@@ -496,7 +665,7 @@ export class ServiceRequestService {
           recipient.id,
           NotificationType.SERVICE_REQUEST,
           `قرار العميل: ${decisionText} الفاتورة`,
-          `العميل ${serviceRequest.user?.firstName || 'غير معروف'} ${decisionText} فاتورة الطلب: ${saved.serviceType}`,
+          `العميل ${serviceRequest.user?.firstName || "غير معروف"} ${decisionText} فاتورة الطلب: ${saved.serviceType}`,
           { serviceRequestId: saved.id, decision },
         );
       } catch (err) {
@@ -507,11 +676,9 @@ export class ServiceRequestService {
     return saved;
   }
 
-
-
   async accept(id: string, user: User): Promise<ServiceRequest> {
     if (user.role !== Role.ADMIN) {
-      throw new ForbiddenException('Only admins can accept service requests');
+      throw new ForbiddenException("Only admins can accept service requests");
     }
 
     const serviceRequest = await this.findOne(id, user);
@@ -521,14 +688,14 @@ export class ServiceRequestService {
 
   private resolveTargetDepartment(category: string): TargetDepartment {
     switch (category) {
-      case 'legal':
+      case "legal":
         return TargetDepartment.LEGAL;
-      case 'marketing':
+      case "marketing":
         return TargetDepartment.MARKETING;
-      case 'leasing':
-      case 'postPurchase':
-      case 'construction':
-      case 'other':
+      case "leasing":
+      case "postPurchase":
+      case "construction":
+      case "other":
       default:
         return TargetDepartment.REAL_ESTATE; // Default fallback for other if not specified
     }
@@ -561,40 +728,122 @@ export class ServiceRequestService {
    * their visibleWhen condition are skipped, as are divider/file/terms fields.
    * Unknown categories or unresolvable definitions never block a request.
    */
-  private async assertCatalogServiceAvailable(dto: CreateServiceRequestDto, user: User): Promise<void> {
+  private async assertCatalogServiceAvailable(
+    dto: CreateServiceRequestDto,
+    user: User,
+  ): Promise<void> {
     if (user.role === Role.ADMIN) return;
-    const category = dto.category || 'other';
-    const formKey = category === 'legal' ? this.resolveLegalFormKey(dto) || category : category;
+    const category = dto.category || "other";
+    if (
+      category !== "legal" &&
+      !Object.prototype.hasOwnProperty.call(DEFAULT_SERVICE_FORMS, category)
+    ) {
+      const setting = await this.settingsService.findOne(
+        "custom_service_categories",
+      );
+      let categories: { id?: string; status?: string }[] = [];
+      try {
+        const value: unknown = JSON.parse(setting?.value || "[]");
+        if (Array.isArray(value)) categories = value;
+      } catch {
+        /* Invalid registry cannot enable a category. */
+      }
+      const selectedCategory = categories.find((item) => item?.id === category);
+      if (
+        !selectedCategory ||
+        ["disabled", "soon"].includes(selectedCategory.status || "")
+      )
+        throw new BadRequestException("هذه الخدمة غير متاحة حالياً");
+    }
+    const formKey =
+      category === "legal"
+        ? this.resolveLegalFormKey(dto) || category
+        : category;
     const [categoryFlag, formFlag, catalog] = await Promise.all([
       this.settingsService.findOne(`module_services_${category}`),
       this.settingsService.findOne(`module_${formKey}`),
-      this.settingsService.findOne('custom_service_catalog'),
+      this.settingsService.findOne("custom_service_catalog"),
     ]);
-    if ([categoryFlag, formFlag].some(flag => flag?.value === 'disabled' || flag?.value === 'soon')) throw new BadRequestException('هذه الخدمة غير متاحة حالياً');
-    const selected = dto.metadata?.catalogService || dto.metadata?.disputeType || dto.metadata?.type || dto.serviceType;
-    let changes: { category: string; name: string; deleted?: boolean; status?: string }[] = [];
+    if (
+      [categoryFlag, formFlag].some(
+        (flag) => flag?.value === "disabled" || flag?.value === "soon",
+      )
+    )
+      throw new BadRequestException("هذه الخدمة غير متاحة حالياً");
+    const selected =
+      dto.metadata?.catalogService ||
+      dto.metadata?.disputeType ||
+      dto.metadata?.type ||
+      dto.serviceType;
+    let changes: {
+      category: string;
+      name: string;
+      deleted?: boolean;
+      status?: string;
+    }[] = [];
     if (catalog?.value) {
-      try { const value: unknown = JSON.parse(catalog.value); if (Array.isArray(value)) changes = value; }
-      catch { throw new BadRequestException('تعذر قراءة إعدادات الخدمة. يرجى المحاولة لاحقاً.'); }
+      try {
+        const value: unknown = JSON.parse(catalog.value);
+        if (Array.isArray(value)) changes = value;
+      } catch {
+        throw new BadRequestException(
+          "تعذر قراءة إعدادات الخدمة. يرجى المحاولة لاحقاً.",
+        );
+      }
     }
-    const legalBranchNames: Record<string, string> = { legal_disputes: 'المنازعات العقارية', legal_contracts: 'العقود', legal_documentation: 'التوثيق', legal_other: 'أخرى' };
-    const parent = category === 'legal' ? changes.find(item => item.category === 'legal' && item.name === legalBranchNames[formKey]) : undefined;
-    if (parent?.deleted || parent?.status === 'disabled' || parent?.status === 'soon') throw new BadRequestException('هذه الخدمة غير متاحة حالياً');
-    const item = changes.find(item => item.category === formKey && item.name === selected);
-    const itemKey = `module_service_item_${formKey}_${selected}`.replace(/\s+/g, '_').toLowerCase();
+    const legalBranchNames: Record<string, string> = {
+      legal_disputes: "المنازعات العقارية",
+      legal_contracts: "العقود",
+      legal_documentation: "التوثيق",
+      legal_other: "أخرى",
+    };
+    const parent =
+      category === "legal"
+        ? changes.find(
+            (item) =>
+              item.category === "legal" &&
+              item.name === legalBranchNames[formKey],
+          )
+        : undefined;
+    if (
+      parent?.deleted ||
+      parent?.status === "disabled" ||
+      parent?.status === "soon"
+    )
+      throw new BadRequestException("هذه الخدمة غير متاحة حالياً");
+    const item = changes.find(
+      (item) => item.category === formKey && item.name === selected,
+    );
+    const itemKey = `module_service_item_${formKey}_${selected}`
+      .replace(/\s+/g, "_")
+      .toLowerCase();
     const flag = await this.settingsService.findOne(itemKey);
-    if (item?.deleted || item?.status === 'disabled' || item?.status === 'soon' || flag?.value === 'disabled' || flag?.value === 'soon') throw new BadRequestException('هذه الخدمة غير متاحة حالياً');
+    if (
+      item?.deleted ||
+      item?.status === "disabled" ||
+      item?.status === "soon" ||
+      flag?.value === "disabled" ||
+      flag?.value === "soon"
+    )
+      throw new BadRequestException("هذه الخدمة غير متاحة حالياً");
   }
 
-  private async validateAgainstServiceForm(createDto: CreateServiceRequestDto, user: User): Promise<void> {
+  private async validateAgainstServiceForm(
+    createDto: CreateServiceRequestDto,
+    user: User,
+  ): Promise<void> {
     const category = createDto.category as string;
     if (!category) return;
-    if (user && ServiceRequestService.FORM_VALIDATION_EXEMPT_ROLES.includes(user.role)) return;
+    if (
+      user &&
+      ServiceRequestService.FORM_VALIDATION_EXEMPT_ROLES.includes(user.role)
+    )
+      return;
 
     let formKey: string | null = null;
-    if (category === 'legal') {
+    if (category === "legal") {
       formKey = this.resolveLegalFormKey(createDto);
-    } else if (DEFAULT_SERVICE_FORMS[category]) {
+    } else {
       formKey = category;
     }
     if (!formKey) return; // unknown/ambiguous category → skip validation
@@ -614,16 +863,27 @@ export class ServiceRequestService {
     const missing: string[] = [];
     for (const field of def.fields) {
       if (!field.required) continue;
-      if (field.type === 'divider' || field.type === 'file' || field.type === 'terms') continue;
+      if (
+        field.type === "divider" ||
+        field.type === "file" ||
+        field.type === "terms"
+      )
+        continue;
       if (!this.isFieldVisible(field.visibleWhen, values)) continue;
       const value = values[field.id];
-      if (value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) {
+      if (
+        value === undefined ||
+        value === null ||
+        (typeof value === "string" && value.trim() === "")
+      ) {
         missing.push(field.label);
       }
     }
 
     if (missing.length > 0) {
-      throw new BadRequestException(`الحقول التالية مطلوبة: ${missing.join('، ')}`);
+      throw new BadRequestException(
+        `الحقول التالية مطلوبة: ${missing.join("، ")}`,
+      );
     }
   }
 
@@ -632,33 +892,45 @@ export class ServiceRequestService {
    * metadata markers (LegalRequestFlow compositions and legacy buildingmanagement
    * service types). Returns null when ambiguous — validation is skipped then.
    */
-  private resolveLegalFormKey(createDto: CreateServiceRequestDto): string | null {
-    const serviceType = (createDto.serviceType || '').trim();
+  private resolveLegalFormKey(
+    createDto: CreateServiceRequestDto,
+  ): string | null {
+    const serviceType = (createDto.serviceType || "").trim();
     const metadata = (createDto.metadata || {}) as Record<string, any>;
 
     if (
-      serviceType.includes('منازعة') || serviceType.includes('نزاع') ||
-      ['dispute', 'deedUpdate'].includes(serviceType) || metadata.disputeType
+      serviceType.includes("منازعة") ||
+      serviceType.includes("نزاع") ||
+      ["dispute", "deedUpdate"].includes(serviceType) ||
+      metadata.disputeType
     ) {
-      return 'legal_disputes';
+      return "legal_disputes";
     }
     if (
-      serviceType.includes('توثيق') || ['notary', 'notarization'].includes(serviceType) ||
-      metadata.deedInfo || metadata.saleAmount
+      serviceType.includes("توثيق") ||
+      ["notary", "notarization"].includes(serviceType) ||
+      metadata.deedInfo ||
+      metadata.saleAmount
     ) {
-      return 'legal_documentation';
+      return "legal_documentation";
     }
     if (
-      serviceType.startsWith('عقد') || serviceType === 'مراجعة عقد' || serviceType === 'contracts' ||
-      metadata.contractDetails || metadata.applicantRole
+      serviceType.startsWith("عقد") ||
+      serviceType === "مراجعة عقد" ||
+      serviceType === "contracts" ||
+      metadata.contractDetails ||
+      metadata.applicantRole
     ) {
-      return 'legal_contracts';
+      return "legal_contracts";
     }
     if (
-      serviceType.startsWith('خدمة قانونية') || serviceType === 'consultation' ||
-      serviceType.includes('استشار') || serviceType.includes('تقرير') || metadata.topic
+      serviceType.startsWith("خدمة قانونية") ||
+      serviceType === "consultation" ||
+      serviceType.includes("استشار") ||
+      serviceType.includes("تقرير") ||
+      metadata.topic
     ) {
-      return 'legal_other';
+      return "legal_other";
     }
     return null;
   }
@@ -666,17 +938,26 @@ export class ServiceRequestService {
   private getTargetValue(dto: CreateServiceRequestDto, target: string): any {
     if (!target) return undefined;
     let current: any = dto;
-    for (const part of target.split('.')) {
-      if (current === undefined || current === null || typeof current !== 'object') return undefined;
+    for (const part of target.split(".")) {
+      if (
+        current === undefined ||
+        current === null ||
+        typeof current !== "object"
+      )
+        return undefined;
       current = current[part];
     }
     return current;
   }
 
-  private isFieldVisible(visibleWhen: VisibleWhen | undefined, values: Record<string, any>): boolean {
+  private isFieldVisible(
+    visibleWhen: VisibleWhen | undefined,
+    values: Record<string, any>,
+  ): boolean {
     if (!visibleWhen) return true;
     const actual = values[visibleWhen.field];
-    const toList = (v?: string | string[]): string[] => (v === undefined ? [] : Array.isArray(v) ? v : [v]);
+    const toList = (v?: string | string[]): string[] =>
+      v === undefined ? [] : Array.isArray(v) ? v : [v];
     const equals = toList(visibleWhen.equals);
     if (equals.length > 0 && !equals.includes(actual)) return false;
     const notEquals = toList(visibleWhen.notEquals);
@@ -695,8 +976,8 @@ export class ServiceRequestService {
   ) {
     const skip = (page - 1) * limit;
     const queryBuilder = this.serviceRequestRepository
-      .createQueryBuilder('service')
-      .leftJoinAndSelect('service.user', 'user');
+      .createQueryBuilder("service")
+      .leftJoinAndSelect("service.user", "user");
 
     const slugToTargetMap: Record<string, TargetDepartment> = {
       marketing: TargetDepartment.MARKETING,
@@ -709,62 +990,98 @@ export class ServiceRequestService {
 
     // If a specific department is requested via query param
     if (department) {
-      const targetDept = slugToTargetMap[department] || (department as TargetDepartment);
-      queryBuilder.andWhere('service.targetDepartment = :targetDept', { targetDept });
+      const targetDept = slugToTargetMap[department];
+      if (!targetDept) throw new BadRequestException("Unknown department");
+      if (
+        ![Role.ADMIN, Role.AGENT, Role.USER, Role.VIEWER].includes(user.role) &&
+        !onlyMine
+      ) {
+        const allowed = Object.keys(slugToTargetMap).some(
+          (slug) =>
+            slugToTargetMap[slug] === targetDept &&
+            departmentAccess(user, slug),
+        );
+        if (!allowed)
+          throw new ForbiddenException(
+            "You do not have access to this department",
+          );
+      }
+      queryBuilder.andWhere("service.targetDepartment = :targetDept", {
+        targetDept,
+      });
     }
 
     // If a specific category is requested via query param
     if (category) {
-      queryBuilder.andWhere('service.category = :category', { category });
+      queryBuilder.andWhere("service.category = :category", { category });
     }
 
     if ((user.role === Role.ADMIN || user.role === Role.AGENT) && !onlyMine) {
       // General list (مركز الطلبات): legal and marketing requests only belong in their departments and must not go here.
       if (!department && !category && !includeDepartmentServices) {
         queryBuilder.andWhere(
-          '(service.category IS NULL OR service.category NOT IN (:...deptOnlyCategories))',
-          { deptOnlyCategories: ['legal', 'marketing'] },
+          "(service.category IS NULL OR service.category NOT IN (:...deptOnlyCategories))",
+          { deptOnlyCategories: ["legal", "marketing"] },
         );
         queryBuilder.andWhere(
-          'service.targetDepartment NOT IN (:...deptOnlyTargets)',
-          { deptOnlyTargets: [TargetDepartment.LEGAL, TargetDepartment.MARKETING] },
+          "service.targetDepartment NOT IN (:...deptOnlyTargets)",
+          {
+            deptOnlyTargets: [
+              TargetDepartment.LEGAL,
+              TargetDepartment.MARKETING,
+            ],
+          },
         );
       }
-    } else if (user.role === Role.USER || user.role === Role.VIEWER || onlyMine) {
-      queryBuilder.andWhere('service.userId = :userId', { userId: user.id });
+    } else if (
+      user.role === Role.USER ||
+      user.role === Role.VIEWER ||
+      onlyMine
+    ) {
+      queryBuilder.andWhere("service.userId = :userId", { userId: user.id });
       if (!department && !category && !includeDepartmentServices) {
         queryBuilder.andWhere(
-          '(service.category IS NULL OR service.category NOT IN (:...deptOnlyCategories))',
-          { deptOnlyCategories: ['legal', 'marketing'] },
+          "(service.category IS NULL OR service.category NOT IN (:...deptOnlyCategories))",
+          { deptOnlyCategories: ["legal", "marketing"] },
         );
         queryBuilder.andWhere(
-          'service.targetDepartment NOT IN (:...deptOnlyTargets)',
-          { deptOnlyTargets: [TargetDepartment.LEGAL, TargetDepartment.MARKETING] },
+          "service.targetDepartment NOT IN (:...deptOnlyTargets)",
+          {
+            deptOnlyTargets: [
+              TargetDepartment.LEGAL,
+              TargetDepartment.MARKETING,
+            ],
+          },
         );
       }
     } else {
       const ownerIds = await this.getOwnerIds(user.id);
-      const userDeptsRaw = Array.isArray(user.departments) ? user.departments : [];
-      const deptPerms = user.departmentPermissions || {};
-      const deptSlugsFromPerms = Object.entries(deptPerms)
-        .filter(([, v]) => v === true || v === 'manage' || v === 'view')
-        .map(([k]) => String(k));
-      const userDepts = Array.from(new Set([...userDeptsRaw, ...deptSlugsFromPerms]));
+      const userDepts = Object.keys(slugToTargetMap).filter((slug) =>
+        departmentAccess(user, slug),
+      );
 
-      const targetDepts = userDepts.map(slug => slugToTargetMap[slug]).filter(Boolean);
+      const targetDepts = userDepts
+        .map((slug) => slugToTargetMap[slug])
+        .filter(Boolean);
 
       // Filter by department if not already explicitly specified
       if (!department) {
         if (targetDepts.length > 0) {
-          queryBuilder.andWhere('service.targetDepartment IN (:...targetDepts)', { targetDepts });
+          queryBuilder.andWhere(
+            "service.targetDepartment IN (:...targetDepts)",
+            { targetDepts },
+          );
         } else {
-          queryBuilder.andWhere('service.userId IN (:...ownerIds)', { ownerIds });
+          queryBuilder.andWhere("service.userId IN (:...ownerIds)", {
+            ownerIds,
+          });
         }
       }
     }
 
     const [items, total] = await queryBuilder
-      .orderBy('service.createdAt', 'DESC')
+      .orderBy("service.createdAt", "DESC")
+      .addOrderBy("service.id", "DESC")
       .skip(skip)
       .take(limit)
       .getManyAndCount();
@@ -781,11 +1098,11 @@ export class ServiceRequestService {
   async findOne(id: string, user: User) {
     const serviceRequest = await this.serviceRequestRepository.findOne({
       where: { id },
-      relations: ['user'],
+      relations: ["user"],
     });
 
     if (!serviceRequest) {
-      throw new NotFoundException('Service request not found');
+      throw new NotFoundException("Service request not found");
     }
 
     // Admins/Agents see everything
@@ -793,27 +1110,29 @@ export class ServiceRequestService {
       return serviceRequest;
     }
 
-    // Clients and viewers can see their own requests
-    if ((user.role === Role.USER || user.role === Role.VIEWER) && serviceRequest.userId === user.id) {
+    // Ownership remains valid if the customer's account role changes.
+    if (serviceRequest.userId === user.id) {
       return serviceRequest;
     }
 
     const userDepts = user.departments || [];
     const targetDept = serviceRequest.targetDepartment;
     const targetToSlugMap: Record<string, string> = {
-      [TargetDepartment.MARKETING]: 'marketing',
-      [TargetDepartment.FINANCE]: 'finance',
-      [TargetDepartment.LEGAL]: 'legal',
-      [TargetDepartment.REAL_ESTATE]: 'properties',
-      [TargetDepartment.EMPLOYEES]: 'employees',
+      [TargetDepartment.MARKETING]: "marketing",
+      [TargetDepartment.FINANCE]: "finance",
+      [TargetDepartment.LEGAL]: "legal",
+      [TargetDepartment.REAL_ESTATE]: "properties",
+      [TargetDepartment.EMPLOYEES]: "employees",
     };
     const requiredDeptSlug = targetToSlugMap[targetDept];
 
-    if (userDepts.includes(requiredDeptSlug as Department)) {
-       return serviceRequest;
+    if (departmentAccess(user, requiredDeptSlug)) {
+      return serviceRequest;
     }
 
-    throw new ForbiddenException('You do not have permission to view this service request');
+    throw new ForbiddenException(
+      "You do not have permission to view this service request",
+    );
   }
 
   // NEW METHOD: Get all unpaid service requests for a user
@@ -827,7 +1146,7 @@ export class ServiceRequestService {
         clientDecision: ClientDecision.ACCEPTED,
       },
       order: {
-        createdAt: 'DESC',
+        createdAt: "DESC",
       },
     });
   }
@@ -835,13 +1154,17 @@ export class ServiceRequestService {
   // NEW METHOD: Get total unpaid amount for a user
   async getTotalUnpaidAmount(userId: string): Promise<number> {
     const result = await this.serviceRequestRepository
-      .createQueryBuilder('service')
-      .select('SUM(service.price * service.quantity)', 'total')
-      .where('service.userId = :userId', { userId })
-      .andWhere('service.paymentStatus = :status', { status: PaidStatus.UNPAID })
-      .andWhere('service.adminAccepted = true')
-      .andWhere('service.invoiceSent = true')
-      .andWhere('service.clientDecision = :decision', { decision: ClientDecision.ACCEPTED })
+      .createQueryBuilder("service")
+      .select("SUM(service.price * service.quantity)", "total")
+      .where("service.userId = :userId", { userId })
+      .andWhere("service.paymentStatus = :status", {
+        status: PaidStatus.UNPAID,
+      })
+      .andWhere("service.adminAccepted = true")
+      .andWhere("service.invoiceSent = true")
+      .andWhere("service.clientDecision = :decision", {
+        decision: ClientDecision.ACCEPTED,
+      })
       .getRawOne();
 
     return parseFloat(result.total) || 0;
@@ -853,8 +1176,10 @@ export class ServiceRequestService {
     serviceRequest.paymentStatus = PaidStatus.PAID;
 
     // Auto-approve Construction and Legal on payment
-    if (['construction', 'legal'].includes(serviceRequest.category || 'other')) {
-        serviceRequest.adminAccepted = true;
+    if (
+      ["construction", "legal"].includes(serviceRequest.category || "other")
+    ) {
+      serviceRequest.adminAccepted = true;
     }
 
     return this.serviceRequestRepository.save(serviceRequest);
@@ -874,9 +1199,14 @@ export class ServiceRequestService {
     };
   }
 
-  private async calculateDefaultPrice(category: string, serviceType: string): Promise<number> {
+  private async calculateDefaultPrice(
+    category: string,
+    serviceType: string,
+  ): Promise<number> {
     // Try to fetch custom price from settings first
-    const settingKey = `service_price_${category}_${serviceType}`.replace(/\s+/g, '_').toLowerCase();
+    const settingKey = `service_price_${category}_${serviceType}`
+      .replace(/\s+/g, "_")
+      .toLowerCase();
     const customPrice = await this.settingsService.findOne(settingKey);
 
     if (customPrice && customPrice.value) {
@@ -886,61 +1216,60 @@ export class ServiceRequestService {
 
     // Fallback to static price map
     const priceMap = {
-      'postPurchase': {
-        'الغاز': 150,
-        'نقل وتركيب الأثاث': 300,
-        'التأمين على المنزل': 500,
-        'الصيانة (سباكة / كهرباء)': 200,
-        'خدمة التنظيف': 250,
-        'تنسيق حدائق': 400,
-        'أنظمة أمنية': 600,
+      postPurchase: {
+        الغاز: 150,
+        "نقل وتركيب الأثاث": 300,
+        "التأمين على المنزل": 500,
+        "الصيانة (سباكة / كهرباء)": 200,
+        "خدمة التنظيف": 250,
+        "تنسيق حدائق": 400,
+        "أنظمة أمنية": 600,
       },
-      'legal': {
-        'التوثيق ونقل الملكية': 1000,
-        'تحديث الصكوك': 800,
-        'حل المنازعات العقارية': 1500,
-        'صياغة ومراجعة العقود العقارية': 1200,
-        'تقديم الاستشارات العقارية': 500,
+      legal: {
+        "التوثيق ونقل الملكية": 1000,
+        "تحديث الصكوك": 800,
+        "حل المنازعات العقارية": 1500,
+        "صياغة ومراجعة العقود العقارية": 1200,
+        "تقديم الاستشارات العقارية": 500,
       },
-      'construction': {
-        'مقاول عظم': 5000,
-        'تصميم هندسي': 2000,
-        'تشطيبات': 3000,
-        'كهرباء': 1000,
-        'سباكة': 1000,
-        'نجارة': 1500,
-        'دهانات': 1200,
-        'ألمنيوم': 2000,
-        'إشراف هندسي': 2500,
-        'تصميم داخلي': 1800,
+      construction: {
+        "مقاول عظم": 5000,
+        "تصميم هندسي": 2000,
+        تشطيبات: 3000,
+        كهرباء: 1000,
+        سباكة: 1000,
+        نجارة: 1500,
+        دهانات: 1200,
+        ألمنيوم: 2000,
+        "إشراف هندسي": 2500,
+        "تصميم داخلي": 1800,
       },
-      'marketing': {
-      'تصوير فوتوغرافي للعقار': 800,
-      'حملة إعلانية (وسائل التواصل الاجتماعي)': 2500,
-      'حملة إعلانية (إعلانات طرق/تقليدية)': 5000,
-    },
-    'leasing': {
-      'تأجير العقار': 1000,
-      'إدارة عقود الإيجار': 500,
-      'تحصيل الإيجارات': 300,
-    },
-    'visit': {
-      'زيارة شخصية': 200,
-      'زيارة بالنيابة': 300,
-      'تصوير العقار': 400,
-      'تقرير مفصل': 500,
-      'جولة مع الوكيل': 250,
-    },
-    'other': {
-      'التقييم العقاري': 1200,
-      'المسح الهندسي': 1500,
-      'تقرير عن الحي': 500,
-    }
-  };
+      marketing: {
+        "تصوير فوتوغرافي للعقار": 800,
+        "حملة إعلانية (وسائل التواصل الاجتماعي)": 2500,
+        "حملة إعلانية (إعلانات طرق/تقليدية)": 5000,
+      },
+      leasing: {
+        "تأجير العقار": 1000,
+        "إدارة عقود الإيجار": 500,
+        "تحصيل الإيجارات": 300,
+      },
+      visit: {
+        "زيارة شخصية": 200,
+        "زيارة بالنيابة": 300,
+        "تصوير العقار": 400,
+        "تقرير مفصل": 500,
+        "جولة مع الوكيل": 250,
+      },
+      other: {
+        "التقييم العقاري": 1200,
+        "المسح الهندسي": 1500,
+        "تقرير عن الحي": 500,
+      },
+    };
 
     return priceMap[category]?.[serviceType] || 100;
   }
-
 
   // Mapping from User.department slug to ServiceRequest.targetDepartment
   private readonly deptToTargetMap: Record<string, TargetDepartment> = {
@@ -951,40 +1280,50 @@ export class ServiceRequestService {
     employees: TargetDepartment.EMPLOYEES,
   };
 
-  async findByDepartment(departmentSlug: string, user: User, countOnly: boolean = false): Promise<any> {
+  async findByDepartment(
+    departmentSlug: string,
+    user: User,
+    countOnly: boolean = false,
+  ): Promise<any> {
+    if (!this.deptToTargetMap[departmentSlug])
+      throw new BadRequestException("Unknown department");
     // Permission check (match controller/DepartmentsGuard semantics):
     // user must have the department in `departments` OR in `departmentPermissions` (true/manage/view).
     if (user.role !== Role.ADMIN && user.role !== Role.AGENT) {
-      const userDepartments = Array.isArray(user.departments) ? user.departments : [];
-      const departmentPermissions = user.departmentPermissions || {};
-      const canAccess =
-        userDepartments.includes(departmentSlug as any) ||
-        departmentPermissions[departmentSlug] === true ||
-        departmentPermissions[departmentSlug] === 'manage' ||
-        departmentPermissions[departmentSlug] === 'view';
+      const canAccess = departmentAccess(user, departmentSlug);
       if (!canAccess) {
-        throw new ForbiddenException('You do not have access to this department');
+        throw new ForbiddenException(
+          "You do not have access to this department",
+        );
       }
     }
 
     const targetDept = this.deptToTargetMap[departmentSlug];
     const queryBuilder = this.serviceRequestRepository
-      .createQueryBuilder('service')
-      .leftJoinAndSelect('service.user', 'client');
+      .createQueryBuilder("service")
+      .leftJoinAndSelect("service.user", "client");
     if (targetDept) {
-      queryBuilder.where('service.targetDepartment = :dept', { dept: targetDept });
+      queryBuilder.where("service.targetDepartment = :dept", {
+        dept: targetDept,
+      });
     }
 
     if (countOnly) {
       const allRequests = await queryBuilder.getMany();
       return {
-        pending: allRequests.filter(r => r.status === ServiceStatus.PENDING).length,
-        inProgress: allRequests.filter(r => [ServiceStatus.ASSIGNED, ServiceStatus.IN_PROGRESS].includes(r.status as any)).length,
-        done: allRequests.filter(r => r.status === ServiceStatus.COMPLETED).length,
+        pending: allRequests.filter((r) => r.status === ServiceStatus.PENDING)
+          .length,
+        inProgress: allRequests.filter((r) =>
+          [ServiceStatus.ASSIGNED, ServiceStatus.IN_PROGRESS].includes(
+            r.status as any,
+          ),
+        ).length,
+        done: allRequests.filter((r) => r.status === ServiceStatus.COMPLETED)
+          .length,
       };
     }
 
-    return await queryBuilder.orderBy('service.createdAt', 'DESC').getMany();
+    return await queryBuilder.orderBy("service.createdAt", "DESC").getMany();
   }
 
   /**
@@ -1000,60 +1339,59 @@ export class ServiceRequestService {
   ): Promise<ServiceRequest> {
     const serviceRequest = await this.serviceRequestRepository.findOne({
       where: { id },
-      relations: ['user'],
+      relations: ["user"],
     });
 
-    if (!serviceRequest) throw new NotFoundException('Service request not found');
+    if (!serviceRequest)
+      throw new NotFoundException("Service request not found");
 
     // Only allow pricing from the request's target department (or admin acting as that department).
     const targetToSlugMap: Record<string, string> = {
-      [TargetDepartment.MARKETING]: 'marketing',
-      [TargetDepartment.FINANCE]: 'finance',
-      [TargetDepartment.LEGAL]: 'legal',
-      [TargetDepartment.REAL_ESTATE]: 'properties',
-      [TargetDepartment.EMPLOYEES]: 'employees',
+      [TargetDepartment.MARKETING]: "marketing",
+      [TargetDepartment.FINANCE]: "finance",
+      [TargetDepartment.LEGAL]: "legal",
+      [TargetDepartment.REAL_ESTATE]: "properties",
+      [TargetDepartment.EMPLOYEES]: "employees",
     };
-    const targetDeptSlug = targetToSlugMap[serviceRequest.targetDepartment] || 'properties';
+    const targetDeptSlug =
+      targetToSlugMap[serviceRequest.targetDepartment] || "properties";
 
     if (!Number.isFinite(price) || price <= 0) {
-      throw new BadRequestException('Price must be greater than zero');
+      throw new BadRequestException("Price must be greater than zero");
     }
 
     // Pricing must come from the department that owns the request. The explicit
     // slug is kept for backwards-compatible clients, but it can never override
     // the request's target department.
-    const userDepts = Array.isArray(user.departments) ? user.departments : [];
-    const departmentPermissions = user.departmentPermissions || {};
-    const roleToDepartment: Partial<Record<Role, string>> = {
-      [Role.MARKETING]: 'marketing',
-      [Role.MARKETING_ADMIN]: 'marketing',
-      [Role.LEGAL]: 'legal',
-      [Role.LEGAL_ADMIN]: 'legal',
-      [Role.FINANCE]: 'finance',
-      [Role.FINANCE_ADMIN]: 'finance',
-    };
-    const roleDepartment = roleToDepartment[user.role];
-    const hasTargetDepartmentAccess =
-      user.role === Role.ADMIN ||
-      roleDepartment === targetDeptSlug ||
-      userDepts.includes(targetDeptSlug as Department) ||
-      departmentPermissions[targetDeptSlug] === true ||
-      departmentPermissions[targetDeptSlug] === 'manage' ||
-      departmentPermissions[targetDeptSlug] === 'view';
+    const hasTargetDepartmentAccess = departmentAccess(
+      user,
+      targetDeptSlug,
+      true,
+    );
 
     if (!hasTargetDepartmentAccess) {
-      throw new ForbiddenException('You do not have access to price this department request');
+      throw new ForbiddenException(
+        "You do not have access to price this department request",
+      );
     }
 
     if (explicitDeptSlug && explicitDeptSlug !== targetDeptSlug) {
-      throw new BadRequestException('The price department must match the request department');
+      throw new BadRequestException(
+        "The price department must match the request department",
+      );
     }
 
     const deptSlug = targetDeptSlug;
 
     // Lock pricing once invoice is sent / client decided / paid.
-    if (serviceRequest.invoiceSent || serviceRequest.clientDecision === ClientDecision.ACCEPTED || serviceRequest.paymentStatus === PaidStatus.PAID) {
-      throw new BadRequestException('Cannot change offer after it has been sent/accepted/paid');
+    if (
+      serviceRequest.invoiceSent ||
+      serviceRequest.clientDecision === ClientDecision.ACCEPTED ||
+      serviceRequest.paymentStatus === PaidStatus.PAID
+    ) {
+      throw new BadRequestException(
+        "Cannot change offer after it has been sent/accepted/paid",
+      );
     }
 
     // Update the departmentPrices map with full historical support
@@ -1061,7 +1399,9 @@ export class ServiceRequestService {
     const nextPrices = { ...currentPrices };
 
     if (currentPrices[deptSlug]) {
-      throw new BadRequestException('تم تقديم عرض من هذا القسم مسبقاً وهو مقفل ولا يمكن تعديله');
+      throw new BadRequestException(
+        "تم تقديم عرض من هذا القسم مسبقاً وهو مقفل ولا يمكن تعديله",
+      );
     }
 
     nextPrices[deptSlug] = {
@@ -1084,13 +1424,17 @@ export class ServiceRequestService {
     await this.upsertServiceRequestInvoice(saved, price);
 
     if (saved.userId) {
-      await this.notificationService.create(
-        saved.userId,
-        NotificationType.SERVICE_REQUEST,
-        'تم تسعير طلب الخدمة',
-        `تم تحديد سعر طلب ${saved.serviceType} بمبلغ ${price} ريال. يمكنك الدفع من المحفظة.`,
-        { serviceRequestId: saved.id, wallet: true },
-      ).catch(err => console.error('Failed to notify client about service price:', err));
+      await this.notificationService
+        .create(
+          saved.userId,
+          NotificationType.SERVICE_REQUEST,
+          "تم تسعير طلب الخدمة",
+          `تم تحديد سعر طلب ${saved.serviceType} بمبلغ ${price} ريال. يمكنك الدفع من المحفظة.`,
+          { serviceRequestId: saved.id, wallet: true },
+        )
+        .catch((err) =>
+          console.error("Failed to notify client about service price:", err),
+        );
     }
 
     return saved;
@@ -1100,39 +1444,46 @@ export class ServiceRequestService {
    * Create or retrieve a chat room linked to this service request.
    * Returns the chatRoomId so the frontend can navigate to the chat.
    */
-  async getOrCreateChatRoom(id: string, user: User, chatService: any): Promise<{ chatRoomId: string }> {
+  async getOrCreateChatRoom(
+    id: string,
+    user: User,
+    chatService: any,
+  ): Promise<{ chatRoomId: string }> {
     const serviceRequest = await this.serviceRequestRepository.findOne({
       where: { id },
-      relations: ['user'],
+      relations: ["user"],
     });
 
-    if (!serviceRequest) throw new NotFoundException('Service request not found');
+    if (!serviceRequest)
+      throw new NotFoundException("Service request not found");
 
     // Check access: admin, agent, the client, or any dept contributor
     const isOwner = serviceRequest.userId === user.id;
     const targetToSlugMap: Record<string, string> = {
-      [TargetDepartment.MARKETING]: 'marketing',
-      [TargetDepartment.FINANCE]: 'finance',
-      [TargetDepartment.LEGAL]: 'legal',
-      [TargetDepartment.REAL_ESTATE]: 'properties',
-      [TargetDepartment.EMPLOYEES]: 'employees',
+      [TargetDepartment.MARKETING]: "marketing",
+      [TargetDepartment.FINANCE]: "finance",
+      [TargetDepartment.LEGAL]: "legal",
+      [TargetDepartment.REAL_ESTATE]: "properties",
+      [TargetDepartment.EMPLOYEES]: "employees",
     };
     const requiredDeptSlug = targetToSlugMap[serviceRequest.targetDepartment];
-    const userDepts = user.departments || [];
-    const hasDeptAccess = userDepts.includes(requiredDeptSlug as Department) ||
-      user.departmentPermissions?.[requiredDeptSlug] === true ||
-      user.departmentPermissions?.[requiredDeptSlug] === 'manage' ||
-      user.departmentPermissions?.[requiredDeptSlug] === 'view';
-    const isStaff = user.role === Role.ADMIN || user.role === Role.AGENT || hasDeptAccess;
-    const isContributor = Object.values(serviceRequest.departmentPrices || {}).some(e => e.addedBy === user.id);
-    const isViewer = (user.role === Role.USER || user.role === Role.VIEWER) && isOwner;
-
-    if (!isStaff && !isContributor && !isViewer) {
-      throw new ForbiddenException('You do not have access to this chat');
+    const hasDeptAccess = departmentAccess(user, requiredDeptSlug);
+    const isStaff =
+      user.role === Role.ADMIN || user.role === Role.AGENT || hasDeptAccess;
+    const permission = user.departmentPermissions?.[requiredDeptSlug];
+    const explicitlyDenied = permission === false || permission === "none";
+    const isContributor =
+      !explicitlyDenied &&
+      Object.values(serviceRequest.departmentPrices || {}).some(
+        (e) => e.addedBy === user.id,
+      );
+    if (!isOwner && !isStaff && !isContributor) {
+      throw new ForbiddenException("You do not have access to this chat");
     }
 
     // If a chat room already exists, return it (staff can open/read/reply)
     if (serviceRequest.chatRoomId) {
+      await chatService.ensureParticipant(serviceRequest.chatRoomId, user.id);
       return { chatRoomId: serviceRequest.chatRoomId };
     }
 
@@ -1168,22 +1519,32 @@ export class ServiceRequestService {
    * Admin confirms a department/agent price offer. The confirmed request becomes
    * payable in the user's wallet via an unpaid Invoice entity.
    */
-  async acceptDepartmentOffer(id: string, deptSlug: string, user: User): Promise<ServiceRequest> {
+  async acceptDepartmentOffer(
+    id: string,
+    deptSlug: string,
+    user: User,
+  ): Promise<ServiceRequest> {
     if (user.role !== Role.ADMIN) {
-      throw new ForbiddenException('Only admins can confirm service request prices');
+      throw new ForbiddenException(
+        "Only admins can confirm service request prices",
+      );
     }
 
     const serviceRequest = await this.serviceRequestRepository.findOne({
       where: { id },
-      relations: ['user'],
+      relations: ["user"],
     });
 
-    if (!serviceRequest) throw new NotFoundException('Service request not found');
+    if (!serviceRequest)
+      throw new NotFoundException("Service request not found");
 
     const offers = serviceRequest.departmentPrices || {};
     const chosenOffer = offers[deptSlug];
 
-    if (!chosenOffer) throw new BadRequestException(`No offer found for department: ${deptSlug}`);
+    if (!chosenOffer)
+      throw new BadRequestException(
+        `No offer found for department: ${deptSlug}`,
+      );
 
     serviceRequest.price = chosenOffer.price;
     serviceRequest.invoicePrice = chosenOffer.price;
@@ -1192,11 +1553,19 @@ export class ServiceRequestService {
     serviceRequest.adminAccepted = true;
     serviceRequest.metadata = {
       ...(serviceRequest.metadata || {}),
-      acceptedOffer: { dept: deptSlug, ...chosenOffer, confirmedBy: user.id, confirmedAt: new Date().toISOString() }
+      acceptedOffer: {
+        dept: deptSlug,
+        ...chosenOffer,
+        confirmedBy: user.id,
+        confirmedAt: new Date().toISOString(),
+      },
     };
 
     let invoice = await this.invoiceRepository.findOne({
-      where: { referenceId: serviceRequest.id, referenceType: 'ServiceRequest' }
+      where: {
+        referenceId: serviceRequest.id,
+        referenceType: "ServiceRequest",
+      },
     });
 
     if (invoice) {
@@ -1209,7 +1578,7 @@ export class ServiceRequestService {
         total: chosenOffer.price,
         status: InvoiceStatus.UNPAID,
         description: `فاتورة خدمة: ${serviceRequest.serviceType}`,
-        referenceType: 'ServiceRequest',
+        referenceType: "ServiceRequest",
         referenceId: serviceRequest.id,
         userId: serviceRequest.userId,
         user: serviceRequest.user,
@@ -1218,7 +1587,9 @@ export class ServiceRequestService {
 
     if (invoice) {
       if (invoice.status === InvoiceStatus.PAID) {
-        throw new BadRequestException('This service invoice has already been paid');
+        throw new BadRequestException(
+          "This service invoice has already been paid",
+        );
       }
       invoice.amount = chosenOffer.price;
       invoice.total = chosenOffer.price;
@@ -1231,13 +1602,17 @@ export class ServiceRequestService {
     const saved = await this.serviceRequestRepository.save(serviceRequest);
 
     if (serviceRequest.userId) {
-      await this.notificationService.create(
-        serviceRequest.userId,
-        NotificationType.SERVICE_REQUEST,
-        'تم اعتماد سعر الخدمة',
-        `تم اعتماد سعر طلب ${saved.serviceType}. يمكنك الآن عرض الفاتورة من المحفظة.`,
-        { serviceRequestId: saved.id },
-      ).catch(err => console.error('Failed to notify client of admin confirmation:', err));
+      await this.notificationService
+        .create(
+          serviceRequest.userId,
+          NotificationType.SERVICE_REQUEST,
+          "تم اعتماد سعر الخدمة",
+          `تم اعتماد سعر طلب ${saved.serviceType}. يمكنك الآن عرض الفاتورة من المحفظة.`,
+          { serviceRequestId: saved.id },
+        )
+        .catch((err) =>
+          console.error("Failed to notify client of admin confirmation:", err),
+        );
     }
 
     return saved;
@@ -1246,26 +1621,38 @@ export class ServiceRequestService {
   /**
    * Create or retrieve a 1-on-1 chat room with a specific staff member who added a price.
    */
-  async getOrCreateStaffChat(id: string, staffId: string, user: User, chatService: any): Promise<{ chatRoomId: string }> {
+  async getOrCreateStaffChat(
+    id: string,
+    staffId: string,
+    user: User,
+    chatService: any,
+  ): Promise<{ chatRoomId: string }> {
     const serviceRequest = await this.serviceRequestRepository.findOne({
       where: { id },
-      relations: ['user'],
+      relations: ["user"],
     });
 
-    if (!serviceRequest) throw new NotFoundException('Service request not found');
+    if (!serviceRequest)
+      throw new NotFoundException("Service request not found");
 
     // Only the request owner (or admin) can initiate a direct 1-on-1 chat with a staff contributor.
     const isOwner = serviceRequest.userId === user.id;
     if (!isOwner && user.role !== Role.ADMIN) {
-      throw new ForbiddenException('Only the request owner can start a direct chat');
+      throw new ForbiddenException(
+        "Only the request owner can start a direct chat",
+      );
     }
 
     // Check if the staff member actually contributed to this request
     const offers = serviceRequest.departmentPrices || {};
-    const isContributor = Object.values(offers).some(e => e.addedBy === staffId);
+    const isContributor = Object.values(offers).some(
+      (e) => e.addedBy === staffId,
+    );
 
     if (!isContributor && user.role !== Role.ADMIN) {
-      throw new ForbiddenException('This staff member is not a contributor to this request');
+      throw new ForbiddenException(
+        "This staff member is not a contributor to this request",
+      );
     }
 
     // Create a 1-on-1 chat room
@@ -1286,12 +1673,17 @@ export class ServiceRequestService {
   /**
    * Create or retrieve a personal chat room for the user to keep notes/messages about this request.
    */
-  async getOrCreateSelfChat(id: string, user: User, chatService: any): Promise<{ chatRoomId: string }> {
+  async getOrCreateSelfChat(
+    id: string,
+    user: User,
+    chatService: any,
+  ): Promise<{ chatRoomId: string }> {
     const serviceRequest = await this.serviceRequestRepository.findOne({
       where: { id },
     });
 
-    if (!serviceRequest) throw new NotFoundException('Service request not found');
+    if (!serviceRequest)
+      throw new NotFoundException("Service request not found");
 
     const room = await chatService.createRoom(
       {

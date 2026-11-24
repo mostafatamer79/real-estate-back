@@ -65,3 +65,5 @@ graphify-out/
 !.codex/skills/graphify/**
 !.codex/skills/superpowers/
 !.codex/skills/superpowers/**
+
+# Private local runtime configuration

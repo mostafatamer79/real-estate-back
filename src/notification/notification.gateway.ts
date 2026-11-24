@@ -4,19 +4,26 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   SubscribeMessage,
-} from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
-import { JwtService } from '@nestjs/jwt';
-import { NotificationService } from './notification.service';
+} from "@nestjs/websockets";
+import { Server, Socket } from "socket.io";
+import { JwtService } from "@nestjs/jwt";
+import { NotificationService } from "./notification.service";
 
 @WebSocketGateway({
   cors: {
-    origin: ['http://localhost:3000', 'http://localhost:5173'],
+    origin: [
+      "https://www.digitalbrokerage.sa",
+      "https://digitalbrokerage.sa",
+      "http://localhost:3000",
+      "http://localhost:5173",
+    ],
     credentials: true,
   },
-  namespace: '/notifications',
+  namespace: "/notifications",
 })
-export class NotificationGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class NotificationGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -29,8 +36,10 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
 
   async handleConnection(client: Socket) {
     try {
-      const token = client.handshake.auth.token || client.handshake.headers.authorization?.split(' ')[1];
-      
+      const token =
+        client.handshake.auth.token ||
+        client.handshake.headers.authorization?.split(" ")[1];
+
       if (!token) {
         client.disconnect();
         return;
@@ -47,10 +56,10 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
 
       // Join user-specific room
       client.join(`user:${userId}`);
-      
+
       console.log(`Client connected: ${client.id} for user: ${userId}`);
     } catch (error) {
-      console.error('WebSocket authentication failed:', error);
+      console.error("WebSocket authentication failed:", error);
       client.disconnect();
     }
   }
@@ -71,12 +80,12 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
   }
 
   async sendNotificationToUser(userId: string, notification: any) {
-    this.server.to(`user:${userId}`).emit('notification', notification);
+    this.server.to(`user:${userId}`).emit("notification", notification);
   }
 
-  @SubscribeMessage('join')
+  @SubscribeMessage("join")
   handleJoin(client: Socket, userId: string) {
     client.join(`user:${userId}`);
-    return { event: 'joined', data: { userId } };
+    return { event: "joined", data: { userId } };
   }
 }

@@ -18,6 +18,7 @@ import { Transform, type TransformFnParams } from "class-transformer";
 import type { DeliveryMode } from "./provider-profile";
 
 export class ProviderApplicationDto {
+  @IsOptional() @IsString() @MaxLength(2048) invitationToken?: string;
   @IsIn(["general", "notary"]) kind: "general" | "notary";
   @IsString() @MaxLength(100) city: string;
   @IsOptional() @IsString() @MaxLength(80) specializationId?: string;

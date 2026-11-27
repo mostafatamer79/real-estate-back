@@ -6,7 +6,7 @@ import {
 } from "../service/service-request.entity";
 
 describe("provider application, approval and offer workflow", () => {
-  it("persists the application as pending, requires review, and keeps an approved offer under its provider ID", async () => {
+  it("activates a verified invited applicant immediately and keeps offers under its provider ID", async () => {
     const user = {
       id: "provider",
       role: Role.VIEWER,
@@ -32,7 +32,7 @@ describe("provider application, approval and offer workflow", () => {
       update: jest.fn(async (_entity, _id, patch) =>
         Object.assign(user, patch),
       ),
-      findOne: async () => request,
+      findOne: async (entity) => entity === User ? user : request,
       save: jest.fn(async (_entity, value) => value),
     };
     const db = { transaction: async (fn) => fn(manager) };
@@ -42,6 +42,7 @@ describe("provider application, approval and offer workflow", () => {
       {} as never,
       db as never,
       { findOne: async () => null } as never,
+      { validate: () => ({ id: "invite", issuer: "admin" }) } as never,
     );
     const application = await service.apply(user.id, {
       kind: "general",
@@ -50,16 +51,10 @@ describe("provider application, approval and offer workflow", () => {
       deliveryModes: ["online"],
     });
     expect(application).toMatchObject({
-      status: "pending",
-      categories: [],
+      status: "approved",
+      categories: ["marketing"],
       requestedCategories: ["marketing"],
     });
-    await expect(
-      service.offer("request", user.id, {
-        amount: 100,
-        deliveryMode: "online",
-      }),
-    ).rejects.toThrow("approval");
     await service.review(
       user.id,
       {

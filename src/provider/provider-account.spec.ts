@@ -68,7 +68,7 @@ describe("historical provider answers", () => {
       } as never,
       {} as never,
       {} as never,
-      {} as never,
+      { transaction: async fn => fn({ findOne: async () => user, update: async (_entity, _id, patch) => Object.assign(user, patch) }) } as never,
       { findOne: async () => null } as never,
     );
     const result = await service.apply("p", {
@@ -132,7 +132,7 @@ describe("provider registration scope and historical type compatibility", () => 
       } as never,
       {} as never,
       {} as never,
-      {} as never,
+      { transaction: async fn => fn({ findOne: async () => user, update: async (_entity, _id, patch) => Object.assign(user, patch) }) } as never,
       settings as never,
     );
     return service;

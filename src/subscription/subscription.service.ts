@@ -136,6 +136,12 @@ export class SubscriptionService {
     createSubscriptionDto: CreateSubscriptionDto,
     isAdmin = false,
   ): Promise<Subscription> {
+    if (!isAdmin && !createSubscriptionDto.packageId) {
+      throw new BadRequestException('Choose a ready-made subscription package');
+    }
+    if (!isAdmin && ![SubscriptionType.MONTHLY, SubscriptionType.YEARLY].includes(createSubscriptionDto.subscriptionType!)) {
+      throw new BadRequestException('Choose a monthly or yearly package');
+    }
     // Validate property or unit exists if provided
     if (createSubscriptionDto.propertyId) {
       const property = await this.propertyRepository.findOne({
@@ -169,6 +175,7 @@ export class SubscriptionService {
       selectedPackage = await this.managementPackageService.findOne(
         createSubscriptionDto.packageId,
       );
+      if (!isAdmin && !selectedPackage.isActive) throw new BadRequestException('This package is unavailable');
       selectedDepartments = [];
       employeeSeats = 0;
 

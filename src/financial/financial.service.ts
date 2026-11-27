@@ -39,6 +39,11 @@ import { PlacesService } from "../place/place.service";
 import { SettingsService } from "../settings/settings.service";
 import { walletBalance } from "./wallet-ledger";
 import { invoiceServiceRequest } from "./invoice-service-request";
+import {
+  EMAIL_MARKETING_INVOICE_REFERENCE_TYPE,
+  preparePaidAdCampaign,
+  publishPaidAd,
+} from "../marketing/publish-paid-ad";
 
 const execFileAsync = promisify(execFile);
 
@@ -2170,6 +2175,11 @@ export class FinancialService {
     },
     user?: any,
   ): Promise<Invoice> {
+    if (dto.referenceType === EMAIL_MARKETING_INVOICE_REFERENCE_TYPE) {
+      throw new BadRequestException(
+        "EmailMarketing invoices must be issued through marketing approval",
+      );
+    }
     const serviceFee = 0;
     const tax = dto.amount * 0.15;
     const total = dto.amount + serviceFee + tax;
@@ -2261,6 +2271,14 @@ export class FinancialService {
           "You do not have permission to update this invoice",
         );
     }
+    if (
+      invoice.referenceType === EMAIL_MARKETING_INVOICE_REFERENCE_TYPE &&
+      status === InvoiceStatus.PAID
+    ) {
+      throw new BadRequestException(
+        "EmailMarketing invoices can only be paid through wallet or payment gateway",
+      );
+    }
     invoice.status = status;
     return this.invoiceRepository.save(invoice);
   }
@@ -2300,6 +2318,14 @@ export class FinancialService {
       dto.status !== undefined &&
       Object.values(InvoiceStatus).includes(dto.status as InvoiceStatus)
     ) {
+      if (
+        invoice.referenceType === EMAIL_MARKETING_INVOICE_REFERENCE_TYPE &&
+        dto.status === InvoiceStatus.PAID
+      ) {
+        throw new BadRequestException(
+          "EmailMarketing invoices can only be paid through wallet or payment gateway",
+        );
+      }
       invoice.status = dto.status as InvoiceStatus;
     }
 
@@ -2392,6 +2418,7 @@ export class FinancialService {
       if (!Number.isFinite(amount) || amount <= 0)
         throw new BadRequestException("Invalid invoice amount");
       const request = await invoiceServiceRequest(manager, invoice);
+      const adCampaign = await preparePaidAdCampaign(manager, invoice);
       const entries = await manager.find(FinancialTransaction, {
         where: [{ fromUserId: userId }, { toUserId: userId }],
       });
@@ -2412,6 +2439,9 @@ export class FinancialService {
         if (["construction", "legal"].includes(request.category || "other"))
           request.adminAccepted = true;
         await manager.save(ServiceRequest, request);
+      }
+      if (adCampaign) {
+        await publishPaidAd(manager, invoice, adCampaign);
       }
       invoice.status = InvoiceStatus.PAID;
       return manager.save(Invoice, invoice);

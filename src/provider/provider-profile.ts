@@ -1,5 +1,7 @@
 export type DeliveryMode = "online" | "in_person";
 export interface ProviderProfile {
+  invitationId?: string;
+  invitedBy?: string;
   status: "pending" | "approved" | "rejected" | "suspended";
   kind: "general" | "notary";
   city: string;

@@ -110,6 +110,16 @@ describe('Nafath OIDC profile verification', () => {
     await expect(service.handleCallback({ state: 'attacker-state' })).rejects.toThrow();
     expect(fetchMock).not.toHaveBeenCalled();
   });
+  it('activates an invited pending provider in the same verified callback without changing role', async () => {
+    const { service, user } = setup();
+    user.role = 'viewer';
+    user.providerProfile = { invitationId: 'invite', invitedBy: 'admin', status: 'pending',
+      kind: 'general', city: 'الرياض', requestedCategories: ['marketing'], categories: [],
+      deliveryModes: ['online'], submittedAt: new Date().toISOString() };
+    await service.handleCallback({ state });
+    expect(user.providerProfile).toMatchObject({ status: 'approved', categories: ['marketing'] });
+    expect(user.role).toBe('viewer');
+  });
   it.each(['expired', 'wrong issuer', 'wrong audience', 'missing expiry', 'future token', 'invalid signature', 'identity mismatch'])(
     'does not verify an account for %s', async problem => {
       const { service, user, fetchMock } = setup();

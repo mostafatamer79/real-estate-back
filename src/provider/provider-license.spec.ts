@@ -35,13 +35,13 @@ const review = {
 function setup(profile: unknown = null) {
   const user = {
     id: "provider",
-    isActive: false,
+    isActive: true,
     nafathVerifiedAt: null,
     providerProfile: profile,
   };
   const update = jest.fn(async (_id, patch) => Object.assign(user, patch));
   const transaction = jest.fn(async (fn) =>
-    fn({ update: jest.fn(), save: jest.fn() }),
+    fn({ findOne: async () => user, update: jest.fn(async (_entity, _id, patch) => Object.assign(user, patch)), save: jest.fn() }),
   );
   const service = new ProviderService(
     { findOne: async () => user, update } as never,
@@ -49,6 +49,7 @@ function setup(profile: unknown = null) {
     {} as never,
     { transaction } as never,
     { findOne: async () => null } as never,
+    { validate: () => ({ id: "invite", issuer: "admin" }) } as never,
   );
   return { service, user, update, transaction };
 }
@@ -71,7 +72,7 @@ describe("provider license dates", () => {
       licenseIssueDate: "2024-02-29",
       licenseExpiryDate: "2027-02-28",
     });
-    expect(user.isActive).toBe(false);
+    expect(user.isActive).toBe(true);
     expect(user.nafathVerifiedAt).toBeNull();
   });
   it.each([

@@ -1,6 +1,19 @@
-import { IsEnum, IsString, IsOptional, IsBoolean, IsNumber, IsArray } from 'class-validator';
+import { IsEnum, IsString, IsOptional, IsBoolean, IsNumber, IsArray, Min, Max } from 'class-validator';
 import { MarketingCategory, MarketingFrequency, MarketingScheduleMode } from '../entities/email-marketing.entity';
 import { Role } from '../../user/user-entity';
+
+export class ApproveEmailMarketingDto {
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0.01)
+  @Max(9999999999)
+  publicationFee: number;
+}
+
+export class RejectEmailMarketingDto {
+  @IsOptional()
+  @IsString()
+  reason?: string;
+}
 
 export class CreateEmailMarketingDto {
   @IsEnum(MarketingCategory)

@@ -13,6 +13,7 @@ import { ServiceRequest, PaidStatus } from '../service/service-request.entity';
 import { CreateGeideaSessionDto, GEIDEA_GUID } from './geidea.dto';
 import { GeideaBillingService } from './geidea-billing.service';
 import { invoiceServiceRequest } from '../financial/invoice-service-request';
+import { preparePaidAdCampaign, publishPaidAd } from '../marketing/publish-paid-ad';
 
 type PaymentUser = { id: string; email?: string };
 type GeideaOrder = {
@@ -133,7 +134,10 @@ export class GeideaService {
       ? item.status === InvoiceStatus.UNPAID
       : [BookingStatus.PENDING, BookingStatus.ACCEPTED].includes(item.status as BookingStatus);
     if (!payable) throw new BadRequestException('Item is not payable');
-    if (invoiceId) await invoiceServiceRequest(this.dataSource.manager, item as Invoice, false);
+    if (invoiceId) {
+      await invoiceServiceRequest(this.dataSource.manager, item as Invoice, false);
+      await preparePaidAdCampaign(this.dataSource.manager, item as Invoice, false);
+    }
     const amount = this.amount(invoiceId ? (item as Invoice).total : (item as Booking).price);
     const { publicKey, password } = this.credentials();
     const timestamp = new Date().toISOString();
@@ -190,11 +194,15 @@ export class GeideaService {
     // A row lock makes duplicate or concurrent notifications idempotent.
     if (invoice) {
       const request = await invoiceServiceRequest(manager, invoice);
+      const adCampaign = await preparePaidAdCampaign(manager, invoice);
       await this.billing.fulfillInvoice(invoice, order.orderId, manager);
       if (request) {
           request.paymentStatus = PaidStatus.PAID;
           if (['construction', 'legal'].includes(request.category || 'other')) request.adminAccepted = true;
           await manager.save(ServiceRequest, request);
+      }
+      if (adCampaign) {
+        await publishPaidAd(manager, invoice, adCampaign);
       }
       invoice.status = InvoiceStatus.PAID;
       await manager.save(Invoice, invoice);

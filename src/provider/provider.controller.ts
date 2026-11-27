@@ -1,4 +1,5 @@
 import { Public } from "../common/decorators/public.decorator";
+import { AllowUnverified } from '../common/decorators/allow-unverified.decorator';
 import {
   ProviderApplicationDto,
   ProviderReviewDto,
@@ -33,6 +34,14 @@ const pageNumber = (page?: string) =>
 @Controller("service-providers")
 export class ProviderController {
   constructor(private readonly providers: ProviderService) {}
+
+  @Post('invitations') @Roles([Role.ADMIN]) createInvitation(@Request() req: ProviderActorRequest) {
+    return this.providers.createInvitation(req.user.id);
+  }
+
+  @Public() @Get('invitations/validate') validateInvitation(@Query('token') token?: string) {
+    return this.providers.validateInvitation(token);
+  }
 
   @Public() @Get("registration-fields") registrationFields() {
     return this.providers.registrationFields();
@@ -71,7 +80,7 @@ export class ProviderController {
   @Get("me") mine(@Request() req: ProviderActorRequest) {
     return this.providers.mine(req.user.id);
   }
-  @Post("apply") apply(
+  @AllowUnverified() @Post("apply") apply(
     @Request() req: ProviderActorRequest,
     @Body() input: ProviderApplicationDto,
   ) {

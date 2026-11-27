@@ -15,6 +15,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, DataSource, IsNull, Not } from "typeorm";
@@ -26,6 +27,8 @@ import {
 } from "../service/service-request.entity";
 import { Invoice, InvoiceStatus } from "../financial/entities/invoice.entity";
 import { SettingsService } from "../settings/settings.service";
+import { ProviderInvitationsService } from './provider-invitations.service';
+import { activateInvitedProvider } from './provider-activation';
 import {
   Notification,
   NotificationType,
@@ -58,7 +61,19 @@ export class ProviderService {
     @InjectRepository(Invoice) private readonly invoices: Repository<Invoice>,
     private readonly dataSource: DataSource,
     private readonly settings: SettingsService,
+    @Optional() private readonly invitations?: ProviderInvitationsService,
   ) {}
+
+  createInvitation(adminId: string) {
+    if (!this.invitations) throw new BadRequestException('Provider invitations are unavailable');
+    return this.invitations.create(adminId);
+  }
+
+  validateInvitation(token: unknown) {
+    if (!this.invitations) throw new BadRequestException('Provider invitations are unavailable');
+    const invitation = this.invitations.validate(token);
+    return { valid: true, expiresAt: invitation.expiresAt };
+  }
 
   private async account(id: string) {
     const user = await this.users.findOne({
@@ -290,7 +305,17 @@ export class ProviderService {
       if (answer) registrationAnswers[field.id] = answer;
       else delete registrationAnswers[field.id];
     }
+    if (!account.isActive && account.isActive !== undefined) throw new ForbiddenException('Provider account is restricted');
+    if (account.providerProfile && ['suspended', 'rejected'].includes(account.providerProfile.status)) {
+      throw new ForbiddenException('Contact the administrator to restore this provider account');
+    }
+    const invitation = !account.providerProfile
+      ? this.invitations?.validate(input.invitationToken)
+      : undefined;
+    if (!account.providerProfile && !invitation) throw new ForbiddenException('A valid provider invitation is required');
     const profile: ProviderProfile = {
+      invitationId: invitation?.id ?? account.providerProfile?.invitationId,
+      invitedBy: invitation?.issuer ?? account.providerProfile?.invitedBy,
       status: "pending",
       kind: input.kind,
       registrationAnswers,
@@ -325,8 +350,17 @@ export class ProviderService {
       throw new ConflictException(
         "Contact the administrator to change an approved provider profile",
       );
-    await this.users.update(id, { providerProfile: profile });
-    return profile;
+    return this.dataSource.transaction(async manager => {
+      // Serialize with the Nafath callback and account restrictions on the same user row.
+      const current = await manager.findOne(User, { where: { id }, lock: { mode: 'pessimistic_write' } });
+      if (!current || current.isActive === false || current.providerProfile?.archivedAt ||
+          ['approved', 'rejected', 'suspended'].includes(current.providerProfile?.status || '')) {
+        throw new ConflictException('Provider account changed; refresh before saving');
+      }
+      const activated = activateInvitedProvider(profile, Boolean(current.nafathVerifiedAt))!;
+      await manager.update(User, id, { providerProfile: activated });
+      return activated;
+    });
   }
 
   async list(page = 1) {

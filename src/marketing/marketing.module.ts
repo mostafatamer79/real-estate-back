@@ -14,6 +14,8 @@ import { NotificationModule } from '../notification/notification.module';
 import { User } from '../user/user-entity';
 import { DepartmentsGuard } from '../common/guards/departments.guard';
 import { SettingsModule } from '../settings/settings.module';
+import { DocumentModule } from '../document/document.module';
+import { Invoice } from '../financial/entities/invoice.entity';
 
 @Module({
   imports: [
@@ -23,11 +25,13 @@ import { SettingsModule } from '../settings/settings.module';
       MarketingCampaign,
       EmailMarketing,
       User,
+      Invoice,
     ]),
     MailModule,
     NotificationModule,
     ScheduleModule.forRoot(),
     SettingsModule,
+    DocumentModule,
   ],
   controllers: [MarketingController],
   providers: [MarketingService, SocialMediaService, MarketingCronService, DepartmentsGuard],

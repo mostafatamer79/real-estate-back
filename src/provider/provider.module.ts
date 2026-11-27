@@ -7,6 +7,7 @@ import { SettingsModule } from "../settings/settings.module";
 import { NotificationModule } from "../notification/notification.module";
 import { ProviderService } from "./provider.service";
 import { ProviderController } from "./provider.controller";
+import { ProviderInvitationsService } from './provider-invitations.service';
 
 @Module({
   imports: [
@@ -15,6 +16,6 @@ import { ProviderController } from "./provider.controller";
     NotificationModule,
   ],
   controllers: [ProviderController],
-  providers: [ProviderService],
+  providers: [ProviderService, ProviderInvitationsService],
 })
 export class ProviderModule {}

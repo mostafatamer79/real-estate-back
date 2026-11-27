@@ -129,6 +129,7 @@ describe("SubscriptionService", () => {
   it("does not honor a customer-provided active status on a paid subscription", async () => {
     mockPackageService.findOne.mockResolvedValue({
       id: "pkg-id",
+      isActive: true,
       monthlyPrice: 100,
       yearlyPrice: 1000,
     });
@@ -158,6 +159,15 @@ describe("SubscriptionService", () => {
     ).rejects.toThrow("administrator");
   });
 
+  it("requires a ready-made active package for customer subscriptions", async () => {
+    const dto = { startDate: new Date(), paymentMethod: PaymentMethod.CREDIT_CARD, subscriptionType: SubscriptionType.MONTHLY };
+    await expect(service.create("user-id", dto)).rejects.toThrow("ready-made");
+    mockPackageService.findOne.mockResolvedValueOnce({ id: "inactive", isActive: false });
+    await expect(service.create("user-id", { ...dto, packageId: "inactive" })).rejects.toThrow("unavailable");
+    await expect(service.create("user-id", { ...dto, packageId: "pkg-id", subscriptionType: SubscriptionType.CUSTOM })).rejects.toThrow("monthly or yearly");
+    await expect(service.create("user-id", { ...dto, packageId: "pkg-id", subscriptionType: undefined })).rejects.toThrow("monthly or yearly");
+  });
+
   describe("discount billing period", () => {
     it.each([
       ["yearly", SubscriptionType.MONTHLY, 100],
@@ -171,6 +181,7 @@ describe("SubscriptionService", () => {
       async (discountPeriod, subscriptionType, expected) => {
         mockPackageService.findOne.mockResolvedValue({
           id: "pkg-id",
+      isActive: true,
           monthlyPrice: 100,
           yearlyPrice: 1000,
           discount: 10,
@@ -193,6 +204,7 @@ describe("SubscriptionService", () => {
     it("should calculate yearly price with discount correctly", async () => {
       const mockPackage = {
         id: "pkg-id",
+      isActive: true,
         yearlyPrice: 1000,
         monthlyPrice: 100,
         discount: 10,
@@ -219,6 +231,7 @@ describe("SubscriptionService", () => {
     it("should calculate monthly price with discount correctly", async () => {
       const mockPackage = {
         id: "pkg-id",
+      isActive: true,
         yearlyPrice: 1000,
         monthlyPrice: 100,
         discount: 10,
@@ -245,6 +258,7 @@ describe("SubscriptionService", () => {
     it("should calculate price correctly when no discount", async () => {
       const mockPackage = {
         id: "pkg-id",
+      isActive: true,
         yearlyPrice: 1000,
         monthlyPrice: 100,
         discount: 0,
@@ -269,6 +283,7 @@ describe("SubscriptionService", () => {
     it("activates a free package immediately without leaving it pending for payment", async () => {
       mockPackageService.findOne.mockResolvedValue({
         id: "free-pkg-id",
+        isActive: true,
         yearlyPrice: 0,
         monthlyPrice: 0,
         discount: 0,

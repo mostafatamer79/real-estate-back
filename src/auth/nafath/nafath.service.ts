@@ -6,6 +6,7 @@ import type { JsonWebKey } from 'crypto';
 import { Repository } from 'typeorm';
 import { User } from '../../user/user-entity';
 import { NafathTransaction } from './nafath-transaction.entity';
+import { activateInvitedProvider } from '../../provider/provider-activation';
 
 interface NafathConfig {
   baseUrl: string;
@@ -200,6 +201,7 @@ export class NafathService {
       user.nationalId = nationalId;
       user.isVerified = true;
       user.nafathVerifiedAt = new Date();
+      user.providerProfile = activateInvitedProvider(user.providerProfile, true);
       try {
         await users.save(user);
       } catch (error) {

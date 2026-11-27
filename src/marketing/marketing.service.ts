@@ -1,12 +1,19 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { MarketingRequest, MarketingRequestType, MarketingRequestStatus } from './entities/marketing-request.entity';
 import { PhotographerProfile, PhotographerType } from './entities/photographer-profile.entity';
 import { MarketingCampaign } from './entities/marketing-campaign.entity';
-import { EmailMarketing, MarketingFrequency, MarketingScheduleMode } from './entities/email-marketing.entity';
+import {
+  EmailMarketing,
+  EmailMarketingApprovalStatus,
+  MarketingFrequency,
+  MarketingScheduleMode,
+} from './entities/email-marketing.entity';
 import { CreateMarketingRequestDto, UpdateMarketingRequestDto } from './dto/marketing-request.dto';
 import { CreateEmailMarketingDto, UpdateEmailMarketingDto } from './dto/email-marketing.dto';
+import { Invoice, InvoiceStatus } from '../financial/entities/invoice.entity';
+import { EMAIL_MARKETING_INVOICE_REFERENCE_TYPE } from './publish-paid-ad';
 
 import { MailService } from '../mail/mail.service';
 
@@ -27,6 +34,8 @@ export class MarketingService {
     private emailMarketingRepository: Repository<EmailMarketing>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(Invoice)
+    private invoiceRepository: Repository<Invoice>,
     private mailService: MailService,
     private notificationService: NotificationService,
   ) {}
@@ -176,63 +185,291 @@ export class MarketingService {
     });
   }
 
+  private pickWhitelistedEmailMarketingContent(dto: Partial<CreateEmailMarketingDto & UpdateEmailMarketingDto>) {
+    const content: Record<string, unknown> = {};
+    if (dto.category !== undefined) content.category = String(dto.category).toLowerCase();
+    if (dto.subject !== undefined) content.subject = dto.subject;
+    if (dto.linkedResourceType !== undefined) content.linkedResourceType = dto.linkedResourceType;
+    if (dto.linkedResourceId !== undefined) content.linkedResourceId = dto.linkedResourceId;
+    if (dto.assignedTo !== undefined) content.assignedTo = dto.assignedTo || null;
+    if (dto.content !== undefined) content.content = dto.content;
+    if (dto.sortOrder !== undefined) content.sortOrder = Number(dto.sortOrder) || 0;
+    if (dto.scheduleMode !== undefined) content.scheduleMode = dto.scheduleMode || MarketingScheduleMode.MANUAL;
+    if (dto.startDate !== undefined) content.startDate = dto.startDate ? new Date(dto.startDate) : null;
+    if (dto.endDate !== undefined) content.endDate = dto.endDate ? new Date(dto.endDate) : null;
+    if (dto.frequency !== undefined) content.frequency = String(dto.frequency).toLowerCase();
+    if (dto.targetRole !== undefined) content.targetRole = dto.targetRole ? String(dto.targetRole).toLowerCase() : null;
+    if (dto.propertyType !== undefined) content.propertyType = dto.propertyType;
+    if (dto.mainCategory !== undefined) content.mainCategory = dto.mainCategory;
+    if (dto.dealType !== undefined) content.dealType = dto.dealType;
+    if (dto.price !== undefined) content.price = Number(dto.price) || 0;
+    if (dto.area !== undefined) content.area = Number(dto.area) || 0;
+    if (dto.city !== undefined) content.city = dto.city;
+    if (dto.neighborhood !== undefined) content.neighborhood = dto.neighborhood;
+    if (dto.mediaFiles !== undefined) content.mediaFiles = Array.isArray(dto.mediaFiles) ? dto.mediaFiles : [];
+    if (dto.details !== undefined) content.details = dto.details;
+    return content;
+  }
+
+  private parsePublicationFee(rawFee: unknown): number {
+    if (typeof rawFee !== 'number' || !Number.isFinite(rawFee) || rawFee <= 0 || rawFee > 9999999999) {
+      throw new BadRequestException('Publication fee must be a positive number up to 9999999999');
+    }
+    if (Math.abs(rawFee * 100 - Math.round(rawFee * 100)) >= 1e-6) {
+      throw new BadRequestException('Publication fee must have at most 2 decimal places');
+    }
+    return Number(rawFee.toFixed(2));
+  }
+
+  private async decorateCampaignsWithInvoices(campaigns: EmailMarketing[]): Promise<EmailMarketing[]> {
+    if (!campaigns.length || !this.invoiceRepository) return campaigns;
+    const invoiceIds = [...new Set(campaigns.map((c) => c.invoiceId).filter((id): id is string => Boolean(id)))];
+    if (!invoiceIds.length) return campaigns;
+    const invoices = await this.invoiceRepository.find({ where: { id: In(invoiceIds) } });
+    const byId = new Map(invoices.map((inv) => [inv.id, inv]));
+    return campaigns.map((campaign) => {
+      const inv = campaign.invoiceId ? byId.get(campaign.invoiceId) : undefined;
+      if (!inv) return campaign;
+      return Object.assign(campaign, {
+        invoice: {
+          id: inv.id,
+          status: inv.status,
+          amount: inv.amount,
+          total: inv.total,
+          description: inv.description,
+          createdAt: inv.createdAt,
+        },
+      });
+    });
+  }
+
   // Email Marketing Management
   async createEmailMarketing(createDto: CreateEmailMarketingDto, ownerId: string): Promise<EmailMarketing> {
-    // Normalize enum values to lowercase to guard against cached clients sending uppercase
+    const whitelisted = this.pickWhitelistedEmailMarketingContent(createDto || {});
     const normalized = {
-      ...createDto,
-      isActive: createDto.isActive ?? false,
-      category: createDto.category?.toLowerCase() as any,
-      frequency: createDto.frequency?.toLowerCase() as any,
-      targetRole: createDto.targetRole ? createDto.targetRole.toLowerCase() as any : null,
-      sortOrder: Number((createDto as any).sortOrder ?? 0) || 0,
-      scheduleMode: (createDto as any).scheduleMode || MarketingScheduleMode.MANUAL,
-      startDate: (createDto as any).startDate ? new Date((createDto as any).startDate) : undefined,
-      endDate: (createDto as any).endDate ? new Date((createDto as any).endDate) : undefined,
-      price: createDto.price !== undefined ? (Number(createDto.price) || 0) : undefined,
-      area: createDto.area !== undefined ? (Number(createDto.area) || 0) : undefined,
+      ...whitelisted,
+      sortOrder: Number(whitelisted.sortOrder ?? 0),
+      scheduleMode: (whitelisted.scheduleMode as MarketingScheduleMode) || MarketingScheduleMode.MANUAL,
+      isActive: false,
+      approvalStatus: EmailMarketingApprovalStatus.PENDING,
+      publicationFee: null,
+      invoiceId: null,
       ownerId,
     };
-    const campaign = this.emailMarketingRepository.create(normalized as any) as unknown as EmailMarketing;
+    const campaign = this.emailMarketingRepository.create(normalized as Partial<EmailMarketing>);
     return await this.emailMarketingRepository.save(campaign);
   }
 
-  async updateEmailMarketing(id: string, ownerId: string, updateDto: UpdateEmailMarketingDto, userRole?: string): Promise<EmailMarketing> {
-    const query = this.emailMarketingRepository.createQueryBuilder('campaign')
-      .where('campaign.id = :id', { id });
-    if (userRole !== 'admin') {
-      query.andWhere('campaign.ownerId = :ownerId', { ownerId });
-    }
-    const campaign = await query.getOne();
-    if (!campaign) throw new NotFoundException('Marketing campaign not found');
-    const normalized: any = {
-      ...updateDto,
-      ...(updateDto.category && { category: updateDto.category.toLowerCase() }),
-      ...(updateDto.frequency && { frequency: updateDto.frequency.toLowerCase() }),
-      ...(updateDto.targetRole !== undefined && { targetRole: updateDto.targetRole ? updateDto.targetRole.toLowerCase() : null }),
-      ...(updateDto.sortOrder !== undefined && { sortOrder: Number(updateDto.sortOrder) || 0 }),
-      ...(updateDto.scheduleMode && { scheduleMode: updateDto.scheduleMode }),
-      ...(updateDto.startDate !== undefined && { startDate: updateDto.startDate ? new Date(updateDto.startDate) : null }),
-      ...(updateDto.endDate !== undefined && { endDate: updateDto.endDate ? new Date(updateDto.endDate) : null }),
-      ...(updateDto.price !== undefined && { price: Number(updateDto.price) || 0 }),
-      ...(updateDto.area !== undefined && { area: Number(updateDto.area) || 0 }),
-    };
-    Object.assign(campaign, normalized);
-    return this.emailMarketingRepository.save(campaign);
+  async updateEmailMarketing(id: string, ownerId: string, updateDto: UpdateEmailMarketingDto & { approvalStatus?: unknown; publicationFee?: unknown; invoiceId?: unknown; ownerId?: unknown }, userRole?: string): Promise<EmailMarketing> {
+    return this.emailMarketingRepository.manager.transaction(async (manager) => {
+      const isAdmin = userRole === Role.ADMIN;
+      const repository = manager.getRepository(EmailMarketing);
+      const query = repository.createQueryBuilder('campaign').setLock('pessimistic_write')
+        .where('campaign.id = :id', { id });
+      if (!isAdmin) {
+        query.andWhere('campaign.ownerId = :ownerId', { ownerId });
+      }
+      const campaign = await query.getOne();
+      if (!campaign) throw new NotFoundException('Marketing campaign not found');
+
+      if (
+        updateDto?.approvalStatus !== undefined ||
+        updateDto?.publicationFee !== undefined ||
+        updateDto?.invoiceId !== undefined ||
+        updateDto?.ownerId !== undefined
+      ) {
+        throw new BadRequestException('Approval, fee, owner, and invoice fields cannot be modified via update');
+      }
+
+      if (!isAdmin) {
+        if (updateDto?.isActive !== undefined && updateDto.isActive !== campaign.isActive) {
+          throw new ForbiddenException('Only admins can toggle ad activation after payment');
+        }
+        if (![EmailMarketingApprovalStatus.PENDING, EmailMarketingApprovalStatus.REJECTED].includes(campaign.approvalStatus)) {
+          throw new ForbiddenException('Cannot edit ad content after pricing or approval; contact admin to reset');
+        }
+        const whitelisted = this.pickWhitelistedEmailMarketingContent(updateDto || {});
+        Object.assign(campaign, whitelisted);
+        if (campaign.approvalStatus === EmailMarketingApprovalStatus.REJECTED) {
+          campaign.approvalStatus = EmailMarketingApprovalStatus.PENDING;
+        }
+        campaign.isActive = false;
+        return repository.save(campaign);
+      }
+
+      if (updateDto?.isActive !== undefined) {
+        const nextActive = Boolean(updateDto.isActive);
+        if (nextActive) {
+          if (campaign.approvalStatus !== EmailMarketingApprovalStatus.PUBLISHED || !campaign.invoiceId) {
+            throw new BadRequestException('Cannot activate ad before approval and paid invoice');
+          }
+          const invoice = await this.invoiceRepository.findOne({ where: { id: campaign.invoiceId } });
+          const fee = Number(campaign.publicationFee);
+          const invTotal = Number(invoice?.total);
+          const validPaidInvoice = Boolean(
+            invoice &&
+            invoice.status === InvoiceStatus.PAID &&
+            invoice.referenceType === EMAIL_MARKETING_INVOICE_REFERENCE_TYPE &&
+            invoice.referenceId === campaign.id &&
+            invoice.userId === campaign.ownerId &&
+            Number.isFinite(fee) &&
+            fee > 0 &&
+            Math.round(invTotal * 100) === Math.round(fee * 100),
+          );
+          if (!validPaidInvoice) {
+            throw new BadRequestException('Cannot activate ad without a paid matching invoice');
+          }
+        }
+        campaign.isActive = nextActive;
+      }
+
+      const whitelisted = this.pickWhitelistedEmailMarketingContent(updateDto || {});
+      Object.assign(campaign, whitelisted);
+      return repository.save(campaign);
+    });
+  }
+
+  async approveEmailMarketing(id: string, rawPublicationFee: number): Promise<{ campaign: EmailMarketing; invoice: Invoice }> {
+    const fee = this.parsePublicationFee(rawPublicationFee);
+
+    return this.emailMarketingRepository.manager.transaction(async (manager) => {
+      // Lock invoices first, then campaign (consistent invoice -> campaign lock order).
+      const existingInvoices = await manager.find(Invoice, {
+        where: { referenceType: EMAIL_MARKETING_INVOICE_REFERENCE_TYPE, referenceId: id },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      const campaign = await manager.findOne(EmailMarketing, {
+        where: { id },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!campaign) {
+        throw new NotFoundException('Marketing campaign not found');
+      }
+      if (!campaign.ownerId) {
+        throw new BadRequestException('Campaign has no owner to bill');
+      }
+      if (campaign.invoiceId && !existingInvoices.some(invoice => invoice.id === campaign.invoiceId)) {
+        throw new ConflictException('Ad pricing changed concurrently; retry approval');
+      }
+      if (campaign.approvalStatus === EmailMarketingApprovalStatus.PUBLISHED) {
+        throw new BadRequestException('Cannot reprice an already published ad');
+      }
+      if (existingInvoices.some((inv) => inv.status === InvoiceStatus.PAID)) {
+        throw new BadRequestException('Cannot reprice an ad with a paid invoice');
+      }
+
+      const currentUnpaid = campaign.invoiceId
+        ? existingInvoices.find((inv) => inv.id === campaign.invoiceId && inv.status === InvoiceStatus.UNPAID)
+        : undefined;
+
+      if (
+        campaign.approvalStatus === EmailMarketingApprovalStatus.AWAITING_PAYMENT &&
+        currentUnpaid &&
+        currentUnpaid.userId === campaign.ownerId &&
+        Math.round(Number(currentUnpaid.total) * 100) === Math.round(fee * 100)
+      ) {
+        if (campaign.isActive || Math.round(Number(campaign.publicationFee || 0) * 100) !== Math.round(fee * 100)) {
+          campaign.isActive = false;
+          campaign.publicationFee = fee;
+          await manager.save(EmailMarketing, campaign);
+        }
+        return { campaign, invoice: currentUnpaid };
+      }
+
+      for (const inv of existingInvoices) {
+        if (inv.status === InvoiceStatus.UNPAID) {
+          inv.status = InvoiceStatus.CANCELLED;
+          await manager.save(Invoice, inv);
+        }
+      }
+
+      const newInvoice = manager.create(Invoice, {
+        userId: campaign.ownerId,
+        amount: fee,
+        serviceFee: 0,
+        tax: 0,
+        total: fee,
+        status: InvoiceStatus.UNPAID,
+        referenceType: EMAIL_MARKETING_INVOICE_REFERENCE_TYPE,
+        referenceId: campaign.id,
+        description: `فاتورة نشر إعلان: ${campaign.subject || campaign.id.slice(0, 8)}`,
+      });
+      const savedInvoice = await manager.save(Invoice, newInvoice);
+
+      campaign.approvalStatus = EmailMarketingApprovalStatus.AWAITING_PAYMENT;
+      campaign.publicationFee = fee;
+      campaign.invoiceId = savedInvoice.id;
+      campaign.isActive = false;
+      const savedCampaign = await manager.save(EmailMarketing, campaign);
+
+      return { campaign: savedCampaign, invoice: savedInvoice };
+    });
+  }
+
+  async rejectEmailMarketing(id: string, reason?: string): Promise<EmailMarketing> {
+    return this.emailMarketingRepository.manager.transaction(async (manager) => {
+      const existingInvoices = await manager.find(Invoice, {
+        where: { referenceType: EMAIL_MARKETING_INVOICE_REFERENCE_TYPE, referenceId: id },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      const campaign = await manager.findOne(EmailMarketing, {
+        where: { id },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!campaign) {
+        throw new NotFoundException('Marketing campaign not found');
+      }
+      if (
+        campaign.approvalStatus === EmailMarketingApprovalStatus.PUBLISHED ||
+        existingInvoices.some((inv) => inv.status === InvoiceStatus.PAID)
+      ) {
+        throw new BadRequestException('Cannot reject an already published or paid ad');
+      }
+
+      for (const inv of existingInvoices) {
+        if (inv.status === InvoiceStatus.UNPAID) {
+          inv.status = InvoiceStatus.CANCELLED;
+          await manager.save(Invoice, inv);
+        }
+      }
+
+      campaign.approvalStatus = EmailMarketingApprovalStatus.REJECTED;
+      campaign.isActive = false;
+      campaign.publicationFee = null;
+      campaign.invoiceId = null;
+      if (reason?.trim()) {
+        campaign.details = { ...((campaign.details || {}) as Record<string, unknown>), rejectionReason: reason.trim() };
+      }
+      return manager.save(EmailMarketing, campaign);
+    });
   }
 
   async findEmailMarketingByOwner(ownerId: string, userRole?: string): Promise<EmailMarketing[]> {
-    if (userRole === 'admin') {
-      return this.emailMarketingRepository.find({ order: { sortOrder: 'ASC', createdAt: 'DESC' } });
-    }
-    return this.emailMarketingRepository.find({ where: { ownerId }, order: { sortOrder: 'ASC', createdAt: 'DESC' } });
+    const campaigns = userRole === Role.ADMIN
+      ? await this.emailMarketingRepository.find({ order: { sortOrder: 'ASC', createdAt: 'DESC' } })
+      : await this.emailMarketingRepository.find({ where: { ownerId }, order: { sortOrder: 'ASC', createdAt: 'DESC' } });
+    return this.decorateCampaignsWithInvoices(campaigns);
   }
 
   async findPublicEmailMarketing(): Promise<EmailMarketing[]> {
     const now = new Date();
     return this.emailMarketingRepository
       .createQueryBuilder('campaign')
+      .innerJoin(
+        Invoice,
+        'inv',
+        'inv.id = campaign.invoiceId AND inv.referenceType = :refType AND inv.referenceId = CAST(campaign.id AS text) AND inv.userId = campaign.ownerId AND inv.status = :paidStatus AND ROUND(inv.total, 2) = ROUND(campaign.publicationFee, 2)',
+        {
+          refType: EMAIL_MARKETING_INVOICE_REFERENCE_TYPE,
+          paidStatus: InvoiceStatus.PAID,
+        },
+      )
       .where('campaign.isActive = :isActive', { isActive: true })
+      .andWhere('campaign.approvalStatus = :published', { published: EmailMarketingApprovalStatus.PUBLISHED })
+      .andWhere('campaign.invoiceId IS NOT NULL')
+      .andWhere('campaign.publicationFee IS NOT NULL AND campaign.publicationFee > 0')
       .andWhere(
         '(campaign.scheduleMode = :manual OR (campaign.scheduleMode = :range AND (campaign.startDate IS NULL OR campaign.startDate <= :now) AND (campaign.endDate IS NULL OR campaign.endDate >= :now)))',
         { manual: MarketingScheduleMode.MANUAL, range: MarketingScheduleMode.DATE_RANGE, now },
@@ -245,18 +482,36 @@ export class MarketingService {
   async getEmailMarketingById(id: string, ownerId: string, userRole?: string): Promise<EmailMarketing> {
     const query = this.emailMarketingRepository.createQueryBuilder('campaign')
       .where('campaign.id = :id', { id });
-    if (userRole !== 'admin') {
+    if (userRole !== Role.ADMIN) {
       query.andWhere('campaign.ownerId = :ownerId', { ownerId });
     }
     const campaign = await query.getOne();
     if (!campaign) throw new NotFoundException('Marketing campaign not found');
+    const [decorated] = await this.decorateCampaignsWithInvoices([campaign]);
+    return decorated;
+  }
+
+  async assertCanUploadMedia(id: string, ownerId: string, userRole?: string): Promise<EmailMarketing> {
+    const campaign = await this.getEmailMarketingById(id, ownerId, userRole);
+    if (
+      userRole !== Role.ADMIN &&
+      ![EmailMarketingApprovalStatus.PENDING, EmailMarketingApprovalStatus.REJECTED].includes(campaign.approvalStatus)
+    ) {
+      throw new ForbiddenException('Cannot modify ad media after pricing or approval');
+    }
     return campaign;
   }
 
   async addMedia(id: string, files: string[], ownerId: string, userRole?: string): Promise<EmailMarketing> {
-    const campaign = await this.getEmailMarketingById(id, ownerId, userRole);
-    campaign.mediaFiles = [...(campaign.mediaFiles || []), ...files];
-    return this.emailMarketingRepository.save(campaign);
+    return this.emailMarketingRepository.manager.transaction(async manager => {
+      const campaign = await manager.findOne(EmailMarketing, { where: { id }, lock: { mode: 'pessimistic_write' } });
+      if (!campaign || (userRole !== Role.ADMIN && campaign.ownerId !== ownerId)) throw new NotFoundException('Marketing campaign not found');
+      if (userRole !== Role.ADMIN && ![EmailMarketingApprovalStatus.PENDING, EmailMarketingApprovalStatus.REJECTED].includes(campaign.approvalStatus)) {
+        throw new ForbiddenException('Cannot modify ad media after pricing or approval');
+      }
+      campaign.mediaFiles = [...(campaign.mediaFiles || []), ...files];
+      return manager.save(EmailMarketing, campaign);
+    });
   }
 
   async removeEmailMarketing(id: string, ownerId: string, userRole?: string): Promise<void> {
@@ -305,7 +560,22 @@ export class MarketingService {
   }
 
   async sendScheduledEmails() {
-    const campaigns = await this.emailMarketingRepository.find({ where: { isActive: true } });
+    const campaigns = await this.emailMarketingRepository
+      .createQueryBuilder('campaign')
+      .innerJoin(
+        Invoice,
+        'inv',
+        'inv.id = campaign.invoiceId AND inv.referenceType = :refType AND inv.referenceId = CAST(campaign.id AS text) AND inv.userId = campaign.ownerId AND inv.status = :paidStatus AND ROUND(inv.total, 2) = ROUND(campaign.publicationFee, 2)',
+        {
+          refType: EMAIL_MARKETING_INVOICE_REFERENCE_TYPE,
+          paidStatus: InvoiceStatus.PAID,
+        },
+      )
+      .where('campaign.isActive = :isActive', { isActive: true })
+      .andWhere('campaign.approvalStatus = :published', { published: EmailMarketingApprovalStatus.PUBLISHED })
+      .andWhere('campaign.invoiceId IS NOT NULL')
+      .andWhere('campaign.publicationFee IS NOT NULL AND campaign.publicationFee > 0')
+      .getMany();
     const now = new Date();
 
     for (const campaign of campaigns) {

@@ -20,6 +20,13 @@ export enum MarketingScheduleMode {
   DATE_RANGE = 'date_range',
 }
 
+export enum EmailMarketingApprovalStatus {
+  PENDING = 'pending',
+  AWAITING_PAYMENT = 'awaiting_payment',
+  PUBLISHED = 'published',
+  REJECTED = 'rejected',
+}
+
 @Entity('email_marketing')
 export class EmailMarketing {
   @PrimaryGeneratedColumn('uuid')
@@ -87,8 +94,21 @@ export class EmailMarketing {
   })
   targetRole: Role; // All users if null, or specific role like AGENT
 
-  @Column({ default: true })
+  @Column({ default: false })
   isActive: boolean;
+
+  @Column({
+    type: 'varchar',
+    length: 32,
+    default: EmailMarketingApprovalStatus.PENDING,
+  })
+  approvalStatus: EmailMarketingApprovalStatus;
+
+  @Column('decimal', { precision: 14, scale: 2, nullable: true })
+  publicationFee: number | null;
+
+  @Column('uuid', { nullable: true })
+  invoiceId: string | null;
 
   @Column({ nullable: true })
   propertyType: string;
